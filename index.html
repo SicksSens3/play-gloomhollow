@@ -72,6 +72,8 @@ body.touch #pad{display:block}body.touch #help{display:none}
 <script>
 (()=>{
 const W=320,H=192,T=16;let CH=192;
+// The build number shown on the title screen is read from sw.js, so the cache version is the one source of truth.
+let BUILD='';fetch('sw.js').then(r=>r.text()).then(t=>{const m=t.match(/gloomhollow-v(\d+)/);if(m)BUILD='build '+m[1];}).catch(()=>{});
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 cv.width=W;cv.height=H;
 const isCoarse=matchMedia('(pointer:coarse)').matches;
@@ -2137,7 +2139,7 @@ function frame(now){const dt=Math.min(0.033,(now-last)/1000);last=now;
  else if(state==='play'){if(press.KeyM)overlayOpen=overlayOpen==='map'?null:'map';if(press.KeyH)overlayOpen=overlayOpen==='help'?null:'help';if(press.KeyI&&!overlayOpen){overlayOpen='items';itemsBack=null;SFX.block();}if(press.Escape&&(overlayOpen==='map'||overlayOpen==='help'))overlayOpen=null;if(overlayOpen)time+=dt;else if(banner&&banner.boss&&banner.t>0.5)cardTick(dt);else if(hitstop>0)hitstop-=dt;else if(slowT>0){slowT-=dt;update(dt*0.4);}else update(dt);}else if(state==='dead'){deadT+=dt;updateFx(dt*0.6);time+=dt*0.4;msg.t-=dt*2;}else if(state==='won'){wonT+=dt;updateFx(dt*0.6);time+=dt*0.4;msg.t-=dt*2;}
  if(parryFx){parryFx.t-=dt;if(parryFx.t<=0)parryFx=null;}flashT=Math.max(0,flashT-dt);
  music(dt);updateCamera(dt,false);
- draw();if(hitstop<=0||state!=='play'){for(const k in press)press[k]=false;mDown.l=mDown.r=mUp.l=mUp.r=false;vStrike=false;}requestAnimationFrame(frame);}
+ draw();if(state==='title'&&BUILD){ctx.setTransform(1,0,0,1,0,0);txt(BUILD,W-4,CH-10,'#464666','right');}if(hitstop<=0||state!=='play'){for(const k in press)press[k]=false;mDown.l=mDown.r=mUp.l=mUp.r=false;vStrike=false;}requestAnimationFrame(frame);}
 const go=()=>{fit();requestAnimationFrame(frame);};
 if(document.fonts&&document.fonts.load){Promise.race([document.fonts.load('8px "Press Start 2P"'),new Promise(r=>setTimeout(r,1500))]).then(go,go);}else go();
 })();

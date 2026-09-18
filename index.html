@@ -367,22 +367,25 @@ function drawSpr(s,x,y,flip,white,wf){ctx.save();ctx.translate(Math.round(x),Mat
 // One strike per weapon (atk), plus a charged heavy: hold right click, or hold the aim stick at its rim, for hv.chg seconds and release. hv.slow is your speed while
 // holding, hv.mul the damage, hv.arc/range widen the swing, hv.hits makes a flurry (daggers, katar). `heavy` weapons break guards and carry hyper-armour on every
 // swing; a charged heavy does both with any weapon and pounds a wider circle with the ground-pounders.
+// hv.art names the weapon's own heavy: wheel (full circle), flurry (bleeding cuts), impale (a line), wrecker, cleave (knockback), firewake (fire crescent),
+// shatter (freeze, x1.5 on the chilled), haul (drag to your feet), reap (heal per foe), blink (through the foe, strike from behind), butcher (x3 under 35%),
+// bulwark (a ward after), tremor (stun in the pound), passado (untouchable dash), frenzy (stamina per cut). Builds live here.
 const WEAPONS={
- rusted:{hv:{chg:0.6,slow:0.55,mul:2},name:'Rusted Shortsword',trait:'plain',col:'#8a7f6a',len:9,atk:{cost:14,dmg:18,range:18,arc:1.9,wind:0.1,active:0.1,rec:0.22,step:30}},
- daggers:{hv:{chg:0.4,slow:0.7,mul:0.8,hits:3,arc:1.1,range:1.1,step:2.2},shape:'daggers',name:'Thief Daggers',trait:'very fast, chains',col:'#b7c9d6',len:6,atk:{cost:8,dmg:11,range:14,arc:1.7,wind:0.05,active:0.07,rec:0.09,step:50}},
- spear:{hv:{chg:0.7,slow:0.5,mul:2.2,arc:1,range:1.3,step:1.6},shape:'spear',name:'Bone Spear',trait:'long thrust',col:'#e0d6c0',len:16,atk:{cost:15,dmg:26,range:32,arc:0.7,wind:0.14,active:0.1,rec:0.26,step:30}},
- mace:{hv:{chg:0.9,slow:0.4,mul:2},shape:'mace',aoe:true,heavy:true,name:'Gravedigger Mace',trait:'pounds the ground, staggers',col:'#6e7a8a',len:11,atk:{cost:24,dmg:34,range:20,arc:2.2,wind:0.26,active:0.12,rec:0.4,step:16,stagger:true}},
- greatsword:{hv:{chg:1.1,slow:0.35,mul:2.2,arc:1.2},shape:'great',heavy:true,name:'Warden Greatsword',trait:'huge, slow',col:'#c9c2b4',len:16,atk:{cost:30,dmg:52,range:28,arc:3.0,wind:0.4,active:0.15,rec:0.45,step:14}},
- ember:{hv:{chg:0.6,slow:0.55,mul:2},shape:'ember',name:'Ember Blade',trait:'hits burn',effect:'burn',col:'#e8a33c',len:10,atk:{cost:14,dmg:15,range:17,arc:1.8,wind:0.1,active:0.09,rec:0.2,step:30}},
- frost:{hv:{chg:0.9,slow:0.4,mul:2},shape:'axe',heavy:true,name:'Frost Axe',trait:'hits slow',effect:'slow',col:'#7fa8ff',len:11,atk:{cost:24,dmg:34,range:21,arc:2.4,wind:0.3,active:0.12,rec:0.38,step:16}},
- chain:{hv:{chg:0.7,slow:0.5,mul:2,range:1.25},shape:'chain',name:"Hollow's Chain",trait:'wide reach, weak',col:'#9a8f7c',len:22,atk:{cost:13,dmg:14,range:32,arc:3.0,wind:0.16,active:0.14,rec:0.28,step:6}},
- scythe:{hv:{chg:1,slow:0.4,mul:2},shape:'scythe',heavy:true,name:'Soul Scythe',trait:'drinks blood',effect:'lifesteal',col:'#8a6aaa',len:15,atk:{cost:24,dmg:36,range:26,arc:3.0,wind:0.3,active:0.14,rec:0.4,step:12}},
- rapier:{hv:{chg:0.5,slow:0.6,mul:2,arc:1,range:1.4,step:1.5},shape:'rapier',name:'Storm Rapier',trait:'every strike lunges',col:'#d9e8ff',len:13,atk:{cost:14,dmg:22,range:24,arc:0.8,wind:0.1,active:0.14,rec:0.2,step:120}},
- cleaver:{hv:{chg:0.7,slow:0.5,mul:2.2},shape:'cleaver',name:'Cursed Cleaver',trait:'+50% dmg, bleeds you',effect:'cursed',col:'#c8302a',len:12,atk:{cost:18,dmg:30,range:19,arc:2.1,wind:0.16,active:0.1,rec:0.28,step:24}},
- halberd:{hv:{chg:1,slow:0.4,mul:2,arc:1.3},shape:'halberd',heavy:true,name:'Gatewarden Halberd',trait:'long, sweeping',col:'#b8b0a0',len:20,atk:{cost:26,dmg:40,range:34,arc:2.2,wind:0.34,active:0.14,rec:0.42,step:10}},
- hammer:{hv:{chg:1.4,slow:0.3,mul:2.5},shape:'hammer',aoe:true,heavy:true,name:'Tomb Warhammer',trait:'crushing, shakes the ground',col:'#7a7a86',len:12,atk:{cost:32,dmg:60,range:20,arc:1.6,wind:0.5,active:0.14,rec:0.55,step:8,stagger:true}},
- sabre:{hv:{chg:0.5,slow:0.6,mul:1.9},shape:'sabre',name:'Duelist Sabre',trait:'quick cuts, steps in',col:'#d9d0bd',len:12,atk:{cost:12,dmg:17,range:20,arc:1.6,wind:0.08,active:0.09,rec:0.14,step:44}},
- katar:{hv:{chg:0.35,slow:0.7,mul:0.75,hits:4,arc:1.1,range:1.1,step:2.2},shape:'katar',name:'Gravedirt Katar',trait:'fastest, short',col:'#a89a8a',len:6,atk:{cost:9,dmg:13,range:13,arc:1.2,wind:0.04,active:0.06,rec:0.08,step:60}}
+ rusted:{hv:{art:'wheel',name:'Wheel',text:'a full circle swing',chg:0.6,slow:0.55,mul:2},name:'Rusted Shortsword',trait:'plain',col:'#8a7f6a',len:9,atk:{cost:14,dmg:18,range:18,arc:1.9,wind:0.1,active:0.1,rec:0.22,step:30}},
+ daggers:{hv:{art:'flurry',name:'Flurry',text:'three cuts, each leaves the foe bleeding',chg:0.4,slow:0.7,mul:0.8,hits:3,arc:1.1,range:1.1,step:2.2},shape:'daggers',name:'Thief Daggers',trait:'very fast, chains',col:'#b7c9d6',len:6,atk:{cost:8,dmg:11,range:14,arc:1.7,wind:0.05,active:0.07,rec:0.09,step:50}},
+ spear:{hv:{art:'impale',name:'Impale',text:'runs through every foe in a line',chg:0.7,slow:0.5,mul:2.2,arc:1,range:1.3,step:1.6},shape:'spear',name:'Bone Spear',trait:'long thrust',col:'#e0d6c0',len:16,atk:{cost:15,dmg:26,range:32,arc:0.7,wind:0.14,active:0.1,rec:0.26,step:30}},
+ mace:{hv:{art:'wrecker',name:'Wrecker',text:'the whirl breaks into a full circle, then the pound',chg:0.9,slow:0.4,mul:2},shape:'mace',aoe:true,heavy:true,name:'Gravedigger Mace',trait:'pounds the ground, staggers',col:'#6e7a8a',len:11,atk:{cost:24,dmg:34,range:20,arc:2.2,wind:0.26,active:0.12,rec:0.4,step:16,stagger:true}},
+ greatsword:{hv:{art:'cleave',name:'Cleave',text:'hurls foes back and lays them out',chg:1.1,slow:0.35,mul:2.2,arc:1.2},shape:'great',heavy:true,name:'Warden Greatsword',trait:'huge, slow',col:'#c9c2b4',len:16,atk:{cost:30,dmg:52,range:28,arc:3.0,wind:0.4,active:0.15,rec:0.45,step:14}},
+ ember:{hv:{art:'firewake',name:'Firewake',text:'leaves a crescent of fire burning',chg:0.6,slow:0.55,mul:2},shape:'ember',name:'Ember Blade',trait:'hits burn',effect:'burn',col:'#e8a33c',len:10,atk:{cost:14,dmg:15,range:17,arc:1.8,wind:0.1,active:0.09,rec:0.2,step:30}},
+ frost:{hv:{art:'shatter',name:'Shatter',text:'freezes; a chilled foe takes half again',chg:0.9,slow:0.4,mul:2},shape:'axe',heavy:true,name:'Frost Axe',trait:'hits slow',effect:'slow',col:'#7fa8ff',len:11,atk:{cost:24,dmg:34,range:21,arc:2.4,wind:0.3,active:0.12,rec:0.38,step:16}},
+ chain:{hv:{art:'haul',name:'Haul',text:'drags every foe hit to your feet',chg:0.7,slow:0.5,mul:2,range:1.25},shape:'chain',name:"Hollow's Chain",trait:'wide reach, weak',col:'#9a8f7c',len:22,atk:{cost:13,dmg:14,range:32,arc:3.0,wind:0.16,active:0.14,rec:0.28,step:6}},
+ scythe:{hv:{art:'reap',name:'Reap',text:'mends you for every foe hit',chg:1,slow:0.4,mul:2},shape:'scythe',heavy:true,name:'Soul Scythe',trait:'drinks blood',effect:'lifesteal',col:'#8a6aaa',len:15,atk:{cost:24,dmg:36,range:26,arc:3.0,wind:0.3,active:0.14,rec:0.4,step:12}},
+ rapier:{hv:{art:'blink',name:'Blink',text:'step through the foe, strike from behind',chg:0.5,slow:0.6,mul:2,arc:1,range:1.4,step:1.5},shape:'rapier',name:'Storm Rapier',trait:'every strike lunges',col:'#d9e8ff',len:13,atk:{cost:14,dmg:22,range:24,arc:0.8,wind:0.1,active:0.14,rec:0.2,step:120}},
+ cleaver:{hv:{art:'butcher',name:'Butcher',text:'triple damage to the nearly dead',chg:0.7,slow:0.5,mul:2.2},shape:'cleaver',name:'Cursed Cleaver',trait:'+50% dmg, bleeds you',effect:'cursed',col:'#c8302a',len:12,atk:{cost:18,dmg:30,range:19,arc:2.1,wind:0.16,active:0.1,rec:0.28,step:24}},
+ halberd:{hv:{art:'bulwark',name:'Bulwark',text:'the sweep leaves a ward on you',chg:1,slow:0.4,mul:2,arc:1.3},shape:'halberd',heavy:true,name:'Gatewarden Halberd',trait:'long, sweeping',col:'#b8b0a0',len:20,atk:{cost:26,dmg:40,range:34,arc:2.2,wind:0.34,active:0.14,rec:0.42,step:10}},
+ hammer:{hv:{art:'tremor',name:'Tremor',text:'everything in the pound is stunned',chg:1.4,slow:0.3,mul:2.5},shape:'hammer',aoe:true,heavy:true,name:'Tomb Warhammer',trait:'crushing, shakes the ground',col:'#7a7a86',len:12,atk:{cost:32,dmg:60,range:20,arc:1.6,wind:0.5,active:0.14,rec:0.55,step:8,stagger:true}},
+ sabre:{hv:{art:'passado',name:'Passado',text:'a dash through the line, untouchable',chg:0.5,slow:0.6,mul:1.9,step:10},shape:'sabre',name:'Duelist Sabre',trait:'quick cuts, steps in',col:'#d9d0bd',len:12,atk:{cost:12,dmg:17,range:20,arc:1.6,wind:0.08,active:0.09,rec:0.14,step:44}},
+ katar:{hv:{art:'frenzy',name:'Frenzy',text:'four cuts; each one returns stamina',chg:0.35,slow:0.7,mul:0.75,hits:4,arc:1.1,range:1.1,step:2.2},shape:'katar',name:'Gravedirt Katar',trait:'fastest, short',col:'#a89a8a',len:6,atk:{cost:9,dmg:13,range:13,arc:1.2,wind:0.04,active:0.06,rec:0.08,step:60}}
 };
 const HV_DEF={chg:0.7,slow:0.5,mul:2,arc:1.3,range:1.15,hits:1,step:1};
 const hv=()=>{const h=Object.assign({},HV_DEF,wpn().hv||{});if(hasRelic('brand'))h.chg*=0.6;return h;};
@@ -572,10 +575,12 @@ const TPL={
 };
 
 // ---------- input ----------
-const keys={},press={},mouse={x:W/2,y:H/2},mDown={l:false,r:false},mHeld={l:false,r:false},mUp={l:false,r:false};let vStrike=false;
+const keys={},press={},mouse={x:W/2,y:H/2,moved:false},mDown={l:false,r:false},mHeld={l:false,r:false},mUp={l:false,r:false};let vStrike=false;
+// Overlays are drawn in screen space; the mouse in screen space is the world mouse plus the camera offset.
+const sm=()=>({x:mouse.x+OFFX,y:mouse.y+OFFY});
 addEventListener('keydown',e=>{audioInit();if(['Space','KeyE','KeyF','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyM','KeyP','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(e.repeat)return;keys[e.code]=true;press[e.code]=true;if(state!=='play')tryStart();});
 addEventListener('keyup',e=>{keys[e.code]=false;});
-cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();mouse.x=(e.clientX-r.left)/r.width*W-OFFX;mouse.y=(e.clientY-r.top)/r.height*cv.height-OFFY;});
+cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();mouse.x=(e.clientX-r.left)/r.width*W-OFFX;mouse.y=(e.clientY-r.top)/r.height*cv.height-OFFY;mouse.moved=true;});
 addEventListener('mouseup',e=>{if(e.button===0){mHeld.l=false;mUp.l=true;}if(e.button===2){mHeld.r=false;mUp.r=true;}});
 cv.addEventListener('mousedown',e=>{audioInit();if(e.button===0){mDown.l=true;mHeld.l=true;}if(e.button===2){mDown.r=true;mHeld.r=true;}if(state!=='play'){const r=cv.getBoundingClientRect();tryStart((e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*cv.height);}});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
@@ -601,7 +606,12 @@ mkStick('aim',(x,y)=>{const m=Math.hypot(x,y);virt.aiming=m>=0.16;virt.aimMag=m;
 document.querySelectorAll('.b').forEach(b=>{const k=b.dataset.k;
  b.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();audioInit();touchMode=true;b.classList.add('on');if(k==='fs'){toggleFS();return;}if(k==='mute'){setMute(!muted);b.textContent=muted?'SOUND':'MUTE';return;}if(state!=='play'){tryStart();return;}if(k==='block')vHeld.block=true;else vPress[k]=true;},{passive:false});
  const end=e=>{e.preventDefault();b.classList.remove('on');if(k==='block')vHeld.block=false;};b.addEventListener('touchend',end);b.addEventListener('touchcancel',end);});
-cv.addEventListener('touchstart',e=>{e.preventDefault();audioInit();touchMode=true;if(state!=='play'){const t=e.changedTouches[0],r=cv.getBoundingClientRect();tryStart((t.clientX-r.left)/r.width*W,(t.clientY-r.top)/r.height*cv.height);}else if(overlayOpen)overlayOpen=null;else{overlayOpen='pause';confirmRestart=0;}},{passive:false});
+cv.addEventListener('touchstart',e=>{e.preventDefault();audioInit();touchMode=true;if(state!=='play'){const t=e.changedTouches[0],r=cv.getBoundingClientRect();tryStart((t.clientX-r.left)/r.width*W,(t.clientY-r.top)/r.height*cv.height);}else if(overlayOpen){const t=e.changedTouches[0],r=cv.getBoundingClientRect();overlayTap((t.clientX-r.left)/r.width*W,(t.clientY-r.top)/r.height*cv.height);}else{overlayOpen='pause';confirmRestart=0;}},{passive:false});
+// On touch, tapping a satchel cell, a bearing or a settings row picks it; tapping anywhere else closes the overlay.
+function overlayTap(x,y){if(overlayOpen==='items'){const i=ITEM_CELL(x,y);if(i>=0&&i<player.items.length){itemSel=i;SFX.block();return;}}
+ else if(overlayOpen==='skins'){const i=SKIN_CELL(x,y);if(i>=0){if(i===skinCursor){const id=SKIN_IDS[i];if(save.unlocked.includes(id)){equipSkin(id);SFX.pickup();overlayOpen=null;}else SFX.guardbreak();}else{skinCursor=i;SFX.block();}return;}}
+ else if(overlayOpen==='pause'){const i=PAUSE_ROW(x,y);if(i>=0){pauseRow=i;SFX.block();return;}}
+ overlayOpen=null;}
 function applyVirtual(){if(vPress.light){mDown.l=true;vStrike=true;}if(vPress.roll)press.Space=true;if(vPress.bolt)press.KeyE=true;if(vPress.flask)press.KeyF=true;if(vPress.use)press.KeyQ=true;if(vPress.items)press.KeyI=true;if(vPress.pause)press.KeyP=true;if(vPress.map)press.KeyM=true;for(const k in vPress)vPress[k]=false;}
 
 // ---------- world ----------
@@ -965,8 +975,27 @@ function tryStart(px,py){
 const wpn=()=>WEAPONS[player.weapon];
 
 // ---------- player ----------
+// Blink: step through the nearest foe ahead and come out behind it, the blade already turning back on it.
+function blinkBehind(p){let best=null,bd=100;for(const e of room.enemies){if(e.dead)continue;const dx=e.x-p.x,dy=e.y-p.y,d=Math.hypot(dx,dy);let a=Math.atan2(dy,dx)-p.aim;a=Math.atan2(Math.sin(a),Math.cos(a));if(d<bd&&Math.abs(a)<0.6){bd=d;best=e;}}
+ const ox=p.x,oy=p.y,ok=(x,y)=>{const s=room.solid[Math.floor(y/T)]&&room.solid[Math.floor(y/T)][Math.floor(x/T)];return(s===0||s===6)&&!collides(x,y,p.r,false);};
+ let tx,ty;if(best){tx=best.x+Math.cos(p.aim)*(best.r+10);ty=best.y+Math.sin(p.aim)*(best.r+10);}else{tx=p.x+Math.cos(p.aim)*48;ty=p.y+Math.sin(p.aim)*48;}
+ if(!ok(tx,ty)){if(best){tx=best.x-Math.cos(p.aim)*(best.r+10);ty=best.y-Math.sin(p.aim)*(best.r+10);}if(!ok(tx,ty)){tx=ox;ty=oy;}}   // no room behind: stay before it, or stay put
+ burst(ox,oy-4,12,'#d9e8ff');p.x=tx;p.y=ty;p.safe={x:tx,y:ty};burst(tx,ty-4,12,'#d9e8ff');p.inv=Math.max(p.inv,0.35);SFX.bolt();
+ if(best){p.atk.ang=Math.atan2(best.y-p.y,best.x-p.x);p.aim=p.atk.ang;p.facing=Math.cos(p.aim)>=0?1:-1;}}
+// Firewake: a crescent of fire left burning along the swing; it burns only foes.
+function firewake(p,a){for(let i=0;i<5;i++){const q=a.ang-a.arc/2+(i+0.5)*a.arc/5,r=a.range*0.75;room.hazards.push({x:p.x+Math.cos(q)*r,y:p.y+Math.sin(q)*r*0.85,t:2.5,dmg:6,name:'your fire',mine:true});}SFX.crackle();}
+// What each art does to a foe it has just hit.
+function artAfterHit(e,A,ang){const p=player;if(!A)return;const mob=!e.boss&&!e.anchored;
+ if(A==='flurry'){e.bleed=2;e.bleedT=e.bleedT||0;}
+ else if(A==='cleave'&&mob){moveEnt(e,Math.cos(ang)*22,Math.sin(ang)*22);if(!e.dead){e.state='stagger';e.t=Math.max(e.t||0,1.5);}}
+ else if(A==='shatter'){e.slow=4;if(mob&&!e.dead){e.state='stagger';e.t=Math.max(e.t||0,1.2);}}
+ else if(A==='haul'&&mob&&!e.dead){for(let i=0;i<20;i++){const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy);if(d<=22)break;moveEnt(e,dx/d*3,dy/d*3);}e.state='stagger';e.t=Math.max(e.t||0,1);burst(e.x,e.y-4,6,'#cfc4b0');}
+ else if(A==='reap'){p.hp=Math.min(p.maxHp,p.hp+8);dmgNum(p.x,p.y-14,'+8','#5aa04a');}
+ else if(A==='tremor'&&mob&&!e.dead){e.state='stagger';e.t=Math.max(e.t||0,1.4);}
+ else if(A==='frenzy'){p.stam=Math.min(p.maxStam,p.stam+4);}}
 function startAttack(heavy){const p=player,w=wpn(),a=w.atk,h=heavy?hv():null;p.state='attack';
- p.atk={phase:'wind',t:heavy?a.wind*0.6:a.wind,ang:p.aim,hitSet:new Set(),arc:a.arc*(h?h.arc:1),range:a.range*(h?h.range:1),step:a.step*(h?h.step:1),dmgMul:h?h.mul:1,hits:h?h.hits:1,heavy:!!heavy,dur:a};
+ p.atk={phase:'wind',t:heavy?a.wind*0.6:a.wind,ang:p.aim,hitSet:new Set(),arc:a.arc*(h?h.arc:1),range:a.range*(h?h.range:1),step:a.step*(h?h.step:1),dmgMul:h?h.mul:1,hits:h?h.hits:1,heavy:!!heavy,art:h?h.art:null,dur:a};
+ if(h){if(h.art==='wheel'||h.art==='wrecker')p.atk.arc=Math.PI*2;if(h.art==='blink')blinkBehind(p);}
  p.stam=Math.max(0,p.stam-a.cost*(heavy&&!hasRelic('brand')?1.5:1));if(w.shape==='mace')p.fv=heavy?18:10;p.stamCd=0.75;p.facing=Math.cos(p.aim)>=0?1:-1;p.blocking=false;p.charging=false;p.charge=0;p.chargeReady=false;
  if(w.effect==='cursed'&&p.hp>3){p.hp-=2;burst(p.x,p.y-4,2,'#c8302a');}(w.heavy||heavy?SFX.swingH:SFX.swingL)();if(heavy){burst(p.x+Math.cos(p.aim)*10,p.y-4+Math.sin(p.aim)*10,10,'#fff0c0');shake=Math.max(shake,0.08);}}
 // Back onto the last safe tile, centred. Input still pushing toward the pit you fell in (px,py) is ignored until it lets go or turns away.
@@ -1051,9 +1080,9 @@ function updatePlayer(dt){
   else if(press.KeyF&&p.flasks>0&&p.hp<p.maxHp){p.state='flask';p.t=0.85;SFX.drink();}
  }else if(p.state==='attack'){
   const a=p.atk,d=a.dur;a.t-=dt;
-  if(a.phase==='wind'&&a.t<=0){a.phase='active';a.t=d.active;}
+  if(a.phase==='wind'&&a.t<=0){a.phase='active';a.t=d.active;if(a.art==='firewake')firewake(p,a);if(a.art==='passado')p.inv=Math.max(p.inv,d.active+0.08);}
   else if(a.phase==='active'){moveEnt(p,Math.cos(a.ang)*a.step*dt,Math.sin(a.ang)*a.step*dt);attackHits(a.range,a.arc,d.dmg*p.dmgMul*a.dmgMul,(!!wpn().heavy||!!d.stagger||a.heavy)&&a.hits<=1,a.ang);   // a flurry only shoves on its last cut, so the rest still land
-   if(a.t<=0){if(a.hits>1){a.hits--;a.hitSet=new Set();a.phase='wind';a.t=0.05;a.ang=p.aim;(wpn().heavy?SFX.swingH:SFX.swingL)();}else{a.phase='rec';a.t=d.rec*(a.heavy?1.2:1);}}}   // a flurry re-aims each cut
+   if(a.t<=0){if(a.hits>1){a.hits--;a.hitSet=new Set();a.phase='wind';a.t=0.05;a.ang=p.aim;(wpn().heavy?SFX.swingH:SFX.swingL)();}else{a.phase='rec';a.t=d.rec*(a.heavy?1.2:1);if(a.art==='bulwark'){p.ward=1;p.wardT=1.6;burst(p.x,p.y-4,10,'#f4c968');}}}}   // a flurry re-aims each cut
   else if(a.phase==='rec'){if(mDown.l&&!wpn().heavy&&!a.heavy&&a.t<d.rec*0.7&&p.stam>0)startAttack(false);else if(press.Space&&a.t<d.rec*0.6&&p.stam>0)startRoll();else if(a.t<=0){p.state='free';p.atk=null;}}
  }else if(p.state==='roll'){
   const sp=p.t>0.08?(hasRelic('quicksilver')?152:128):40;moveEnt(p,p.rollDir.x*sp*dt,p.rollDir.y*sp*dt);
@@ -1098,15 +1127,18 @@ function castSpell(id,ba){const p=player,sp=SPELLS[id],pow=p.spellPow*p.dmgMul;c
  }}
 function attackHits(range,arc,dmg,stagger,ang){
  const aoe=!!wpn().aoe,ix=player.x+Math.cos(ang)*14,iy=player.y+Math.sin(ang)*14;
- const H=!!player.atk.heavy,pr=H?42:26;   // a charged pound reaches further
+ const H=!!player.atk.heavy,pr=H?42:26,A=player.atk.art;   // a charged pound reaches further
  if(aoe&&!player.atk.pounded){player.atk.pounded=true;burst(ix,iy,H?26:14,'#9a8f7c');shake=Math.max(shake,H?0.3:0.15);SFX.slam();const N=H?20:12;for(let i=0;i<N;i++){const q=i/N*Math.PI*2;parts.push({x:ix+Math.cos(q)*4,y:iy+Math.sin(q)*3,vx:Math.cos(q)*(H?95:60),vy:Math.sin(q)*(H?65:40),life:0.3,col:'#6d6578'});}}
  for(const e of room.enemies){if(e.dead||player.atk.hitSet.has(e))continue;
   let at=null;
   for(const hp of hitPoints(e)){const dx=hp.x-player.x,dy=hp.y-player.y,d=Math.hypot(dx,dy);
    if(aoe){if(Math.hypot(hp.x-ix,hp.y-iy)<=pr+hp.r){at=hp;break;}continue;}
+   if(A==='impale'){const c=Math.cos(ang),sn=Math.sin(ang),t=dx*c+dy*sn,perp=Math.abs(-dx*sn+dy*c);if(t<0||t>range*1.9||perp>hp.r+6)continue;at=hp;break;}   // a line, not an arc
    if(d>range+hp.r)continue;let a=Math.atan2(dy,dx)-ang;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)>arc/2)continue;at=hp;break;}
   if(!at)continue;
-  player.atk.hitSet.add(e);const wasRip=e.riposte&&player.riposteT>0;damageEnemy(e,dmg*(1+0.2*player.sharp)*(hasRelic('mask')&&player.hp<player.maxHp*0.4?1.35:1),stagger,ang,wpn().effect||(player.inf&&UPG[player.inf].fx)||(hasRelic('idol')?'burn':undefined),!!wpn().heavy||!!player.atk.heavy,at);
+  player.atk.hitSet.add(e);const wasRip=e.riposte&&player.riposteT>0;let mul=1;
+  if(A==='shatter'&&e.slow>0){mul=1.5;dmgNum(at.x,at.y-e.r-14,'SHATTER','#7fa8ff');}else if(A==='butcher'&&e.hp<e.maxHp*0.35){mul=3;dmgNum(at.x,at.y-e.r-14,'BUTCHER','#c8302a');}
+  damageEnemy(e,dmg*mul*(1+0.2*player.sharp)*(hasRelic('mask')&&player.hp<player.maxHp*0.4?1.35:1),stagger,ang,wpn().effect||(player.inf&&UPG[player.inf].fx)||(hasRelic('idol')?'burn':undefined),!!wpn().heavy||!!player.atk.heavy,at);artAfterHit(e,A,ang);
   if(e.affix==='thorned'&&!e.dead&&!wasRip&&!(e.thornCd>0)){e.thornCd=0.5;const q=player;q.hp-=4;dmgNum(q.x,q.y-14,4,'#c8302a');burst(q.x,q.y-4,6,'#8a4a2a');SFX.hurt();buzz(20);if(run)run.killedBy='the thorns of '+e.name;if(q.hp<=0&&!spare())die();}}
  for(const b of room.props){if(b.kind!=='brazier'||b.lit||player.atk.hitSet.has(b))continue;const dx=b.x-player.x,dy=b.y-player.y,d=Math.hypot(dx,dy);if(d>range+8)continue;
   let a=Math.atan2(dy,dx)-ang;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)>arc/2)continue;player.atk.hitSet.add(b);hitBrazier(b);}
@@ -1208,6 +1240,8 @@ function updateEnemy(e,dt){
  const p=player;e.flash=Math.max(0,e.flash-dt);e.t-=dt;e.spikeCd-=dt;e.cd2-=dt;e.cd3-=dt;
  if(e.burn>0){e.burn-=dt;e.burnT=(e.burnT||0)+dt;if(Math.random()<0.3)parts.push({x:e.x+(Math.random()-.5)*6,y:e.y-4,vx:0,vy:-25,life:0.3,col:Math.random()<0.5?'#e8a33c':'#e04a3a'});
   if(e.burnT>=0.5){e.burnT-=0.5;e.hp-=4;dmgNum(e.x,e.y-e.r-6,4,'#e8a33c');if(e.hp<=0){if(tryRevive(e))return;e.dead=true;souls+=Math.round(e.souls*(room.event==='blood'?2:1)*(hasRelic('miser')?1.5:1));relicKill();burst(e.x,e.y,16,'#e8a33c');SFX.kill();killEnemy(e);return;}}}
+ if(e.bleed>0){e.bleed-=dt;e.bleedT=(e.bleedT||0)+dt;if(Math.random()<0.25)parts.push({x:e.x+(Math.random()-.5)*6,y:e.y-2,vx:0,vy:12,life:0.3,col:'#c8302a'});
+  if(e.bleedT>=0.5){e.bleedT-=0.5;e.hp-=3;dmgNum(e.x,e.y-e.r-6,3,'#c8302a');if(e.hp<=0){if(tryRevive(e))return;e.dead=true;souls+=Math.round(e.souls*(room.event==='blood'?2:1)*(hasRelic('miser')?1.5:1));relicKill();burst(e.x,e.y,16,'#c8302a');SFX.kill();killEnemy(e);return;}}}
  if(e.slow>0){e.slow-=dt;if(Math.random()<0.2)parts.push({x:e.x+(Math.random()-.5)*8,y:e.y+e.r-2,vx:0,vy:-8,life:0.4,col:'#7fa8ff'});}
  {const etx=Math.floor(e.x/T),ety=Math.floor(e.y/T),es=room.solid[ety]&&room.solid[ety][etx];if(es===6&&e.type!=='angler'&&e.type!=='drowned')dt*=0.6;if(es===7&&e.spikeCd<=0&&e.type!=='imp'&&e.type!=='witch'&&e.type!=='salamander'&&e.affix!=='burning'){e.spikeCd=0.8;damageEnemy(e,4,false,Math.random()*6.28);if(e.dead)return;}}
  dt=e.slow>0?dt*0.5:dt;
@@ -1844,7 +1878,7 @@ function drawPlayer(){
  if(p.state==='flask'){const g=1-p.t/0.85;ctx.fillStyle='#d07a2a';ctx.fillRect(Math.round(p.x)-2,Math.round(p.y)-18,4,5);ctx.fillStyle=K;ctx.fillRect(Math.round(p.x)-6,Math.round(p.y)-22,12,2);ctx.fillStyle='#e6a34c';ctx.fillRect(Math.round(p.x)-6,Math.round(p.y)-22,Math.round(12*g),2);}
 }
 function bar(x,y,w,val,max,col){ctx.fillStyle=K;ctx.fillRect(x-1,y-1,w+2,5);ctx.fillStyle='#2e2838';ctx.fillRect(x,y,w,3);ctx.fillStyle=col;ctx.fillRect(x,y,Math.round(w*Math.max(0,val)/max),3);}
-function itemLabel(it){switch(it.kind){case'weapon':return WEAPONS[it.id].name;case'spell':return SPELLS[it.id].name+' ('+SPELLS[it.id].cost+' mana)';case'flask':return 'Flask refill';case'hpup':return ITEMS.hpup.name+' (+35 max HP)';case'manaup':return ITEMS.manaup.name+' (+35 max mana)';case'gourd':return ITEMS.gourd.name+' (+1 flask)';case'blessing':return 'Drink from the well (+1 flask)';case'buff':case'relic':return ITEMS[it.id]&&ITEMS[it.id].relic?ITEMS[it.id].name+' ('+ITEMS[it.id].desc+')':BUFFS[it.id].name+' ('+BUFFS[it.id].desc+')';case'corpse':return 'Search the fallen';case'souls':return 'Gather souls';case'stairs':return floor+1>=FINAL?'Descend to the maw':floor+1===FINAL-1?'Descend to the throne':'Descend to floor '+(floor+1);case'key':return 'Take the key';case'upgrade':return UPG[it.id].name+' ('+UPG[it.id].desc+')';case'camp':return 'Rest at the fire';case'heart':return 'Pierce the heart';}}
+function itemLabel(it){switch(it.kind){case'weapon':{const w=WEAPONS[it.id];return w.name+(w.hv&&w.hv.name?' \u00b7 '+w.hv.name:'');}case'spell':return SPELLS[it.id].name+' ('+SPELLS[it.id].cost+' mana)';case'flask':return 'Flask refill';case'hpup':return ITEMS.hpup.name+' (+35 max HP)';case'manaup':return ITEMS.manaup.name+' (+35 max mana)';case'gourd':return ITEMS.gourd.name+' (+1 flask)';case'blessing':return 'Drink from the well (+1 flask)';case'buff':case'relic':return ITEMS[it.id]&&ITEMS[it.id].relic?ITEMS[it.id].name+' ('+ITEMS[it.id].desc+')':BUFFS[it.id].name+' ('+BUFFS[it.id].desc+')';case'corpse':return 'Search the fallen';case'souls':return 'Gather souls';case'stairs':return floor+1>=FINAL?'Descend to the maw':floor+1===FINAL-1?'Descend to the throne':'Descend to floor '+(floor+1);case'key':return 'Take the key';case'upgrade':return UPG[it.id].name+' ('+UPG[it.id].desc+')';case'camp':return 'Rest at the fire';case'heart':return 'Pierce the heart';}}
 function bigBar(x,y,w,h,val,max,col,dark){ctx.fillStyle=K;ctx.fillRect(x-1,y-1,w+2,h+2);ctx.fillStyle=dark;ctx.fillRect(x,y,w,h);const f=Math.round(w*Math.max(0,val)/max);ctx.fillStyle=col;ctx.fillRect(x,y,f,h);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(x,y,f,1);}
 function drawBand(){
  const p=player,y0=H,b=BAND;ctx.fillStyle=FP().bg;ctx.fillRect(0,y0,W,b);ctx.fillStyle=FP().wl;ctx.fillRect(0,y0,W,1);ctx.fillStyle=FP().wd;ctx.fillRect(0,y0+1,W,1);
@@ -1930,14 +1964,18 @@ function drawSkins(){
  if(!un&&sk.prog){const[c,m]=sk.prog(save.stats);txt(Math.min(c,m)+' / '+m,W/2,152,'#e8a33c','center');}
  else if(un)txt(id===save.skin?'worn':(touchMode?'USE to wear':'Q to wear'),W/2,152,'#5aa04a','center');
  txt(save.unlocked.length+' of '+n+' found',W/2,166,'#464666','center');
- txt(touchMode?'stick browse  USE wear  stick down: records  MAP leave':'A/D browse  Q wear  S records  H leave',W/2,CH-14,'#464666','center');
+ txt(touchMode?'stick browse  tap twice to wear  stick down past the last row: records  MAP leave':'arrows or mouse browse  Q wear  R records  H leave',W/2,CH-14,'#464666','center');
 }
+const SKIN_CELL=(x,y)=>{const gap=34,x0=W/2-8*gap/2;for(let i=0;i<SKIN_IDS.length;i++){const cx=Math.round(x0+(i%9)*gap),cy=62+Math.floor(i/9)*40;if(x>=cx-15&&x<cx+15&&y>=cy-26&&y<cy+6)return i;}return -1;}
 function skinMenuInput(){
  let dir=0;if(press.KeyA||press.ArrowLeft)dir=-1;if(press.KeyD||press.ArrowRight)dir=1;
  if(virt.mx<-0.5&&!virt.sl)dir=-1;virt.sl=virt.mx<-0.5;if(virt.mx>0.5&&!virt.sr)dir=1;virt.sr=virt.mx>0.5;
  if(dir){skinCursor=(skinCursor+dir+SKIN_IDS.length)%SKIN_IDS.length;SFX.block();}
+ {let vdir=0;if(press.KeyW||press.ArrowUp)vdir=-1;if(press.KeyS||press.ArrowDown)vdir=1;if(virt.my>0.6&&!virt.sd)vdir=1;if(virt.my<-0.6&&!virt.su)vdir=-1;virt.sd=virt.my>0.6;virt.su=virt.my<-0.6;
+  if(vdir){const rows=Math.ceil(SKIN_IDS.length/9),row=Math.floor(skinCursor/9),nr=row+vdir;if(nr>=0&&nr<rows&&skinCursor%9+nr*9<SKIN_IDS.length){skinCursor=skinCursor%9+nr*9;SFX.block();}else{overlayOpen='stats';SFX.block();}}}   // rows of nine; past the last row lie the records
+ {const m=sm(),i=SKIN_CELL(m.x,m.y);if(i>=0&&i!==skinCursor&&(mouse.moved||mDown.l)){skinCursor=i;SFX.block();}}
+ if(press.KeyR){overlayOpen='stats';SFX.block();}
  if(press.KeyQ||press.Enter||press.KeyE||mDown.l){const id=SKIN_IDS[skinCursor];if(save.unlocked.includes(id)){equipSkin(id);SFX.pickup();overlayOpen=null;}else SFX.guardbreak();}
- if(press.KeyS||press.ArrowDown||press.KeyW||press.ArrowUp||(virt.my>0.6&&!virt.sd)){overlayOpen='stats';SFX.block();}virt.sd=virt.my>0.6;
  if(press.KeyH||press.KeyM||press.Escape)overlayOpen=null;
 }
 function drawPause(){
@@ -1950,8 +1988,10 @@ function drawPause(){
  txt(confirmRestart>0?(touchMode?'USE again to abandon run':'R again to abandon run'):(touchMode?'USE: abandon run':'R: abandon run'),W/2,152,confirmRestart>0?'#e04a3a':'#8a8296','center');
  txt(touchMode?'stick: select / adjust   MAP resume':'W/S select  A/D adjust  P resume',W/2,CH-14,'#464666','center');
 }
+const PAUSE_ROW=(x,y)=>{if(x<W/2-104||x>W/2+104)return -1;const i=Math.floor((y-74)/11);return i>=0&&i<6?i:-1;}
 function pauseInput(dt){
- let dir=0;if(press.KeyA||press.ArrowLeft)dir=-1;if(press.KeyD||press.ArrowRight)dir=1;
+ let dir=0;if(press.KeyA||press.ArrowLeft)dir=-1;if(press.KeyD||press.ArrowRight)dir=1;if(press.Enter||press.KeyE)dir=1;
+ {const m=sm(),i=PAUSE_ROW(m.x,m.y);if(i>=0&&mouse.moved&&i!==pauseRow){pauseRow=i;SFX.block();}if(i>=0&&mDown.l){pauseRow=i;dir=m.x<W/2?-1:1;}}   // hover to pick a row, click its < or > side
  if(virt.mx<-0.5&&!virt.sl)dir=-1;virt.sl=virt.mx<-0.5;if(virt.mx>0.5&&!virt.sr)dir=1;virt.sr=virt.mx>0.5;
  let vdir=0;if(press.KeyW||press.ArrowUp)vdir=-1;if(press.KeyS||press.ArrowDown)vdir=1;if(virt.my<-0.6&&!virt.su)vdir=-1;virt.su=virt.my<-0.6;if(virt.my>0.6&&!virt.sd)vdir=1;virt.sd=virt.my>0.6;
  if(vdir){pauseRow=(pauseRow+vdir+6)%6;SFX.block();}
@@ -1985,9 +2025,11 @@ function drawDeath(){
  ctx.globalAlpha=1;
 }
 let itemSel=0;
-function itemsInput(){let dir=0;if(press.KeyA||press.ArrowLeft)dir=-1;if(press.KeyD||press.ArrowRight)dir=1;
+const ITEM_CELL=(x,y)=>{const i=Math.floor((x-32)/16);return y>=82&&y<100&&x>=32&&i>=0&&i<16?i:-1;}
+function itemsInput(){let dir=0;if(press.KeyA||press.ArrowLeft)dir=-1;if(press.KeyD||press.ArrowRight)dir=1;if(press.KeyW||press.ArrowUp)dir=-4;if(press.KeyS||press.ArrowDown)dir=4;
  if(virt.mx<-0.5&&!virt.sl)dir=-1;virt.sl=virt.mx<-0.5;if(virt.mx>0.5&&!virt.sr)dir=1;virt.sr=virt.mx>0.5;
- const n=player.items.length;if(itemSel>=n)itemSel=Math.max(0,n-1);if(dir&&n){itemSel=(itemSel+dir+n)%n;SFX.block();}}
+ const n=player.items.length;if(itemSel>=n)itemSel=Math.max(0,n-1);if(dir&&n){itemSel=(itemSel+dir+n*4)%n;SFX.block();}
+ if(mouse.moved||mDown.l){const m=sm(),i=ITEM_CELL(m.x,m.y);if(i>=0&&i<n&&i!==itemSel){itemSel=i;SFX.block();}}}   // hover or click a cell
 function drawItems(){
  ctx.fillStyle='rgba(8,7,12,.93)';ctx.fillRect(0,0,W,cv.height);
  txt('THE SATCHEL',W/2,5,'#f4c968','center');txt('what you carry',W/2,16,'#6d6578','center');
@@ -1995,7 +2037,7 @@ function drawItems(){
  // in hand: weapon and spell
  ctx.fillStyle='#14131c';ctx.fillRect(8,26,W-16,42);ctx.strokeStyle='#2e2d42';ctx.lineWidth=1;ctx.strokeRect(8.5,26.5,W-17,41);
  ctx.fillStyle=K;ctx.fillRect(12,30,16,16);ctx.fillStyle='#1c1b28';ctx.fillRect(13,31,14,14);drawWeapon(p.weapon,16,43,-Math.PI/4,Math.min(13,Math.max(9,w.len)));
- txt(w.name+(p.sharp?' +'+p.sharp:''),32,29,'#d9d0bd');txt((p.inf?UPG[p.inf].name+', ':'')+w.trait+(w.heavy?'. heavy':''),32,39,'#6d6578');
+ txt(w.name+(p.sharp?' +'+p.sharp:'')+(p.inf?' ('+UPG[p.inf].name.split(' ')[0]+')':''),32,29,'#d9d0bd');txt('heavy: '+hv().name+' \u00b7 '+w.trait,32,39,'#6d6578');
  ctx.fillStyle=K;ctx.fillRect(12,49,16,16);ctx.fillStyle='#1c1b28';ctx.fillRect(13,50,14,14);ctx.fillStyle='#4a3220';ctx.fillRect(16,52,8,10);ctx.fillStyle='#7a4a1e';ctx.fillRect(16,52,2,10);ctx.fillStyle=sp.col;ctx.fillRect(19,56,3,3);ctx.fillStyle='#fff0c0';ctx.fillRect(19,56,1,1);
  txt(sp.name,32,50,'#d9d0bd');txt(sp.trait+'  '+sp.cost+' mana',32,60,'#6d6578');
  txt(SKINS[save.skin].name+'   flasks '+p.flasks+'/'+p.maxFlasks+(p.keys?'   keys '+p.keys:''),W/2,72,'#8a8296','center');
@@ -2008,7 +2050,7 @@ function drawItems(){
  if(!p.items.length){txt('nothing yet',W/2,108,'#464666','center');txt('the hollow keeps its gifts in chests',W/2,120,'#2e2d42','center');}
  else{const it=p.items[Math.min(itemSel,p.items.length-1)],d=ITEMS[it.id];ctx.fillStyle='#14131c';ctx.fillRect(8,104,W-16,34);ctx.fillStyle=K;ctx.fillRect(14,108,26,26);ctx.fillStyle='#1c1b28';ctx.fillRect(15,109,24,24);drawIcon(it.id,15,109,2);
   txt(d.name+(it.n>1?'  x'+it.n:''),46,110,d.relic?'#f4c968':'#d9d0bd');txt(d.desc,46,121,'#8a8296');if(d.relic)txt('relic',W-12,110,'#8a7530','right');}
- txt(touchMode?'stick: browse   MAP close':'A/D browse   I / Esc close',W/2,CH-14,'#464666','center');
+ txt(touchMode?'stick or tap: browse   MAP close':'arrows or mouse browse   I / Esc close',W/2,CH-14,'#464666','center');
 }
 function drawWin(){
  const fade=Math.max(0,Math.min(1,(wonT-0.6)/0.8));if(fade<=0)return;ctx.globalAlpha=fade;
@@ -2139,7 +2181,7 @@ function frame(now){const dt=Math.min(0.033,(now-last)/1000);last=now;
  else if(state==='play'){if(press.KeyM)overlayOpen=overlayOpen==='map'?null:'map';if(press.KeyH)overlayOpen=overlayOpen==='help'?null:'help';if(press.KeyI&&!overlayOpen){overlayOpen='items';itemsBack=null;SFX.block();}if(press.Escape&&(overlayOpen==='map'||overlayOpen==='help'))overlayOpen=null;if(overlayOpen)time+=dt;else if(banner&&banner.boss&&banner.t>0.5)cardTick(dt);else if(hitstop>0)hitstop-=dt;else if(slowT>0){slowT-=dt;update(dt*0.4);}else update(dt);}else if(state==='dead'){deadT+=dt;updateFx(dt*0.6);time+=dt*0.4;msg.t-=dt*2;}else if(state==='won'){wonT+=dt;updateFx(dt*0.6);time+=dt*0.4;msg.t-=dt*2;}
  if(parryFx){parryFx.t-=dt;if(parryFx.t<=0)parryFx=null;}flashT=Math.max(0,flashT-dt);
  music(dt);updateCamera(dt,false);
- draw();if(state==='title'&&BUILD){ctx.setTransform(1,0,0,1,0,0);txt(BUILD,W-4,CH-10,'#464666','right');}if(hitstop<=0||state!=='play'){for(const k in press)press[k]=false;mDown.l=mDown.r=mUp.l=mUp.r=false;vStrike=false;}requestAnimationFrame(frame);}
+ draw();if(state==='title'&&BUILD){ctx.setTransform(1,0,0,1,0,0);txt(BUILD,W-4,CH-10,'#464666','right');}if(hitstop<=0||state!=='play'){for(const k in press)press[k]=false;mDown.l=mDown.r=mUp.l=mUp.r=false;vStrike=false;}mouse.moved=false;requestAnimationFrame(frame);}
 const go=()=>{fit();requestAnimationFrame(frame);};
 if(document.fonts&&document.fonts.load){Promise.race([document.fonts.load('8px "Press Start 2P"'),new Promise(r=>setTimeout(r,1500))]).then(go,go);}else go();
 })();

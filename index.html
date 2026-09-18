@@ -870,7 +870,8 @@ function tileSolid(tx,ty,forEnemy){const R=room;
  return s===2||s===4||s===8||(s===5&&!!forEnemy);
 }
 function doorLocked(dir){const d=DIRS.find(x=>x.n===dir);const n=dungeon[key(room.x+d.x,room.y+d.y)];return !!(n&&n.type==='vault'&&!n.opened&&player.keys<=0);}
-function collides(x,y,r,forEnemy){for(const[dx,dy]of[[-r,-r],[r,-r],[-r,r],[r,r]]){if(tileSolid(Math.floor((x+dx)/T),Math.floor((y+dy)/T),forEnemy))return true;}return false;}
+// Nine probes (corners, edge midpoints, centre): with four corners alone a 16-px pillar could sit between the corners of a body wider than a tile, and the Warden walked onto pillars.
+function collides(x,y,r,forEnemy){for(const[dx,dy]of[[-r,-r],[r,-r],[-r,r],[r,r],[0,-r],[0,r],[-r,0],[r,0],[0,0]]){if(tileSolid(Math.floor((x+dx)/T),Math.floor((y+dy)/T),forEnemy))return true;}return false;}
 function moveEnt(e,dx,dy){const en=e!==player;const ox=e.x,oy=e.y;if(!collides(e.x+dx,e.y,e.r,en))e.x+=dx;if(!collides(e.x,e.y+dy,e.r,en))e.y+=dy;if(en&&(e.x!==ox||e.y!==oy)){e.moving=true;}}
 function spikeState(s){const t=(time+s.phase)%2.6;return t>2.0?'up':t>1.65?'warn':'down';}
 
@@ -1277,14 +1278,16 @@ const hazardTile=(tx,ty)=>{const s=room.solid[ty]&&room.solid[ty][tx];return s==
 const FIREPROOF=new Set(['salamander','imp','witch','angler','drowned']);
 function blockedFor(e,x,y){if(collides(x,y,e.r,true))return true;if(FIREPROOF.has(e.type))return false;const r=e.r;for(const[ox,oy]of[[0,0],[r,0],[-r,0],[0,r],[0,-r]])if(hazardTile(Math.floor((x+ox)/T),Math.floor((y+oy)/T)))return true;return false;}
 // A breadth-first distance field from the player's tile over the tiles a foe can walk (no walls, pillars, furniture, pits or hazards), rebuilt a few times a second and shared by every foe.
-let flow=null;
-function getFlow(){const R=room;if(flow&&flow.room===R&&time-flow.at<0.15)return flow;const W2=R.rw,H2=R.rh,px=Math.floor(player.x/T),py=Math.floor(player.y/T);if(px<0||py<0||px>=W2||py>=H2)return flow;
- const d=new Int16Array(W2*H2).fill(-1),q=[px,py];d[py*W2+px]=0;let qi=0;while(qi<q.length){const cx=q[qi++],cy=q[qi++],cd=d[cy*W2+cx];for(const[ox,oy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+ox,ny=cy+oy;if(nx<0||ny<0||nx>=W2||ny>=H2)continue;const k=ny*W2+nx;if(d[k]>=0||tileSolid(nx,ny,true)||hazardTile(nx,ny))continue;d[k]=cd+1;q.push(nx,ny);}}
- flow={room:R,at:time,d,w:W2,h:H2};return flow;}
+const flows={};   // one field per body size: small walkers share the tile field; a body wider than a tile (the Warden) only counts a tile as open when it fits centred there
+function getFlow(r){const R=room,wide=r>8?r:0,flow=flows[wide];if(flow&&flow.room===R&&time-flow.at<0.15)return flow;const W2=R.rw,H2=R.rh,px=Math.floor(player.x/T),py=Math.floor(player.y/T);if(px<0||py<0||px>=W2||py>=H2)return flow;
+ const d=new Int16Array(W2*H2).fill(-1),q=[px,py];d[py*W2+px]=0;let qi=0;while(qi<q.length){const cx=q[qi++],cy=q[qi++],cd=d[cy*W2+cx];for(const[ox,oy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+ox,ny=cy+oy;if(nx<0||ny<0||nx>=W2||ny>=H2)continue;const k=ny*W2+nx;if(d[k]>=0||hazardTile(nx,ny)||(wide?collides(nx*T+8,ny*T+8,wide,true):tileSolid(nx,ny,true)))continue;d[k]=cd+1;q.push(nx,ny);}}
+ return flows[wide]={room:R,at:time,d,w:W2,h:H2};}
 // Where a foe should head next along the field: the neighbouring tile centre with the shortest way to you, or null when it already has a straight run.
-function flowDir(e){const f=getFlow();if(!f)return null;const tx=Math.floor(e.x/T),ty=Math.floor(e.y/T),D=(x,y)=>(x<0||y<0||x>=f.w||y>=f.h)?-1:f.d[y*f.w+x];const here=D(tx,ty);if(here===1||here===0)return null;
+function flowDir(e){const f=getFlow(e.r);if(!f)return null;const tx=Math.floor(e.x/T),ty=Math.floor(e.y/T),D=(x,y)=>(x<0||y<0||x>=f.w||y>=f.h)?-1:f.d[y*f.w+x];const here=D(tx,ty);if(here===1||here===0)return null;
  let best=null,bd=here>=0?here:1e9;for(const[ox,oy]of[[1,0],[-1,0],[0,1],[0,-1]]){const v=D(tx+ox,ty+oy);if(v>=0&&v<bd){bd=v;best=[tx+ox,ty+oy];}}if(!best)return null;
  const gx=best[0]*T+8,gy=best[1]*T+8,dx=gx-e.x,dy=gy-e.y,l=Math.hypot(dx,dy);return l<1?null:{x:dx/l,y:dy/l};}
+// The nearest tile centre where a body of this radius fits: rings outward from its own tile.
+function freePoint(e){const tx=Math.floor(e.x/T),ty=Math.floor(e.y/T);for(let d=0;d<=5;d++)for(let oy=-d;oy<=d;oy++)for(let ox=-d;ox<=d;ox++){if(Math.max(Math.abs(ox),Math.abs(oy))!==d)continue;const cx=(tx+ox)*T+8,cy=(ty+oy)*T+8;if(cx<T||cy<T||cx>room.pw-T||cy>room.ph-T)continue;if(!collides(cx,cy,e.r,true)&&!hazardTile(tx+ox,ty+oy))return{x:cx,y:cy};}return null;}
 function steer(e,vx,vy,dt){const sp=Math.hypot(vx,vy);if(sp<1e-3)return;let ux=vx/sp,uy=vy/sp;
  if(e.unstickT>0){e.unstickT-=dt;ux=e.unstick.x;uy=e.unstick.y;}
  else if(e.pathT>0){e.pathT-=dt;const f=flowDir(e);if(f){ux=f.x;uy=f.y;}}   // following the field round whatever was in the way
@@ -1352,7 +1355,7 @@ function updateEnemy(e,dt){
    else if(e.type==='brute'){const t2=e.tier===2; // tier 2 (floor 4): charges from the start, leaps onto you, slams send shockwaves
     if((e.hp<e.maxHp*0.5||t2)&&dist>60&&e.cd2<=0){e.state='windup';e.kind='charge';e.t=0.7;e.dir={x:nx,y:ny};}
     else if(t2&&dist>46&&dist<130&&e.cd3<=0){e.state='windup';e.kind='leap';e.t=0.7;e.dir={x:nx,y:ny};e.slam={x:p.x,y:p.y};}
-    else if(dist<36){e.state='windup';e.kind='slam';e.t=t2?0.7:0.85;e.dir={x:nx,y:ny};e.slam={x:e.x+nx*20,y:e.y+ny*15};}else moveEnt(e,nx*e.speed*dt,ny*e.speed*dt);}
+    else if(dist<36){e.state='windup';e.kind='slam';e.t=t2?0.7:0.85;e.dir={x:nx,y:ny};e.slam={x:e.x+nx*20,y:e.y+ny*15};}else steer(e,nx*e.speed,ny*e.speed,dt);}
    else if(e.type==='drowned'){e.cd-=dt;if(dist<26){e.state='windup';e.kind='slam';e.t=0.6;e.dir={x:nx,y:ny};}else if(e.cd<=0&&dist>50){e.state='windup';e.kind='spit';e.t=0.7;}else steer(e,nx*e.speed,ny*e.speed,dt);}
    else if(e.type==='imp'){e.cd-=dt;if(dist<40)steer(e,-nx*e.speed,-ny*e.speed,dt);else if(dist>90)steer(e,nx*e.speed,ny*e.speed,dt);else{const st=Math.sin(time*3+e.x)*1;steer(e,-ny*st*e.speed*0.5,nx*st*e.speed*0.5,dt);}
     if(e.cd<=0&&dist<140){e.state='windup';e.t=0.5;}}
@@ -1451,7 +1454,7 @@ function updateEnemy(e,dt){
  }
  const tx=Math.floor(e.x/T),ty=Math.floor(e.y/T);
  if(e.spikeCd<=0&&room.solid[ty]&&room.solid[ty][tx]===3){const s=room.spikes.find(q=>q.tx===tx&&q.ty===ty);if(s&&spikeState(s)==='up'){e.spikeCd=1;damageEnemy(e,10,false,Math.random()*6.28);}}
- for(const o of room.enemies){if(o===e||o.dead||o.anchored)continue;const ox=e.x-o.x,oy=e.y-o.y,d=Math.hypot(ox,oy),m=e.r+o.r+1;if(d<m&&d>0){e.x+=ox/d*(m-d)*0.5;e.y+=oy/d*(m-d)*0.5;}}
+ for(const o of room.enemies){if(o===e||o.dead||o.anchored)continue;const ox=e.x-o.x,oy=e.y-o.y,d=Math.hypot(ox,oy),m=e.r+o.r+1;if(d<m&&d>0)moveEnt(e,ox/d*(m-d)*0.5,oy/d*(m-d)*0.5);}   // through moveEnt: a crowd used to press one of its own into a pillar
 }
 // ---------- the Ashen Wyrm (final boss) ----------
 // Its head hangs from the top wall and never moves. Claws slam where you stand and stay planted (hit them); the tail sweeps the
@@ -1511,7 +1514,8 @@ function ambient(dt){const bm=BIOME();
 function update(dt){
  time+=dt;updatePlayer(dt);
  room.ambT=(room.ambT||0)-dt;if(room.ambT<=0){room.ambT=1.1+Math.random()*1.6;const f=room.decor.find(d=>d.kind==='forge'||d.kind==='cauldron'||d.kind==='fire'||d.kind==='fountain');if(f&&Math.hypot(f.x-player.x,f.y-player.y)<200)(f.kind==='cauldron'||f.kind==='fountain'?SFX.bubble:SFX.crackle)();}
- for(const e of room.enemies)if(!e.dead){e.moving=false;if(e.state==='windup'&&e.pstate!=='windup'){if(hasRelic('hourglass'))e.t*=1.25;if(e.windMul)e.t*=e.windMul;e.windT=e.t;}e.pstate=e.state;updateEnemy(e,dt);enemyTick(e,dt);if(e.moving){e.walk=(e.walk||0)+dt;if((e.boss||e.elite)&&!e.anchored&&Math.random()<0.2)parts.push({x:e.x+(Math.random()-.5)*e.r*2,y:e.y+e.r-1,vx:(Math.random()-.5)*12,vy:-5-Math.random()*5,life:0.25,col:'#6d6578'});}}
+ for(const e of room.enemies)if(!e.dead){e.moving=false;if(e.state==='windup'&&e.pstate!=='windup'){if(hasRelic('hourglass'))e.t*=1.25;if(e.windMul)e.t*=e.windMul;e.windT=e.t;}e.pstate=e.state;if(!e.anchored&&collides(e.x,e.y,e.r,true)){const fp=freePoint(e);if(fp){e.x=fp.x;e.y=fp.y;}}   // never leave a foe overlapping a pillar, whatever put it there
+  updateEnemy(e,dt);enemyTick(e,dt);if(e.moving){e.walk=(e.walk||0)+dt;if((e.boss||e.elite)&&!e.anchored&&Math.random()<0.2)parts.push({x:e.x+(Math.random()-.5)*e.r*2,y:e.y+e.r-1,vx:(Math.random()-.5)*12,vy:-5-Math.random()*5,life:0.25,col:'#6d6578'});}}
  // Ground hazards: fire (Witch) or rock (King). `delay` is a telegraph window before the hazard turns live.
  for(let i=room.hazards.length-1;i>=0;i--){const h=room.hazards[i];if(h.delay>0){h.delay-=dt;continue;}h.t-=dt;if(h.t<=0){room.hazards.splice(i,1);continue;}if(h.chase){const hx=player.x-h.x,hy=player.y-h.y,hd=Math.hypot(hx,hy)||1;h.x+=hx/hd*13*dt;h.y+=hy/hd*13*dt;}
   const fire=h.kind!=='rock';if(Math.random()<(room.hazards.length>40?0.08:0.3))parts.push({x:h.x+(Math.random()-.5)*8,y:h.y,vx:0,vy:fire?-30:-12,life:0.3,col:fire?(Math.random()<0.5?'#e8a33c':'#e04a3a'):'#8a8296',noG:true});

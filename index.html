@@ -502,7 +502,7 @@ function unownedWeapon(){const c=Object.keys(WEAPONS).filter(k=>k!==player.weapo
 // ---------- room templates (interior only; walls added around) ----------
 // # wall  P pillar  ^ spikes  ~ pit  B brazier  = plate  $ shop pedestal  A altar  C chest  S tome  H souls  M merchant  F campfire
 // m shelf  c counter  l lantern  r rug  b barrel/crate  q weapon rack  g forge  s statue  n candles  O well basin  G grate  T long table  h chair  f banner  t torch
-// i/j/y change with the biome (see BIO_DECOR)  (solid 8 = furniture you cannot walk through)
+// i/j/y change with the biome (see BIO_DECOR)  Z turning idol  J the stone the idols face  D a stone of the walk  (solid 8 = furniture you cannot walk through)
 const STD=[[".t..f.........f..t","....P........P....","..GGGGGGGGGGGGGG..","..................",".......rrrr.......",".......rrrr.......","..................","..GGGGGGGGGGGGGG..","....P........P....","..i............i.."],
  ["####..........####","####..........####","##.....rrrr.....##",".....y.rrrr.y.....","..i....rrrr....i..",".......rrrr.......",".......rrrr.......","##.....rrrr.....##","####..........####","####..........####"],
  ["^^...t........t...","^.................","...i..............",".......####.......",".......####.......",".......####.......",".......####.......",".......j..j......^","..............i..^","................^^"],
@@ -556,8 +556,12 @@ const TPL={
  shrine:[["s.tn..nt.s","..........","..A..A..A.","..........","..n....n..","..........","s..P..P..s",".........."]],
  treasure:[["...t..........t...",".^^............^^.",".^..............^.","..................","......C.....S.....","..................","..................",".^..............^.",".^^............^^.",".................."]],
  secret:[[".t......t.",".^......^.","..........","...C..S...","..H....H..","..........",".^......^.",".........."]],
+ // puzzles: braziers and plates keep an order you read off notches on the room itself; idols turn to face the stone; stones must all be walked once
  puzzle:[["..................","..................","..................","..B............B..","..................","..................","..................","..................","..................","..................","..................","..................","..B............B..","..................","..................",".................."],
-  ["..................","..................","..................","..=....=....=....=","..................","..................","..................","..................","..................",".................."]],
+  ["..................","..................","..................","..=....=....=....=","..................","..................","..................","..................","..................",".................."],
+  ["..................",".n..............n.","........Z.........","..................","..Z.....J....Z....","..................","..................","........Z.........",".n..............n.",".................."],
+  ["..................","..................","..................","..................","..................","..................","..DDDDD...........","..DDDDD......n....","..DDDDD...........",".................."],
+  ["..................","..................","..................","..................","..................","..................","....n.......DDDD..","............DDDD..","............DDDD..","............DDDD.."]],
  trap:[["..................","..................","..................","....~~~~~~~~~~....","....~^^^^^^^^~....","....~^......^~....","....~^..CS..^~....","....~^..HH..^~....","....~^......^~....","....~^^^^^^^^~....","....~~~~~~~~~~....","..................","..................",".................."],
   ["......................","......................","......................","...~~~~~~~~~~~~~~~~...","...~..............~...","...~.~~~~~~~~~~~~.~...","...~.~....CS....~.~...","...~.~..H....H..~.~...","...~.~~~~~~~~~~~~.~...","...~..............~...","...~~~~~~~~~~~~~~~~...","......................","......................","......................"]],
  // a blessed well: drink once and you carry one more flask from then on
@@ -694,6 +698,8 @@ function buildRoomInner(r){
   else if(ch==='H'){r.items.push({kind:'souls',n:50+Math.floor(Math.random()*50),x:px,y:py,price:0});}
   else if(ch==='B'){r.solid[ty][tx]=4;r.props.push({kind:'brazier',x:px,y:py,idx:r.props.length,lit:false});}
   else if(ch==='='){r.props.push({kind:'plate',x:px,y:py,tx,ty,idx:r.props.length,lit:false});}
+  else if(ch==='Z'){r.solid[ty][tx]=4;r.props.push({kind:'idol',x:px,y:py,tx,ty,dir:0,target:0,ring:0,spin:0});}else if(ch==='J'){r.solid[ty][tx]=4;r.props.push({kind:'plinth',x:px,y:py,tx,ty,lit:false});}
+  else if(ch==='D')r.props.push({kind:'stone',x:px,y:py,tx,ty,lit:false});
   else if(ch==='M')r.decor.push({kind:'merchant',x:px,y:py});else if(ch==='F'){r.decor.push({kind:'fire',x:px,y:py});r.items.push({kind:'camp',x:px,y:py+6,price:0});}
   else if(ch==='X'){r.items.push({kind:'corpse',variant:pick(['skeleton','knightc','pilgrim']),x:px,y:py-1,price:0});}
   else if(ch==='m'){r.solid[ty][tx]=8;r.decor.push({kind:'shelf',x:px,y:py,v:(tx*3+ty)%3});}else if(ch==='c'){r.solid[ty][tx]=8;r.decor.push({kind:'counter',x:px,y:py});}
@@ -706,7 +712,10 @@ function buildRoomInner(r){
    else if(d.kind==='chair')d.v=at('ltable',d.tx,d.ty+1)?1:0;}}
  if(r.well){const xs=r.well.map(q=>q[0]),ys=r.well.map(q=>q[1]),fx=(Math.min(...xs)+Math.max(...xs)+1)/2*T,fy=(Math.min(...ys)+Math.max(...ys)+1)/2*T;   // the basin sits on its O tiles; the blessing waits at its foot
   r.decor.push({kind:'fountain',x:fx,y:fy},{kind:'puddle',x:fx-20,y:fy+T*1.7,v:1},{kind:'puddle',x:fx+22,y:fy+T*1.5,v:0});r.items.push({kind:'blessing',x:fx,y:fy+T*1.5+2,price:0});}
- if(r.type==='puzzle'||r.type==='kiln'){r.seq=r.props.map((_,i)=>i).sort(()=>Math.random()-0.5);r.step=0;}
+ if(r.type==='puzzle'||r.type==='kiln'){r.puzzle=r.props.some(b=>b.kind==='idol')?'idols':r.props.some(b=>b.kind==='stone')?'walk':r.props[0]&&r.props[0].kind==='plate'?'plates':'braziers';r.seq=r.props.map((_,i)=>i).sort(()=>Math.random()-0.5);r.step=0;r.walkCount=0;r.turns=0;
+  if(r.puzzle==='idols'){const pl=r.props.find(b=>b.kind==='plinth'),ids=r.props.filter(b=>b.kind==='idol').sort((a,b)=>Math.atan2(a.y-pl.y,a.x-pl.x)-Math.atan2(b.y-pl.y,b.x-pl.x));   // ring order around the stone
+   ids.forEach((b,i)=>{b.ring=i;const dx=pl.x-b.x,dy=pl.y-b.y;b.target=Math.abs(dx)>Math.abs(dy)?(dx>0?0:2):(dy>0?1:3);b.dir=b.target;});
+   const m=ids.length,turn=i=>[i,(i+1)%m,(i-1+m)%m].forEach(j=>ids[j].dir=(ids[j].dir+1)%4),k=3+Math.floor(Math.random()*3);for(let t=0;t<k;t++)turn(Math.floor(Math.random()*m));if(ids.every(b=>b.dir===b.target))turn(0);}}   // scrambled by real turns, so it always unwinds
  if(r.type==='smith'){const ids=Object.keys(UPG).sort(()=>Math.random()-0.5);r.items.filter(it=>it.kind==='upgrade').forEach((it,i)=>{it.id=ids[i];it.price=priced(UPG[ids[i]].price);});}
  if(r.type==='shrine'){const ids=Object.keys(BUFFS).sort(()=>Math.random()-0.5);r.items.forEach((it,i)=>it.id=ids[i]);}
  if(r.type==='shop'){const seen=new Set();r.items.forEach(it=>{if((it.kind==='weapon'||it.kind==='spell')&&seen.has(it.kind+it.id))it.id=it.kind==='weapon'?unownedWeapon():unownedSpell();seen.add(it.kind+it.id);});}
@@ -910,7 +919,7 @@ function goRoom(dir){
  if(hasRelic('aegis')&&!room.cleared&&room.enemies&&room.enemies.some(e=>!e.dead)){player.ward=1;player.wardT=10;burst(player.x,player.y-4,12,'#f4c968');}   // the Aegis Shard raises a ward as the fight begins
  if(room.event&&!room.eventSeen&&!room.cleared){room.eventSeen=true;showMsg(EVENT_MSG[room.event],2.6);SFX.boss();if(room.event==='stir')room.eventT=1.2;}
  if(room.type==='secret'&&!room.greeted){room.greeted=true;showMsg('A forgotten hoard',2.5);stat('secrets');}
- if((room.type==='puzzle'||room.type==='kiln')&&!room.greeted){room.greeted=true;showMsg(room.props[0]&&room.props[0].kind==='plate'?'Step on the plates as the stone shows':'Light the braziers as the stone shows',3);}
+ if((room.type==='puzzle'||room.type==='kiln')&&!room.greeted){room.greeted=true;showMsg({braziers:'The braziers keep their own order',plates:'The stones remember an order',idols:'The idols have turned from the stone',walk:'Cross every stone, and only once'}[room.puzzle]||'The braziers keep their own order',3);}
  if(room.type==='ossuary'&&!room.greeted){room.greeted=true;showMsg('The dead here remember how to stand',3);}
  if(room.type==='flooded'&&!room.greeted){room.greeted=true;showMsg('Still water. Something waits beneath.',3);}
  if(room.type==='trap'&&!room.greeted){room.greeted=true;showMsg('Roll across the dark. The prize waits within.',3);}
@@ -1109,7 +1118,7 @@ function updatePlayer(dt){
   if(ts===7&&p.state!=='roll'){p.lavaT+=dt;if(p.lavaT>0.35){p.lavaT=0;if(hurtPlayer(6,{x:p.x+(Math.random()-.5),y:p.y+1,name:'the lava',burn:true}))burst(p.x,p.y+3,6,'#e8a33c');}}
   if(ts===5){if(p.state!=='roll'&&p.state!=='fall'){p.state='fall';p.t=0.75;p.fallX=p.x;p.fallY=p.y;p.blocking=false;p.atk=null;p.pull=null;for(let i=0;i<8;i++)parts.push({x:p.x+(Math.random()-.5)*10,y:p.y+p.r,vx:(Math.random()-.5)*30,vy:-10-Math.random()*20,life:0.3,col:'#6d6578'});SFX.fall();}}
   else if(ts===0||ts===3){p.safe={x:p.x,y:p.y};}
-  for(const b of room.props){if(b.kind!=='plate')continue;const on=b.tx===ptx&&b.ty===pty;if(on&&!b.pressed&&!b.lit)hitBrazier(b);b.pressed=on;}}
+  for(const b of room.props){if(b.kind!=='plate')continue;const on=b.tx===ptx&&b.ty===pty;if(on&&!b.pressed&&!b.lit)hitBrazier(b);b.pressed=on;}walkStep(p,ptx,pty);}
  if(p.x<-3)goRoom('W');else if(p.x>room.pw+3)goRoom('E');else if(p.y<-3)goRoom('N');else if(p.y>room.ph+3)goRoom('S');
 }
 function castSpell(id,ba){const p=player,sp=SPELLS[id],pow=p.spellPow*p.dmgMul;const shoot=(a,dmg,spd,r,col,fx)=>projs.push({x:p.x+Math.cos(a)*8,y:p.y+Math.sin(a)*8-2,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,r,dmg:dmg*pow,owner:'p',life:2,col,fx});
@@ -1143,8 +1152,8 @@ function attackHits(range,arc,dmg,stagger,ang){
   if(A==='shatter'&&e.slow>0){mul=1.5;dmgNum(at.x,at.y-e.r-14,'SHATTER','#7fa8ff');}else if(A==='butcher'&&e.hp<e.maxHp*0.35){mul=3;dmgNum(at.x,at.y-e.r-14,'BUTCHER','#c8302a');}
   damageEnemy(e,dmg*mul*(1+0.2*player.sharp)*(hasRelic('mask')&&player.hp<player.maxHp*0.4?1.35:1),stagger,ang,wpn().effect||(player.inf&&UPG[player.inf].fx)||(hasRelic('idol')?'burn':undefined),!!wpn().heavy||!!player.atk.heavy,at);artAfterHit(e,A,ang);
   if(e.affix==='thorned'&&!e.dead&&!wasRip&&!(e.thornCd>0)){e.thornCd=0.5;const q=player;q.hp-=4;dmgNum(q.x,q.y-14,4,'#c8302a');burst(q.x,q.y-4,6,'#8a4a2a');SFX.hurt();buzz(20);if(run)run.killedBy='the thorns of '+e.name;if(q.hp<=0&&!spare())die();}}
- for(const b of room.props){if(b.kind!=='brazier'||b.lit||player.atk.hitSet.has(b))continue;const dx=b.x-player.x,dy=b.y-player.y,d=Math.hypot(dx,dy);if(d>range+8)continue;
-  let a=Math.atan2(dy,dx)-ang;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)>arc/2)continue;player.atk.hitSet.add(b);hitBrazier(b);}
+ for(const b of room.props){if(!((b.kind==='brazier'&&!b.lit)||b.kind==='idol')||player.atk.hitSet.has(b))continue;const dx=b.x-player.x,dy=b.y-player.y,d=Math.hypot(dx,dy);if(d>range+8)continue;
+  let a=Math.atan2(dy,dx)-ang;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)>arc/2)continue;player.atk.hitSet.add(b);if(b.kind==='idol')hitIdol(b);else hitBrazier(b);}
  // clay pots shatter under any swing (or the ground pound) and sometimes spill a few souls
  for(let i=room.decor.length-1;i>=0;i--){const d=room.decor[i];if(d.kind!=='pot')continue;const dx=d.x-player.x,dy=d.y-2-player.y,dist=Math.hypot(dx,dy);let hit=false;
   if(aoe)hit=Math.hypot(d.x-ix,d.y-iy)<=28;else if(dist<=range+5){let a=Math.atan2(dy,dx)-ang;a=Math.atan2(Math.sin(a),Math.cos(a));hit=Math.abs(a)<=arc/2+0.25;}
@@ -1158,12 +1167,26 @@ function hitPoints(e){if(e.type!=='dragon')return[{x:e.x,y:e.y,r:e.r}];const pts
 function doorCenter(dir){const cx=(room.dx+1)*T,cy=(room.dy+1)*T;return dir==='N'?{x:cx,y:8}:dir==='S'?{x:cx,y:room.ph-8}:dir==='W'?{x:8,y:cy}:{x:room.pw-8,y:cy};}
 function openSecret(){room.secretOpen=true;room.doors[room.secretDir]=true;const c=doorCenter(room.secretDir);burst(c.x,c.y,24,'#464666');burst(c.x,c.y,10,'#2f5a33');shake=Math.max(shake,0.3);hitstop=Math.max(hitstop,0.1);SFX.slam();showMsg('The wall gives way',2.5);}
 const BCOL=['#e04a3a','#5aa04a','#7fa8ff','#f4c968'];
+// A wrong choice wakes something: one hollow claws up beside it. Never more than three at once.
+function raiseHollow(x,y){if(room.enemies.filter(e=>!e.dead).length>=3)return;const sp=freeNear(room,Math.floor(x/T),Math.floor(y/T));const e=mkEnemy('grunt',sp.tx*T+8,sp.ty*T+8,false);e.name='a risen hollow';e.state='stagger';e.t=0.8;room.enemies.push(e);burst(e.x,e.y+2,14,'#6d6578');SFX.search();}
+// Turning idols: a hit turns the idol you struck and its two ring neighbours a quarter turn. All must face the stone.
+function hitIdol(b){if(room.solved)return;const ids=room.props.filter(q=>q.kind==='idol').sort((a,c)=>a.ring-c.ring),m=ids.length,i=ids.indexOf(b);[i,(i+1)%m,(i-1+m)%m].forEach(j=>{ids[j].dir=(ids[j].dir+1)%4;ids[j].spin=0.3;});SFX.block();burst(b.x,b.y-6,6,'#9a8f7c');room.turns++;
+ if(ids.every(q=>q.dir===q.target)){room.solved=true;showMsg('The idols face the stone',2.5);SFX.clear();const pl=room.props.find(q=>q.kind==='plinth');if(pl)pl.lit=true;const cx=pl?pl.x:room.pw/2,cy=(pl?pl.y:room.ph/2)+22;burst(cx,cy,20,'#f4c968');
+  dropItem(room.weaponRoom?{kind:'weapon',id:unownedWeapon(),x:cx,y:cy,price:0,chest:true}:{kind:'relic',id:unownedRelic()||pick(Object.keys(BUFFS)),x:cx,y:cy,price:0,chest:true},{kind:'spell',id:unownedSpell(),x:cx-24,y:cy+6,price:0},{kind:'souls',n:60,x:cx+24,y:cy+6,price:0});stat('puzzles');}
+ else if(room.turns%6===0)raiseHollow(b.x,b.y);}
+// The stone walk: every stone lit in one unbroken walk. A second step on a lit stone, or leaving the stones, darkens them all.
+function walkReset(x,y){const real=room.walkCount>=3;room.props.forEach(b=>{if(b.kind==='stone')b.lit=false;});room.walkCount=0;room.lastStone=null;SFX.guardbreak();shake=Math.max(shake,0.1);showMsg('The stones go dark',1.2);if(real)raiseHollow(x,y);}   // a broken attempt wakes a hollow; a stray step only darkens the stones
+function walkStep(p,ptx,pty){if(room.puzzle!=='walk'||room.solved||p.state==='roll'||p.state==='fall')return;const on=room.props.find(b=>b.kind==='stone'&&b.tx===ptx&&b.ty===pty);
+ if(on){if(!on.lit){on.lit=true;room.walkCount++;room.lastStone=on;SFX.pickup();burst(on.x,on.y,4,'#f4c968');const total=room.props.filter(b=>b.kind==='stone').length;
+   if(room.walkCount===total){room.solved=true;showMsg('Every stone remembers your step',2.5);SFX.clear();const cx=room.pw/2,cy=room.ph/2;burst(cx,cy,20,'#f4c968');dropItem(room.weaponRoom?{kind:'weapon',id:unownedWeapon(),x:cx,y:cy,price:0,chest:true}:{kind:'flask',x:cx,y:cy,price:0},{kind:'souls',n:120,x:cx-22,y:cy+10,price:0},{kind:'souls',n:120,x:cx+22,y:cy+10,price:0});stat('puzzles');}}
+  else if(on!==room.lastStone)walkReset(on.x,on.y);}
+ else if(room.walkCount>0)walkReset(p.x,p.y);}
 function hitBrazier(b){
  if(room.seq[room.step]===b.idx){b.lit=true;room.step++;SFX.pickup();burst(b.x,b.y-8,10,BCOL[b.idx]);
   if(room.step===room.props.length){room.solved=true;showMsg(room.type==='kiln'?'The kiln roars':b.kind==='plate'?'The stones sing':'The braziers roar',2.5);SFX.clear();const cx=room.pw/2,cy=room.ph/2;burst(cx,cy,20,'#f4c968');
    if(room.type==='kiln')dropItem({kind:'upgrade',id:'burn',x:cx,y:cy,price:0,ped:true},{kind:'souls',n:100,x:cx-22,y:cy+10,price:0},{kind:'souls',n:100,x:cx+22,y:cy+10,price:0});
    else dropItem(room.weaponRoom?{kind:'weapon',id:unownedWeapon(),x:cx,y:cy,price:0,chest:true}:{kind:'relic',id:unownedRelic()||pick(Object.keys(BUFFS)),x:cx,y:cy,price:0,chest:true},{kind:'souls',n:80,x:cx-22,y:cy+10,price:0},{kind:'souls',n:80,x:cx+22,y:cy+10,price:0});stat('puzzles');}}
- else{room.props.forEach(q=>q.lit=false);room.step=0;SFX.guardbreak();shake=Math.max(shake,0.1);showMsg(b.kind==='plate'?'The stones fall silent':'The flames die',1.2);burst(b.x,b.y-8,8,'#6d6578');}
+ else{room.props.forEach(q=>q.lit=false);room.step=0;SFX.guardbreak();shake=Math.max(shake,0.1);showMsg(b.kind==='plate'?'The stones fall silent':'The flames die',1.2);burst(b.x,b.y-8,8,'#6d6578');raiseHollow(b.x,b.y);}
 }
 function damageEnemy(e,d,heavy,ang,fx,isHeavy,at){
  let rip=false;const hx=at?at.x:e.x,hy=at?at.y:e.y;if(at&&at.head)d*=1.5;
@@ -1536,8 +1559,6 @@ function drawWalls(){
  }
  if(room.secretDir&&!room.secretOpen){const d=room.secretDir;const R=room,tiles=d==='N'?[[R.dx,0],[R.dx+1,0]]:d==='S'?[[R.dx,R.rh-1],[R.dx+1,R.rh-1]]:d==='W'?[[0,R.dy],[0,R.dy+1]]:[[R.rw-1,R.dy],[R.rw-1,R.dy+1]];
   ctx.fillStyle='#1e1d2c';for(const[tx,ty]of tiles){const x=tx*T,y=ty*T;ctx.fillRect(x+7,y+2,1,4);ctx.fillRect(x+8,y+6,1,3);ctx.fillRect(x+6,y+9,2,1);ctx.fillRect(x+5,y+10,1,4);ctx.fillRect(x+9,y+9,1,3);ctx.fillRect(x+10,y+12,1,3);}}
- if(room.type==='puzzle'||room.type==='kiln'){const x=room.pw/2-18,y=3;ctx.fillStyle=K;ctx.fillRect(x-1,y-1,38,10);ctx.fillStyle='#5a5a7c';ctx.fillRect(x,y,36,8);ctx.fillStyle=FP().wl;ctx.fillRect(x,y+6,36,2);
-  room.seq.forEach((bi,i)=>{ctx.fillStyle=i<room.step?BCOL[bi]:FP().wd;ctx.fillRect(x+3+i*9,y+2,4,4);ctx.fillStyle=BCOL[bi];ctx.fillRect(x+4+i*9,y+3,2,2);});}
  // vines
  for(let ty=0;ty<room.rh;ty++)for(let tx=0;tx<room.rw;tx++){if(room.solid[ty][tx]!==1||isDoorTile(tx,ty))continue;const v=thash(tx,ty,room.seed+11)%11;if(v>3)continue;const x=tx*T,y=ty*T;
   const hang=ty===0||(ty+1<room.rh&&room.solid[ty+1][tx]!==1);
@@ -1700,9 +1721,21 @@ function drawDecor(d){
   ctx.fillStyle='#e04a3a';ctx.fillRect(x-3,y-6-f,6,5);ctx.fillStyle='#e8a33c';ctx.fillRect(x-2,y-7-f,4,4);ctx.fillStyle='#f4c968';ctx.fillRect(x-1,y-8-((f+1)%3),2,3);}
 }
 function drawProp(b){const x=Math.round(b.x),y=Math.round(b.y);
- if(b.kind==='plate'){ctx.fillStyle=K;ctx.fillRect(x-6,y-6,12,12);ctx.fillStyle=b.lit?'#5a5a7c':'#3a3a52';ctx.fillRect(x-5,y-5,10,10);ctx.fillStyle=b.lit?BCOL[b.idx]:hexA(BCOL[b.idx],0.45);ctx.fillRect(x-2,y-2,4,4);ctx.fillRect(x-1,y-4,2,1);ctx.fillRect(x-1,y+3,2,1);if(b.lit)light(x,y,16,hexA(BCOL[b.idx],'A'),0.25);return;}
+ if(b.kind==='plate'){ctx.fillStyle=K;ctx.fillRect(x-6,y-6,12,12);ctx.fillStyle=b.lit?'#5a5a7c':'#3a3a52';ctx.fillRect(x-5,y-5,10,10);ctx.fillStyle=b.lit?BCOL[b.idx]:hexA(BCOL[b.idx],0.45);ctx.fillRect(x-2,y-2,4,4);ctx.fillRect(x-1,y-4,2,1);ctx.fillRect(x-1,y+3,2,1);
+  const nn=room.seq?room.seq.indexOf(b.idx)+1:0;ctx.fillStyle='#9a8f7c';for(let i=0;i<nn;i++)ctx.fillRect(x-4+i*3,y-5,1,1);   // its place in the order, carved along the top edge
+  if(b.lit)light(x,y,16,hexA(BCOL[b.idx],'A'),0.25);return;}
+ if(b.kind==='stone'){ctx.fillStyle=K;ctx.fillRect(x-7,y-7,14,14);ctx.fillStyle=b.lit?'#8a7530':'#14131c';ctx.fillRect(x-6,y-6,12,12);ctx.fillStyle=b.lit?'#f4c968':'#2a2636';ctx.fillRect(x-1,y-1,2,2);ctx.fillRect(x-4,y-4,1,1);ctx.fillRect(x+3,y+3,1,1);if(b.lit)light(x,y,14,'rgba(244,201,104,A)',0.25);return;}
+ if(b.kind==='plinth'){ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-7,y+5,14,2);ctx.fillStyle=K;ctx.fillRect(x-6,y-10,12,16);ctx.fillStyle='#5a5a7c';ctx.fillRect(x-5,y-9,10,14);ctx.fillStyle='#464666';ctx.fillRect(x-5,y-2,10,7);ctx.fillStyle='#7a7a9c';ctx.fillRect(x-5,y-9,10,1);
+  ctx.fillStyle=b.lit?'#f4c968':'#3a3a52';ctx.fillRect(x-2,y-14,4,5);ctx.fillStyle=b.lit?'#fff0c0':'#5a5a7c';ctx.fillRect(x-1,y-13,1,2);if(b.lit)light(x,y-12,24,'rgba(244,201,104,A)',0.35);return;}
+ if(b.kind==='idol'){const jx=b.spin>0?Math.round(Math.sin(time*40)*b.spin*4):0;if(b.spin>0)b.spin=Math.max(0,b.spin-1/60);const X=x+jx,d=b.dir,face=b.dir===b.target;   // a stone figure; its face shows which way it looks
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(X-6,y+5,12,2);ctx.fillStyle=K;ctx.fillRect(X-5,y-1,10,7);ctx.fillRect(X-4,y-13,8,13);ctx.fillRect(X-3,y-17,6,5);
+  ctx.fillStyle='#5a5a7c';ctx.fillRect(X-4,y,8,5);ctx.fillRect(X-3,y-12,6,12);ctx.fillRect(X-2,y-16,4,4);ctx.fillStyle='#464666';ctx.fillRect(X-3,y-12,1,12);ctx.fillRect(X-4,y+3,8,2);
+  const ec=face?'#f4c968':'#e04a3a';ctx.fillStyle=ec;if(d===1){ctx.fillRect(X-2,y-15,1,1);ctx.fillRect(X+1,y-15,1,1);ctx.fillStyle='#8a8296';ctx.fillRect(X-1,y-13,2,1);}
+  else if(d===0){ctx.fillRect(X+1,y-15,1,1);ctx.fillStyle='#8a94a4';ctx.fillRect(X+2,y-14,2,1);}else if(d===2){ctx.fillRect(X-2,y-15,1,1);ctx.fillStyle='#8a94a4';ctx.fillRect(X-4,y-14,2,1);}else{ctx.fillStyle='#3a3a52';ctx.fillRect(X-2,y-16,4,3);}
+  if(face)light(X,y-14,10,'rgba(244,201,104,A)',0.25);return;}
  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-6,y+5,12,2);ctx.fillStyle=K;ctx.fillRect(x-6,y-3,12,9);ctx.fillStyle='#464666';ctx.fillRect(x-5,y-2,10,7);ctx.fillStyle='#5a5a7c';ctx.fillRect(x-6,y-4,12,2);ctx.fillStyle='#2a2a40';ctx.fillRect(x-5,y+3,10,2);
  ctx.fillStyle=BCOL[b.idx];ctx.fillRect(x-1,y,2,2);
+ {const nn=room.seq?room.seq.indexOf(b.idx)+1:0;ctx.fillStyle='#9a8f7c';for(let i=0;i<nn;i++)ctx.fillRect(x-4+i*3,y+4,1,1);}   // its place in the order, notched into the base
  if(b.lit){const f=Math.floor(time*10+b.idx)%3;ctx.fillStyle=BCOL[b.idx];ctx.fillRect(x-3,y-9-f,6,6);ctx.fillStyle='#fff0c0';ctx.fillRect(x-1,y-8-((f+1)%3),2,3);light(x,y-8,22,'rgba(255,240,192,A)',0.2);}
  else{ctx.fillStyle='#3a1014';ctx.fillRect(x-3,y-5,6,2);ctx.fillStyle='#6d6578';ctx.fillRect(x-2,y-6,1,1);ctx.fillRect(x+1,y-6,1,1);}}
 function drawItem(it){
@@ -2131,7 +2164,7 @@ function draw(){
   const f=Math.floor(time*10+h.x)%3;ctx.fillStyle='#7a2a14';ctx.fillRect(hx-5,hy-2,10,4);ctx.fillStyle='#e04a3a';ctx.fillRect(hx-4,hy-5-f,8,5);ctx.fillStyle='#e8a33c';ctx.fillRect(hx-2,hy-7-((f+1)%3),4,4);ctx.fillStyle='#fff0c0';ctx.fillRect(hx-1,hy-5,2,2);light(h.x,h.y-4,16,'rgba(232,163,60,A)',0.3);}
  drawTelegraphs();
  for(const w of room.waves){const a=0.15+0.75*(1-w.r/w.maxR);ctx.strokeStyle=hexA(w.col,a);ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(w.x,w.y,w.r,w.r*0.75,0,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=hexA('#fff0c0',a*0.5);ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(w.x,w.y,Math.max(1,w.r-2),Math.max(1,w.r-2)*0.75,0,0,Math.PI*2);ctx.stroke();}
- ents.push({y:player.y,f:drawPlayer});room.decor.forEach(d=>{if(!FLAT_DECOR.has(d.kind))ents.push({y:d.kind==='lantern'?d.y+40:d.y,f:()=>drawDecor(d)});});room.items.forEach(it=>ents.push({y:it.y,f:()=>drawItem(it)}));room.props.forEach(b=>{if(b.kind==='plate')drawProp(b);else ents.push({y:b.y+4,f:()=>drawProp(b)});});
+ ents.push({y:player.y,f:drawPlayer});room.decor.forEach(d=>{if(!FLAT_DECOR.has(d.kind))ents.push({y:d.kind==='lantern'?d.y+40:d.y,f:()=>drawDecor(d)});});room.items.forEach(it=>ents.push({y:it.y,f:()=>drawItem(it)}));room.props.forEach(b=>{if(b.kind==='plate'||b.kind==='stone')drawProp(b);else ents.push({y:b.y+4,f:()=>drawProp(b)});});
  ents.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
  for(const q of projs){ctx.fillStyle=q.col;if(q.hook){if(q.from&&!q.from.dead){ctx.strokeStyle='#cfc4b0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q.from.x+6,q.from.y-4);ctx.lineTo(q.x,q.y);ctx.stroke();}ctx.fillStyle=K;ctx.fillRect(Math.round(q.x)-2,Math.round(q.y)-2,5,5);ctx.fillStyle='#e8e0d0';ctx.fillRect(Math.round(q.x)-1,Math.round(q.y)-1,3,3);continue;}if(q.sword){ctx.save();ctx.translate(q.x,q.y);ctx.rotate(time*25);ctx.strokeStyle='#b06a2a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(8,0);ctx.stroke();ctx.strokeStyle='#e8a33c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(8,0);ctx.stroke();ctx.restore();continue;}if(q.owner==='p'){ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.fill();}else{ctx.lineWidth=1;ctx.strokeStyle=q.col;ctx.beginPath();ctx.moveTo(q.x,q.y);const l=Math.hypot(q.vx,q.vy);ctx.lineTo(q.x-q.vx/l*6,q.y-q.vy/l*6);ctx.stroke();}}
  if(parryFx){const f=parryFx,k=1-f.t/f.max,e=1-Math.pow(1-k,3);   // the parry flash: a star that snaps out, a ring that races away, a shield-arc facing the blow

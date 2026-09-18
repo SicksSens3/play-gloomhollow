@@ -2,7 +2,7 @@
 
 <h3 align="center">A slow, Souls-like pixel dungeon crawler. Five floors down to the Wyrm, then loop.</h3>
 
-<p align="center"><a href="https://sickssens3.github.io/play-gloomhollow/"><img src="readme/play.png" alt="Play now" width="270"></a></p>
+<p align="center"><a href="https://sickssens3.github.io/play-gloomhollow/"><img src="readme/play.png" alt="Play now" width="360"></a></p>
 
 <p align="center">Plays in the browser on desktop and phone. Installs as an app from the browser menu and runs offline. No account, no download.</p>
 

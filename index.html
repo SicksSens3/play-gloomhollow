@@ -2002,14 +2002,16 @@ function drawEnemy(e){
  if(e.type==='knight'&&t2){const f=e.facing,w1=Math.sin(time*5)*2,w2=Math.sin(time*5+1)*2.5;ctx.fillStyle=K;ctx.beginPath();ctx.moveTo(e.x-f*3,e.y-13);ctx.lineTo(e.x-f*11-w1,e.y-3);ctx.lineTo(e.x-f*9-w2,e.y+e.r);ctx.lineTo(e.x-f*1,e.y+e.r-2);ctx.closePath();ctx.fill();ctx.fillStyle='#7a1e1a';ctx.beginPath();ctx.moveTo(e.x-f*3,e.y-12);ctx.lineTo(e.x-f*10-w1,e.y-3);ctx.lineTo(e.x-f*8-w2,e.y+e.r-1);ctx.lineTo(e.x-f*2,e.y+e.r-2);ctx.closePath();ctx.fill();}
  ctx.save();if(big!==1){ctx.translate(e.x,e.y+e.r);ctx.scale(big,big);ctx.translate(-e.x,-(e.y+e.r));}
  if(e.boss&&!e.anchored){const ro=e.roarT>0?Math.sin(Math.PI*Math.min(1,e.roarT/0.6)):0,br=1+0.03*Math.sin(time*3+e.x)+0.25*ro;ctx.translate(e.x,e.y+e.r);ctx.scale(1+0.1*ro,br);ctx.translate(-e.x,-(e.y+e.r));}   // bosses breathe
- if(e.type==='brute'){let sx=1,sy=1,rot=0;const wt=e.windT||0.7,q=1-Math.max(0,e.t)/wt,dxs=e.dir&&e.dir.x<0?-1:1;   // the Warden's poses: crouch for a slam or leap, coil for the sweep, lean into the charge, squash on impact
+ if(e.type==='brute'){let sx=1,sy=1,rot=0,dy=0,swx=0;const wt=e.windT||0.7,q=1-Math.max(0,e.t)/wt,dxs=e.dir&&e.dir.x<0?-1:1,fd=e.facing>=0?1:-1;   // the Warden's poses: crouch for a slam or leap, coil for the sweep, lean into the charge, squash on impact
   if(e.state==='windup'&&(e.kind==='slam'||e.kind==='leap')){sx=1+0.1*q;sy=1-0.14*q;}
   else if(e.state==='windup'&&e.kind==='sweep')rot=-dxs*0.2*q;
   else if(e.state==='windup'&&e.kind==='charge'){sy=1-0.08*q;rot=dxs*0.1*q;}
   else if(e.state==='attack'&&e.kind==='charge')rot=dxs*0.22;
   else if(e.state==='attack'&&e.kind==='sweep')rot=dxs*(e.phase===2?-1:1)*0.25*(1-Math.max(0,e.t)/0.2);
+  else if(e.moving&&e.state==='chase'){const cyc=(e.walk||0)*7.85,s2=Math.sin(cyc),fall=Math.pow(1-Math.abs(s2),3);rot=s2*0.07+fd*0.06;sx=1+0.06*fall;sy=1-0.07*fall;dy=-Math.abs(s2)*3;swx=Math.round(s2*1.5);}   // the lumber: rise, sway, and a heavy drop on each footfall, in time with the stomps
+  else if(e.state==='chase'||e.state==='recover'||e.state==='idle'){const brth=Math.sin(time*2.2);sy=1+0.035*brth;sx=1-0.015*brth;rot=0.02*Math.sin(time*1.1);}   // standing: a slow, heavy breath and a shift of weight
   if(e.squashT>0){const k=e.squashT/0.15;sx*=1+0.18*k;sy*=1-0.22*k;}
-  if(sx!==1||sy!==1||rot){ctx.translate(e.x,e.y+e.r);ctx.rotate(rot);ctx.scale(sx,sy);ctx.translate(-e.x,-(e.y+e.r));}}
+  if(sx!==1||sy!==1||rot||dy||swx){ctx.translate(e.x+swx,e.y+e.r+dy);ctx.rotate(rot);ctx.scale(sx,sy);ctx.translate(-e.x,-(e.y+e.r));}}
  const wcyc=(e.moving&&e.state==='chase')?Math.floor((e.walk||0)*8)%4:0,wf=[1,0,-1,0][wcyc],eb=(e.moving&&e.state==='chase')?[1,0,1,0][wcyc]:0;
  drawSpr(sp,e.x,e.y+e.r-(e.z||0)-hov-eb,e.facing,e.flash>0||wind,wf);if(e.type==='hellsbell')drawHandBell(e);
  if(e.type==='brute'&&e.state==='windup'&&(e.kind==='slam'||e.kind==='leap')){const q=1-Math.max(0,e.t)/(e.windT||0.7);for(const s2 of[-1,1]){const fx=Math.round(e.x+s2*11),fy=Math.round(e.y-16-q*12);ctx.fillStyle=K;ctx.fillRect(fx-3,fy-3,7,7);ctx.fillStyle='#cfc4b0';ctx.fillRect(fx-2,fy-2,5,5);ctx.fillStyle='#9a8f7c';ctx.fillRect(fx-2,fy+1,5,2);}}   // both fists up

@@ -119,7 +119,7 @@ Each gets a title card as you walk in, and roars. Nothing moves until the card i
 
 Slams the ground where you stand, sweeps a hook at arm's length, and charges if you keep away. At two thirds health he roars (a shockwave) and rages: leaps onto you, charges from closer, slams twice. At a third he roars again and goes berserk: faster, every slam cracks the floor into a shockwave, the sweep comes back the other way, the charge ends in a crater.
 
-**On a loop, Warden Unchained.** Warden Unchained: charges and leaps from the first second, and every slam sends a shockwave.
+**On a loop, as Warden Unchained (It remembers you).** Charges and leaps from the first second, and every slam sends a shockwave.
 
 ### The Rusted Knight · Floor 2
 
@@ -127,7 +127,7 @@ Slams the ground where you stand, sweeps a hook at arm's length, and charges if 
 
 A duelist. Dashes in from range, and up close fights in three-hit combos. Below half health he throws his sword and dashes after it to take it back. Parry him and he staggers long enough for a riposte.
 
-**On a loop, Knight Reforged.** Knight Reforged: a whirling blade at mid range, a delayed final hit on the combo, and two drowned ones called up at half health.
+**On a loop, as Knight Reforged (Drowned twice. Risen twice.).** A whirling blade at mid range, a delayed final hit on the combo, and two drowned ones called up at half health.
 
 ### The Cinder Witch · Floor 3
 
@@ -135,7 +135,7 @@ A duelist. Dashes in from range, and up close fights in three-hit combos. Below 
 
 Blinks away when you close. Volleys of fire bolts, rings of fire around herself, and a summons of imps below sixty percent. The floor she leaves burning is the fight.
 
-**On a loop, Witch Ascended.** Witch Ascended: sweeping walls of fire and meteors that fall where you stood.
+**On a loop, as Witch Ascended (All fire is hers now).** Sweeping walls of fire and meteors that fall where you stood.
 
 ### Hells Bell · Floor 4
 
@@ -143,7 +143,7 @@ Blinks away when you close. Volleys of fire bolts, rings of fire around herself,
 
 A giant with a bell for a head and a hand bell to ring. The toll is a shockwave that stuns you if it catches you standing: roll through it. The bell slam lays a line of broken floor toward you. At two thirds health he kneels and rings the dead up, untouchable until they fall. At a third the lights go out and he is gone; volleys of bell sparks cross the room in curtains, rings and rain until they are spent, then the lights return and so does he.
 
-**On a loop, Hells Bell.** The Last Toll: two shockwaves per toll, four risen, six volleys and two spark patterns at once.
+**On a loop, as Hells Bell (The last toll).** Two shockwaves per toll, four risen, six volleys and two spark patterns at once.
 
 ### The Hollow King · Floor 5
 
@@ -157,7 +157,7 @@ Warden of the last stair, always at full strength. Calls the hollow at three qua
 
 It fills the top of the arena. Its claws slam down and stay planted where they land, and that is where you hit it. The tail sweeps across, snaking, and rears up to slam where you stand, a shockwave and rubble. The breath is a cone that flashes together after its warning: roll through it and the head hangs open for a moment. Ember globs are lobbed at you and around you. Strike the raised head, or stand under it, and it lunges out on its neck to bite, then stays down and open. At half health it roars and the outer floor turns to lava; imps crawl out. At a quarter it roars again and the stage shrinks further.
 
-**On a loop, The Ashen Wyrm.** On a loop: double claws, double tail passes, five globs.
+**On a loop, as The Ashen Wyrm (It was here before the hollow).** Double claws, double tail passes, five globs.
 
 <p align="center"><img src="readme/bossfigures.png" alt="The bosses as they stand" width="720"></p>
 

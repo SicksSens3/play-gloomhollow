@@ -1,8 +1,8 @@
 <p align="center"><img src="readme/banner.png" alt="Gloomhollow" width="720"></p>
 
-<h3 align="center">A slow, Souls-like pixel dungeon crawler. Five floors down to the Wyrm, then loop.</h3>
+<h3 align="center">A slow, Souls-like pixel dungeon crawler. Six floors down to the Wyrm, then loop.</h3>
 
-<p align="center"><a href="https://sickssens3.github.io/play-gloomhollow/"><img src="readme/play.png" alt="Play now" width="360"></a></p>
+<p align="center"><a href="https://sickssens3.github.io/play-gloomhollow/"><img src="readme/play.png" alt="Play now" width="270"></a></p>
 
 <p align="center">Plays in the browser on desktop and phone. Installs as an app from the browser menu and runs offline. No account, no download.</p>
 
@@ -18,9 +18,7 @@ Every run is a new dungeon: three biomes, each with its own hazards, litter and 
 
 One strike per weapon, and a charged heavy on every one: hold right click, or hold the aim stick at its rim, then let go. Block in every direction. Time the block and you parry; parry and the riposte is yours. Roll through pits, dodge the red wedge where a blow is about to land, and drink from the well when you find it.
 
-Fifteen weapons, and every heavy is its own art. The spear impales everything in a line. The chain hauls what it hits to your feet. The scythe mends you for every foe it reaps. The rapier blinks through a foe and strikes from behind. The frost axe shatters the chilled, the cleaver butchers the nearly dead, the halberd leaves a ward, the warhammer stuns the whole pound, the sabre dashes untouchable, and the daggers leave their marks bleeding. Pick the weapon for the build you want.
-
-Magic comes back only between rooms. This is a melee game.
+Fifteen weapons, from thief's daggers that loose a flurry to a tomb warhammer that shakes the ground. Magic comes back only between rooms. This is a melee game.
 
 ## The bosses
 

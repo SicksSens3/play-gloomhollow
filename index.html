@@ -645,7 +645,7 @@ function applyVirtual(){if(vPress.light){mDown.l=true;vStrike=true;}if(vPress.ro
 // ---------- world ----------
 const DIRS=[{x:0,y:-1,n:'N'},{x:1,y:0,n:'E'},{x:0,y:1,n:'S'},{x:-1,y:0,n:'W'}];
 const key=(x,y)=>x+','+y;
-let state='title',dungeon,room,player,projs=[],parts=[],msg={t:0,txt:''},shake=0,souls=0,roomsCleared=0,deadT=0,winning=false,winT=0,wonT=0,time=0,overlayOpen=null,lastTpl=-1,lastGrand=null,hitstop=0,dmgNums=[],floor=1,run=null,confirmRestart=0,pauseRow=0,deaths=[],banner=null,transT=0,transDir=null,parryFx=null,slowT=0,flashT=0;
+let state='title',dungeon,room,player,projs=[],parts=[],vfx=[],msg={t:0,txt:''},shake=0,souls=0,roomsCleared=0,deadT=0,winning=false,winT=0,wonT=0,time=0,overlayOpen=null,lastTpl=-1,lastGrand=null,hitstop=0,dmgNums=[],floor=1,run=null,confirmRestart=0,pauseRow=0,deaths=[],banner=null,transT=0,transDir=null,parryFx=null,slowT=0,flashT=0;
 // The descent is finite and every floor is unique: the three biomes once each, then the throne (Hollow King), then the maw (floor FINAL, the Wyrm).
 // After the Wyrm you may loop: `loop` counts New Game+ cycles; the player keeps everything, enemies scale up and the biome bosses return in their tier-2 forms.
 const FINAL=5;let loop=0,itemsBack=null;
@@ -894,7 +894,7 @@ const ETYPES={
 // Floor scaling: hp +20% and damage +10% per floor, then x1.4 hp / x1.25 dmg per loop. Biome bosses are tier 2 from the first loop on.
 function mkEnemy(type,x,y,elite){const t=ETYPES[type],fs=(1+0.2*(floor-1))*(1+0.4*loop),fd=(1+0.1*(floor-1))*(1+0.25*loop);
  const e={type,name:t.name,x,y,r:t.r,hp:Math.round(t.hp*fs*(elite?2.2:1)),speed:t.speed,dmg:Math.round(t.dmg*fd*(elite?1.4:1)),souls:Math.round(t.souls*(elite?3:1)*(1+0.5*loop)),boss:!!t.boss,anchored:!!t.anchored,elite:!!elite,state:'idle',t:0.5+Math.random()*0.5,flash:0,hit:false,facing:1,dead:false,cd:1+Math.random(),cd2:4,cd3:3,spikeCd:0,faceAng:0,phase:1,flank:[-1,0,1][Math.floor(Math.random()*3)],avoid:Math.random()<0.5?1:-1,tier:t.boss&&(type==='king'||type==='dragon'||loop>0)?2:1};
- if(type==='dragon'){e.claws=[{side:'L',x:0,y:0,planted:false,t:0},{side:'R',x:0,y:0,planted:false,t:0}];e.exposed=false;e.exposeT=0;e.cd=2.5;e.slam={x,y:y+80};}
+ if(type==='dragon'){e.claws=[{side:'L',x:0,y:0,planted:false,t:0},{side:'R',x:0,y:0,planted:false,t:0}];e.exposed=false;e.exposeT=0;e.cd=2.5;e.slam={x,y:y+80};e.globs=[];e.tailDown=0;}
  e.maxHp=e.hp;if(elite&&!t.boss)giveAffix(e);else if(elite)e.name='an elite '+t.name.replace(/^a /,'');return e;}
 // Champions (loops only): a named elite that hits harder, moves faster, drops steel and a tome, and rises once from death.
 // Elite affixes: every elite carries one visible trait besides its bigger numbers. The death screen names it.
@@ -935,7 +935,7 @@ function spawnEnemies(r){
 function goRoom(dir){
  const d=DIRS.find(x=>x.n===dir);const nr=dungeon[key(room.x+d.x,room.y+d.y)];if(!nr)return;
  if(nr.type==='vault'&&!nr.opened){nr.opened=true;player.keys--;SFX.door();}
- room=nr;if(!room.built)buildRoom(room);projs=[];
+ room=nr;if(!room.built)buildRoom(room);projs=[];vfx=[];
  const cx=(room.dx+1)*T,cy=(room.dy+1)*T;
  if(dir==='W'){player.x=room.pw-T-9;player.y=cy;}if(dir==='E'){player.x=T+9;player.y=cy;}
  if(dir==='N'){player.y=room.ph-T-9;player.x=cx;}if(dir==='S'){player.y=T+9;player.x=cx;}
@@ -980,16 +980,16 @@ function newGame(seed,daily){
  player={x:W/2,y:H/2,r:5,hp:100,maxHp:100,stam:100,maxStam:100,stamCd:0,mana:60,maxMana:60,spell:'bolt',spellPow:1,ward:0,wardT:0,dmgMul:1,inf:null,sharp:0,keys:0,lavaT:0,burn:0,burnT:0,flasks:3,maxFlasks:3,speed:64,state:'free',t:0,aim:0,facing:1,lastMove:{x:1,y:0},inv:0,flash:0,walk:0,atk:null,weapon:'rusted',blocking:false,blockT:0,riposteT:0,charging:false,charge:0,chargeReady:false,items:[]};
  floor=1;loop=0;run={floor:1,loop:0,rooms:0,kills:0,parries:0,killedBy:'the dark',seed:runSeed,daily:!!daily,bossHits:0,flasksFloor:0};save.stats.runs++;persist();banner=null;transT=0;
  dungeon=genDungeon();room=dungeon[key(0,0)];buildRoom(room);player.x=room.pw/2;player.y=room.ph/2+14;player.safe={x:player.x,y:player.y};fit();
- projs=[];parts=[];dmgNums=[];hitstop=0;souls=0;roomsCleared=0;shake=0;winning=false;wonT=0;overlayOpen=null;confirmRestart=0;state='play';showMsg('Floor 1  '+FP().name,3);
+ projs=[];vfx=[];parts=[];dmgNums=[];hitstop=0;souls=0;roomsCleared=0;shake=0;winning=false;wonT=0;overlayOpen=null;confirmRestart=0;state='play';showMsg('Floor 1  '+FP().name,3);
 }
 function descend(){floor++;run.floor=floor;run.flasksFloor=0;run.spared=false;if(floor>save.stats.bestFloor){save.stats.bestFloor=floor;}persist();lastTpl=-1;lastGrand=null;
  dungeon=genDungeon();room=dungeon[key(0,0)];buildRoom(room);const p=player;p.x=room.pw/2;p.y=room.ph/2+14;p.safe={x:p.x,y:p.y};fit();p.hp=p.maxHp;p.mana=p.maxMana;p.stam=p.maxStam;p.flasks=p.maxFlasks;p.state='free';p.blocking=false;
- projs=[];parts=[];dmgNums=[];shake=0;SFX.door();SFX.clear();showMsg('Floor '+floor+'  '+FP().name,3.2);}
+ projs=[];vfx=[];parts=[];dmgNums=[];shake=0;SFX.door();SFX.clear();showMsg('Floor '+floor+'  '+FP().name,3.2);}
 // New Game+: same run, same gear, new dungeon, stronger hollow.
 function loopGame(){loop++;if(run)run.loop=loop;floor=1;run.floor=1;run.flasksFloor=0;run.spared=false;lastTpl=-1;lastGrand=null;
  dungeon=genDungeon();room=dungeon[key(0,0)];buildRoom(room);const p=player;p.x=room.pw/2;p.y=room.ph/2+14;p.safe={x:p.x,y:p.y};fit();
  p.hp=p.maxHp;p.mana=p.maxMana;p.stam=p.maxStam;p.flasks=p.maxFlasks;p.keys=0;p.burn=0;p.ward=0;p.state='free';p.blocking=false;p.atk=null;
- projs=[];parts=[];dmgNums=[];shake=0;hitstop=0;winning=false;wonT=0;banner=null;overlayOpen=null;state='play';SFX.door();SFX.clear();showMsg('Loop '+loop+'   Floor 1  '+FP().name,3.2);}
+ projs=[];vfx=[];parts=[];dmgNums=[];shake=0;hitstop=0;winning=false;wonT=0;banner=null;overlayOpen=null;state='play';SFX.door();SFX.clear();showMsg('Loop '+loop+'   Floor 1  '+FP().name,3.2);}
 function toTitle(){state='title';room=null;dungeon=null;fit();}
 function deathButtons(){const y=CH-40;return[{id:'rise',x:W/2-118,y,w:112,h:18,label:'RISE AGAIN'},{id:'seed',x:W/2+6,y,w:112,h:18,label:'SAME SEED'}];}
 function winButtons(){const y=CH-44;return[{id:'loop',x:W/2-118,y,w:112,h:20,label:'DESCEND AGAIN'},{id:'fire',x:W/2+6,y,w:112,h:20,label:'TO THE FIRE'}];}
@@ -1113,7 +1113,7 @@ function updatePlayer(dt){
   if(press.KeyQ&&it)takeItem(it);
   else if((mDown.l||(mUp.r&&p.charging))&&p.stam>0)startAttack(p.chargeReady&&(mUp.r||vStrike));
   else if(press.Space&&p.stam>0)startRoll();
-  else if(press.KeyE&&p.mana>=spellCost(SPELLS[p.spell])){p.state='cast';p.t=SPELLS[p.spell].cast;}
+  else if(press.KeyE&&p.mana>=spellCost(SPELLS[p.spell])){const sp=SPELLS[p.spell];p.state='cast';p.t=sp.cast;vfx.push({kind:'rune',x:p.x,y:p.y+p.r,t:sp.cast+0.05,max:sp.cast+0.05,col:sp.col,grow:true});}
   else if(press.KeyF&&p.flasks>0&&p.hp<p.maxHp){p.state='flask';p.t=0.85;SFX.drink();}
  }else if(p.state==='attack'){
   const a=p.atk,d=a.dur;a.t-=dt;
@@ -1146,21 +1146,25 @@ function updatePlayer(dt){
   for(const b of room.props){if(b.kind!=='plate')continue;const on=b.tx===ptx&&b.ty===pty;if(on&&!b.pressed&&!b.lit)hitBrazier(b);b.pressed=on;}walkStep(p,ptx,pty);}
  if(p.x<-3)goRoom('W');else if(p.x>room.pw+3)goRoom('E');else if(p.y<-3)goRoom('N');else if(p.y>room.ph+3)goRoom('S');
 }
-function castSpell(id,ba){const p=player,sp=SPELLS[id],pow=p.spellPow*p.dmgMul;const shoot=(a,dmg,spd,r,col,fx)=>projs.push({x:p.x+Math.cos(a)*8,y:p.y+Math.sin(a)*8-2,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,r,dmg:dmg*pow,owner:'p',life:2,col,fx});
+function castSpell(id,ba){const p=player,sp=SPELLS[id],pow=p.spellPow*p.dmgMul;const shoot=(a,dmg,spd,r,col,fx,tag)=>projs.push({x:p.x+Math.cos(a)*8,y:p.y+Math.sin(a)*8-2,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,r,dmg:dmg*pow,owner:'p',life:2,col,fx,tag});
  switch(id){
   case'bolt':shoot(ba,32,145,3,sp.col);SFX.bolt();shake=Math.max(shake,0.04);break;
-  case'shards':for(let i=-1;i<=1;i++)shoot(ba+i*0.28,14,160,2,sp.col);SFX.bolt();SFX.arrow();shake=Math.max(shake,0.05);break;
-  case'lance':shoot(ba,26,170,3,sp.col,'burn');SFX.bolt();shake=Math.max(shake,0.05);break;
+  case'shards':for(let i=-1;i<=1;i++)shoot(ba+i*0.28,14,160,2,sp.col,undefined,'shard');SFX.bolt();SFX.arrow();shake=Math.max(shake,0.05);break;
+  case'lance':shoot(ba,26,170,3,sp.col,'burn','lance');SFX.bolt();shake=Math.max(shake,0.05);break;
   case'nova':{for(const e of room.enemies){if(e.dead)continue;for(const hp of hitPoints(e)){const d=Math.hypot(hp.x-p.x,hp.y-p.y);if(d<42){const a=Math.atan2(hp.y-p.y,hp.x-p.x);damageEnemy(e,26*pow,true,a,undefined,false,hp);if(e.type!=='brute'&&e.type!=='king'&&!e.anchored)moveEnt(e,Math.cos(a)*10,Math.sin(a)*10);break;}}}
-   for(let i=0;i<24;i++){const a=i/24*Math.PI*2;parts.push({x:p.x+Math.cos(a)*6,y:p.y-2+Math.sin(a)*6,vx:Math.cos(a)*90,vy:Math.sin(a)*90,life:0.35,col:sp.col});}SFX.slam();shake=Math.max(shake,0.2);break;}
+   for(let i=0;i<24;i++){const a=i/24*Math.PI*2;parts.push({x:p.x+Math.cos(a)*6,y:p.y-2+Math.sin(a)*6,vx:Math.cos(a)*90,vy:Math.sin(a)*90,life:0.35,col:sp.col});}
+   vfx.push({kind:'ring',x:p.x,y:p.y,r0:6,r1:46,t:0.35,max:0.35,col:sp.col,w:3,inner:true},{kind:'ring',x:p.x,y:p.y,r0:2,r1:40,t:0.5,max:0.5,col:'#d9d0bd',w:1},{kind:'rune',x:p.x,y:p.y+p.r,t:0.45,max:0.45,col:sp.col,r:15});SFX.slam();shake=Math.max(shake,0.2);break;}
   case'blink':{const ox=p.x,oy=p.y;for(let t=46;t>=8;t-=4){const nx=p.x+Math.cos(ba)*t,ny=p.y+Math.sin(ba)*t;if(nx>T+4&&nx<room.pw-T-4&&ny>T+4&&ny<room.ph-T-4&&!collides(nx,ny,p.r)){p.x=nx;p.y=ny;break;}}
-   burst(ox,oy-4,10,sp.col);burst(p.x,p.y-4,10,sp.col);p.inv=Math.max(p.inv,0.35);SFX.roll();SFX.parry();break;}
-  case'ward':p.ward=1;p.wardT=8;burst(p.x,p.y-4,12,sp.col);SFX.flask();break;
-  case'hex':for(const e of room.enemies){if(e.dead)continue;e.slow=3.5;burst(e.x,e.y-4,6,sp.col);}SFX.bolt();SFX.block();break;
+   burst(ox,oy-4,10,sp.col);burst(p.x,p.y-4,10,sp.col);p.inv=Math.max(p.inv,0.35);for(let k=0;k<3;k++)vfx.push({kind:'ghost',x:ox+(p.x-ox)*k/3,y:oy+p.r+(p.y-oy)*k/3,t:0.22+k*0.06,max:0.4,facing:p.facing});vfx.push({kind:'ring',x:ox,y:oy,r0:3,r1:16,t:0.25,max:0.25,col:sp.col,w:1});SFX.roll();SFX.parry();break;}   // you leave shades behind you
+  case'ward':p.ward=1;p.wardT=8;burst(p.x,p.y-4,12,sp.col);vfx.push({kind:'ring',x:p.x,y:p.y,r0:16,r1:6,t:0.35,max:0.35,col:sp.col,w:2},{kind:'rune',x:p.x,y:p.y+p.r,t:0.5,max:0.5,col:sp.col,r:12});SFX.flask();break;
+  case'hex':for(const e of room.enemies){if(e.dead)continue;e.slow=3.5;burst(e.x,e.y-4,6,sp.col);for(let i=0;i<6;i++)parts.push({x:e.x+(Math.random()-.5)*12,y:e.y-16-Math.random()*8,vx:(Math.random()-.5)*8,vy:14+Math.random()*10,life:0.7,col:i%2?'#d9e8ff':'#7fa8ff',noG:true});}
+   vfx.push({kind:'ring',x:p.x,y:p.y,r0:6,r1:190,t:0.6,max:0.6,col:sp.col,w:2,inner:true},{kind:'rune',x:p.x,y:p.y+p.r,t:0.5,max:0.5,col:sp.col,r:13});SFX.bolt();SFX.block();break;   // a wave of frost rolls over the room; snow settles on every foe
   case'pull':{let best=null,bd=130;for(const e of room.enemies){if(e.dead||e.anchored)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<bd){bd=d;best=e;}}
-   if(best){const a=Math.atan2(best.y-p.y,best.x-p.x);for(let i=0;i<8;i++)parts.push({x:p.x+Math.cos(a)*(6+i*bd/8),y:p.y-2+Math.sin(a)*(6+i*bd/8),vx:0,vy:0,life:0.25,col:sp.col});
+   if(best){const a=Math.atan2(best.y-p.y,best.x-p.x);vfx.push({kind:'chain',x1:p.x,y1:p.y-2,x2:best.x,y2:best.y-2,t:0.3,max:0.3},{kind:'ring',x:best.x,y:best.y,r0:best.r+2,r1:best.r+14,t:0.25,max:0.25,col:sp.col,w:1});
     const tx=p.x+Math.cos(a)*18,ty=p.y+Math.sin(a)*18;if(!collides(tx,ty,best.r,true)){best.x=tx;best.y=ty;}if(!best.boss||best.tier<2){best.state='stagger';best.t=0.6;}burst(best.x,best.y-4,10,sp.col);SFX.parry();SFX.search();}else SFX.block();break;}
-  case'ashfall':{for(let i=0;i<7;i++){const a=i/7*Math.PI*2+Math.random()*0.4,r=i?18+Math.random()*30:0;room.hazards.push({x:p.x+Math.cos(a)*r,y:p.y+Math.sin(a)*r*0.75,delay:0.5+Math.random()*0.3,warn:0.6,t:1.0,dmg:Math.round(12*pow*fireMul()),name:'your ashfall',mine:true});}SFX.bolt();SFX.slam();shake=Math.max(shake,0.1);break;}
+  case'ashfall':{for(let i=0;i<7;i++){const a=i/7*Math.PI*2+Math.random()*0.4,r=i?18+Math.random()*30:0;const hz={x:p.x+Math.cos(a)*r,y:p.y+Math.sin(a)*r*0.75,delay:0.5+Math.random()*0.3,warn:0.6,t:1.0,dmg:Math.round(12*pow*fireMul()),name:'your ashfall',mine:true};room.hazards.push(hz);
+    for(let k=0;k<3;k++)parts.push({x:hz.x+(Math.random()-.5)*3,y:hz.y-64-k*7,vx:0,vy:64/hz.delay,life:hz.delay,col:k?'#e04a3a':'#fff0c0',noG:true});}   // embers streak down onto their rings
+   vfx.push({kind:'rune',x:p.x,y:p.y+p.r,t:0.6,max:0.6,col:sp.col,r:14});SFX.bolt();SFX.slam();shake=Math.max(shake,0.1);break;}
  }}
 function attackHits(range,arc,dmg,stagger,ang){
  const aoe=!!wpn().aoe,ix=player.x+Math.cos(ang)*14,iy=player.y+Math.sin(ang)*14;
@@ -1357,7 +1361,7 @@ function updateEnemy(e,dt){
     else if(t2&&dist>46&&dist<130&&e.cd3<=0){e.state='windup';e.kind='leap';e.t=0.7;e.dir={x:nx,y:ny};e.slam={x:p.x,y:p.y};}
     else if(dist<36){e.state='windup';e.kind='slam';e.t=t2?0.7:0.85;e.dir={x:nx,y:ny};e.slam={x:e.x+nx*20,y:e.y+ny*15};}else steer(e,nx*e.speed,ny*e.speed,dt);}
    else if(e.type==='drowned'){e.cd-=dt;if(dist<26){e.state='windup';e.kind='slam';e.t=0.6;e.dir={x:nx,y:ny};}else if(e.cd<=0&&dist>50){e.state='windup';e.kind='spit';e.t=0.7;}else steer(e,nx*e.speed,ny*e.speed,dt);}
-   else if(e.type==='imp'){e.cd-=dt;if(dist<40)steer(e,-nx*e.speed,-ny*e.speed,dt);else if(dist>90)steer(e,nx*e.speed,ny*e.speed,dt);else{const st=Math.sin(time*3+e.x)*1;steer(e,-ny*st*e.speed*0.5,nx*st*e.speed*0.5,dt);}
+   else if(e.type==='imp'){e.cd-=dt;   /* backs off at half pace so you can catch it */if(dist<40)steer(e,-nx*e.speed*0.55,-ny*e.speed*0.55,dt);else if(dist>90)steer(e,nx*e.speed,ny*e.speed,dt);else{const st=Math.sin(time*3+e.x)*1;steer(e,-ny*st*e.speed*0.5,nx*st*e.speed*0.5,dt);}
     if(e.cd<=0&&dist<140){e.state='windup';e.t=0.5;}}
    else if(e.type==='witch'){e.cd-=dt;
     if(dist<40&&e.cd2<=0){e.cd2=2.5;const sp=freeSpots(room,6).filter(q=>Math.hypot(q.x-p.x,q.y-p.y)>80);if(sp.length){burst(e.x,e.y-6,14,'#e8a33c');const q=pick(sp);e.x=q.x;e.y=q.y;burst(e.x,e.y-6,14,'#e8a33c');SFX.parry();}}
@@ -1393,8 +1397,8 @@ function updateEnemy(e,dt){
    if(e.type==='king'&&(e.kind==='bolts'||e.kind==='sweep'&&e.t>0.15||e.kind==='rupture'&&e.t>0.25)){e.dir={x:nx,y:ny};}
    if(e.t<=0){
     if(e.type==='archer'){projs.push({x:e.x,y:e.y-2,vx:nx*105,vy:ny*105,r:2,dmg:e.dmg,owner:'e',life:3,col:'#c8b070',name:'a cultist arrow'});SFX.arrow();e.cd=1.6+Math.random();e.state='recover';e.t=0.95;}
-    else if(e.type==='imp'){projs.push({x:e.x,y:e.y-2,vx:nx*115,vy:ny*115,r:3,dmg:e.dmg,owner:'e',life:2.5,col:'#e8a33c',name:'an imp\'s fireball',burn:true});SFX.bolt();e.cd=1.4+Math.random();e.state='recover';e.t=0.5;
-     if(Math.random()<0.35){const sp=freeSpots(room,5).filter(q=>Math.hypot(q.x-p.x,q.y-p.y)>50);if(sp.length){burst(e.x,e.y-3,8,'#c8503a');const q=pick(sp);e.x=q.x;e.y=q.y;burst(e.x,e.y-3,8,'#c8503a');}}}
+    else if(e.type==='imp'){projs.push({x:e.x,y:e.y-2,vx:nx*115,vy:ny*115,r:3,dmg:e.dmg,owner:'e',life:2.5,col:'#e8a33c',name:'an imp\'s fireball',burn:true});SFX.bolt();e.shots=(e.shots||0)+1;e.cd=1.0+Math.random()*0.4;e.state='recover';e.t=0.45;
+     if(e.shots>=3){e.shots=0;e.cd=1.8;   /* three shots, then it blinks away, every time */const sp=freeSpots(room,5).filter(q=>Math.hypot(q.x-p.x,q.y-p.y)>50);if(sp.length){burst(e.x,e.y-3,8,'#c8503a');const q=pick(sp);e.x=q.x;e.y=q.y;burst(e.x,e.y-3,8,'#c8503a');}}}
     else if(e.type==='drowned'&&e.kind==='spit'){projs.push({x:e.x,y:e.y-4,vx:nx*72,vy:ny*72,r:4,dmg:Math.round(e.dmg*0.6),owner:'e',life:3,col:'#4aa08a',name:'a gout of black water'});SFX.search();e.cd=2.2+Math.random();e.state='recover';e.t=0.6;}
     else if(e.type==='knight'&&e.kind==='throw'){e.swordOut=true;const kn=e;projs.push({x:e.x,y:e.y-4,vx:e.dir.x*175,vy:e.dir.y*175,r:4,dmg:Math.round(e.dmg*1.2),owner:'e',life:0.7,col:'#b06a2a',name:"the Knight's thrown blade",sword:true,onEnd:(q)=>{kn.target={x:q.x,y:q.y};kn.state='attack';kn.kind='retrieve';kn.t=1.5;kn.hit=false;kn.dir={x:0,y:0};}});SFX.swingH();e.state='recover';e.kind='wait';e.t=1.2;e.cd=5;}
     else if(e.type==='bell'&&e.kind==='ring'){for(const o of room.enemies){if(o===e||o.dead||o.boss||Math.hypot(o.x-e.x,o.y-e.y)>100)continue;if(!o.baseSpeed){o.baseSpeed=o.speed;o.baseDmg=o.dmg;}o.speed=o.baseSpeed*1.35;o.dmg=Math.round(o.baseDmg*1.3);o.buffT=5;if(o.state==='idle'){o.state='chase';}burst(o.x,o.y-4,8,'#f4c968');}
@@ -1460,6 +1464,11 @@ function updateEnemy(e,dt){
 // Its head hangs from the top wall and never moves. Claws slam where you stand and stay planted (hit them); the tail sweeps the
 // arena at your height (roll through); fire breath fans across the floor, after which the lowered head can be hit for bonus damage.
 function updateDragon(e,dt){const p=player,ph2=e.hp<e.maxHp*0.5;
+ if(e.tailDown>0)e.tailDown-=dt;
+ // ember globs in the air: on landing each one splashes fire (and hurts you if it lands on you)
+ for(let i=e.globs.length-1;i>=0;i--){const g=e.globs[i];g.t+=dt;if(g.t<g.dur){if(Math.random()<0.5){const q=g.t/g.dur,gx=g.x0+(g.x1-g.x0)*q,gy=g.y0+(g.y1-g.y0)*q-Math.sin(q*Math.PI)*46;parts.push({x:gx+(Math.random()-.5)*4,y:gy,vx:(Math.random()-.5)*10,vy:-10,life:0.3,col:Math.random()<0.5?'#e8a33c':'#e04a3a',noG:true});}continue;}
+  e.globs.splice(i,1);burst(g.x1,g.y1,12,'#e8a33c');SFX.crackle();shake=Math.max(shake,0.08);room.hazards.push({x:g.x1,y:g.y1,delay:0,t:1.4,dmg:10,name:"the Wyrm's spit"});for(let k=0;k<3;k++){const a=k*2.094+Math.random(),r=9+Math.random()*4;room.hazards.push({x:g.x1+Math.cos(a)*r,y:g.y1+Math.sin(a)*r*0.7,delay:0.1,warn:0,t:1.1,dmg:10,name:"the Wyrm's spit"});}
+  if(Math.hypot(p.x-g.x1,p.y-g.y1)<12+p.r)hurtPlayer(Math.round(e.dmg*0.7),{x:g.x1,y:g.y1,name:"the Wyrm's spit",burn:true});}
  for(const c of e.claws)if(c.planted){c.t-=dt;if(c.t<=0){c.planted=false;burst(c.x,c.y,8,'#6a1e1e');}}
  if(e.exposed){e.exposeT-=dt;if(e.exposeT<=0)e.exposed=false;}
  e.cd-=dt;
@@ -1471,18 +1480,22 @@ function updateDragon(e,dt){const p=player,ph2=e.hp<e.maxHp*0.5;
    else if(e.hp<e.maxHp*0.25&&!e.roared2&&!room.lavaWarn){e.roared2=true;e.state='windup';e.kind='roar';e.t=0.8;}
    else if(ph2&&!e.brood&&!room.lavaWarn){e.brood=true;e.state='windup';e.kind='call';e.t=0.9;}
    else if(e.cd<=0){const r=Math.random();
-    if(r<0.45){e.kind='claw';e.side=p.x<room.pw/2?'L':'R';e.slam={x:p.x,y:p.y};e.clawN=ph2?2:1;e.state='windup';e.t=ph2?0.75:0.9;}
-    else if(r<0.75){e.kind='tail';e.tailY=Math.max(T+14,Math.min(room.ph-T-14,p.y));e.tailDir=p.x<room.pw/2?-1:1;e.tailPass=ph2?2:1;e.state='windup';e.t=0.85;}
+    if(r<0.35){e.kind='claw';e.side=p.x<room.pw/2?'L':'R';e.slam={x:p.x,y:p.y};e.clawN=ph2?2:1;e.state='windup';e.t=ph2?0.75:0.9;}
+    else if(r<0.6){e.kind='tail';e.tailY=Math.max(T+14,Math.min(room.ph-T-14,p.y));e.tailDir=p.x<room.pw/2?-1:1;e.tailPass=ph2?2:1;e.state='windup';e.t=0.85;}
+    else if(r<0.8){e.kind='spit';e.state='windup';e.t=0.7;}   // the head rears back and lobs embers
     else{e.kind='fire';e.fireA=Math.max(0.5,Math.min(Math.PI-0.5,Math.atan2(p.y-e.y,p.x-e.x)));e.state='windup';e.t=1.0;}}
    break;
   case'windup':
    if(e.kind==='claw'&&e.t>0.35)e.slam={x:p.x,y:p.y};
    if(e.kind==='fire'&&e.t>0.3)e.fireA=Math.max(0.5,Math.min(Math.PI-0.5,Math.atan2(p.y-e.y,p.x-e.x)));
+   if(e.kind==='tailslam'&&e.t>0.25)e.slam={x:p.x,y:p.y};
    if(e.t<=0){
     if(e.kind==='call'){const sp=freeSpots(room,6);for(let i=0;i<3&&i<sp.length;i++){room.enemies.push(mkEnemy('imp',sp[i].x,sp[i].y,false));burst(sp[i].x,sp[i].y,10,'#c8503a');}SFX.boss();e.state='recover';e.t=1.0;}
     else if(e.kind==='roar'){wyrmRoar(e,e.roared2?2:1);e.state='recover';e.t=1.6;e.cd=1.2;}
     else if(e.kind==='fire'){breath(e);e.exposed=true;e.exposeT=3.0;e.state='recover';e.t=2.6;e.cd=ph2?1.2:2.0;}
     else if(e.kind==='tail'){e.state='attack';e.t=4;e.hit=false;e.tailX=e.tailDir>0?-50:room.pw+50;SFX.swingH();}
+    else if(e.kind==='tailslam'){e.state='attack';e.t=0.2;SFX.swingH();}
+    else if(e.kind==='spit'){spit(e,ph2?5:3);e.state='recover';e.t=1.1;e.cd=ph2?1.0:1.5;}
     else{e.state='attack';e.t=0.22;e.hit=false;SFX.roll();}}
    break;
   case'attack':
@@ -1492,19 +1505,30 @@ function updateDragon(e,dt){const p=player,ph2=e.hp<e.maxHp*0.5;
    else if(e.kind==='tail'){e.tailX+=e.tailDir*(ph2?300:250)*dt;if(Math.random()<0.5)parts.push({x:e.tailX-e.tailDir*10,y:e.tailY+2,vx:0,vy:-8,life:0.25,col:'#6d6578'});
     if(!e.hit&&Math.abs(p.y-e.tailY)<11&&Math.abs(p.x-e.tailX)<16){e.hit=true;hurtPlayer(Math.round(e.dmg*0.8),{x:e.tailX,y:e.tailY,name:"the Wyrm's tail"});}
     const done=e.tailDir>0?e.tailX>room.pw+50:e.tailX<-50;
-    if(done||e.t<=0){if(e.tailPass>1){e.tailPass--;e.tailDir*=-1;e.tailY=Math.max(T+14,Math.min(room.ph-T-14,p.y));e.state='windup';e.t=0.5;}else{e.state='recover';e.t=1.2;e.cd=ph2?1.0:1.6;}}}
+    if(done||e.t<=0){if(e.tailPass>1){e.tailPass--;e.tailDir*=-1;e.tailY=Math.max(T+14,Math.min(room.ph-T-14,p.y));e.state='windup';e.t=0.5;}else{e.kind='tailslam';e.slam={x:p.x,y:p.y};e.state='windup';e.t=0.6;}}}   // the sweep ends with the tail rearing up over you
+   else if(e.kind==='tailslam'){if(e.t<=0){const sx=e.slam.x,sy=e.slam.y;shake=Math.max(shake,0.35);hitstop=Math.max(hitstop,0.04);SFX.slam();burst(sx,sy,18,'#6d6578');room.waves.push(mkWave(sx,sy,Math.round(e.dmg*0.6),"the Wyrm's tail",'#8a2a2a'));
+     if(Math.hypot(p.x-sx,p.y-sy)<18+p.r)hurtPlayer(e.dmg,{x:sx,y:sy,name:"the Wyrm's tail"});
+     for(let i=0;i<5;i++){const a=i*1.257+Math.random()*0.6,rr=14+Math.random()*10;room.hazards.push({x:sx+Math.cos(a)*rr,y:sy+Math.sin(a)*rr*0.7,delay:0.05,warn:0,t:1.0,dmg:8,kind:'rock',name:"the Wyrm's tail"});}   // the floor splits into rubble
+     e.tailDown=0.55;e.state='recover';e.t=1.2;e.cd=ph2?1.0:1.6;}}
    break;}}
+// Ember spit: globs lobbed at you and around you; each shows its landing ring while it flies.
+function spit(e,n){const p=player;SFX.arrow();SFX.boss();for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,r=i?18+Math.random()*30:0,x1=Math.max(T+6,Math.min(room.pw-T-6,p.x+Math.cos(a)*r)),y1=Math.max(T+6,Math.min(room.ph-T-6,p.y+Math.sin(a)*r*0.75));e.globs.push({x0:e.x,y0:e.y-6,x1,y1,t:0,dur:0.75+i*0.09});}}
+// The tail as a curve from its side of the room to the slam point, `lift` px above it.
+function tailCurve(e,lift){const ex=e.tailDir>0?room.pw+20:-20,x1=e.slam.x,y1=e.slam.y-lift,cx=(ex+x1)/2,cy=lift>0?Math.min(e.tailY,y1)-70:(e.tailY+y1)/2+12,pts=[];for(let i=0;i<=28;i++){const t=i/28,u=1-t;pts.push({x:u*u*ex+2*u*t*cx+t*t*x1,y:u*u*e.tailY+2*u*t*cy+t*t*y1});}return pts;}
+function drawTailCurve(pts){for(let i=0;i<pts.length;i++){const q=pts[i],r=7-i*0.15;ctx.fillStyle=K;ctx.beginPath();ctx.arc(q.x,q.y,r+1,0,Math.PI*2);ctx.fill();ctx.fillStyle=i%2?'#6a1e1e':'#8a2a2a';ctx.beginPath();ctx.arc(q.x,q.y,r,0,Math.PI*2);ctx.fill();}
+ const a=pts[pts.length-1],b=pts[pts.length-2],ang=Math.atan2(a.y-b.y,a.x-b.x);ctx.fillStyle='#f0ece0';ctx.beginPath();ctx.moveTo(a.x+Math.cos(ang-0.5)*3,a.y+Math.sin(ang-0.5)*3);ctx.lineTo(a.x+Math.cos(ang)*13,a.y+Math.sin(ang)*13);ctx.lineTo(a.x+Math.cos(ang+0.5)*3,a.y+Math.sin(ang+0.5)*3);ctx.closePath();ctx.fill();}
 // The roar: a shockwave from the head, then ring `stage` (1 = outermost interior ring, 2 = the next) is marked; it turns to lava 1.8 s later.
 function wyrmRoar(e,stage){SFX.boss();SFX.slam();shake=Math.max(shake,0.5);hitstop=Math.max(hitstop,0.08);burst(e.x,e.y+6,30,'#e8a33c');
  room.waves.push(mkWave(e.x,e.y+16,Math.round(e.dmg*0.5),"the Wyrm's roar",'#e8a33c'));
  const tiles=[];for(let ty=1;ty<room.rh-1;ty++)for(let tx=1;tx<room.rw-1;tx++){const d=Math.min(tx-1,ty-1,room.rw-2-tx,room.rh-2-ty);if(d===stage-1&&room.solid[ty][tx]===0)tiles.push({tx,ty});}
  room.lavaWarn={tiles,t:1.8};showMsg(stage===1?'The floor cracks':'The floor gives way',1.8);}
 // A cone of fire that sweeps from one edge of the cone to the other; each spot ignites ~0.5 s after its warning ring appears.
-function breath(e){const hx=e.x,hy=e.y+8,n=7,spread=0.6,dir=Math.random()<0.5?1:-1;SFX.boss();SFX.slam();shake=Math.max(shake,0.2);
- for(let k=0;k<n;k++){const a=e.fireA+dir*(-spread+2*spread*k/(n-1));for(let r=30;r<330;r+=18){const x=hx+Math.cos(a)*r,y=hy+Math.sin(a)*r;if(x<T-4||x>room.pw-T+4||y<T-4||y>room.ph-T+4)break;room.hazards.push({x,y,delay:0.2+k*0.12+r*0.001,warn:0.5,t:0.7,dmg:12,name:"the Wyrm's fire"});}}}
+function breath(e){   /* the whole cone flashes together after its warning; each flame bites for 0.18 s (t above `live`) and then only glows, so a roll's 0.28 s of invulnerability carries you through it */const hx=e.x,hy=e.y+8,n=7,spread=0.6,dir=Math.random()<0.5?1:-1;SFX.boss();SFX.slam();shake=Math.max(shake,0.2);
+ for(let k=0;k<n;k++){const a=e.fireA+dir*(-spread+2*spread*k/(n-1));for(let r=30;r<330;r+=18){const x=hx+Math.cos(a)*r,y=hy+Math.sin(a)*r;if(x<T-4||x>room.pw-T+4||y<T-4||y>room.ph-T+4)break;room.hazards.push({x,y,delay:0.25+r*0.0005,warn:0.55,t:0.45,live:0.27,dmg:12,flash:true,name:"the Wyrm's fire"});}}}
 
 // ---------- update ----------
 function updateFx(dt){for(let i=parts.length-1;i>=0;i--){const a=parts[i];a.life-=dt;a.x+=a.vx*dt;a.y+=a.vy*dt;if(!a.noG)a.vy+=60*dt;if(a.life<=0)parts.splice(i,1);}
+ for(let i=vfx.length-1;i>=0;i--){vfx[i].t-=dt;if(vfx[i].t<=0)vfx.splice(i,1);}
  for(let i=deaths.length-1;i>=0;i--){deaths[i].t+=dt;if(deaths[i].t>0.7)deaths.splice(i,1);}}
 function ambient(dt){const bm=BIOME();
  if(bm===1&&Math.random()<dt*6)parts.push({x:T+Math.random()*(room.pw-T*2),y:T-2,vx:0,vy:70+Math.random()*30,life:0.6,col:'#4aa08a'});
@@ -1520,7 +1544,7 @@ function update(dt){
  for(let i=room.hazards.length-1;i>=0;i--){const h=room.hazards[i];if(h.delay>0){h.delay-=dt;continue;}h.t-=dt;if(h.t<=0){room.hazards.splice(i,1);continue;}if(h.chase){const hx=player.x-h.x,hy=player.y-h.y,hd=Math.hypot(hx,hy)||1;h.x+=hx/hd*13*dt;h.y+=hy/hd*13*dt;}
   const fire=h.kind!=='rock';if(Math.random()<(room.hazards.length>40?0.08:0.3))parts.push({x:h.x+(Math.random()-.5)*8,y:h.y,vx:0,vy:fire?-30:-12,life:0.3,col:fire?(Math.random()<0.5?'#e8a33c':'#e04a3a'):'#8a8296',noG:true});
   if(h.mine){for(const e of room.enemies){if(e.dead||e.fireCd>0)continue;for(const hp of hitPoints(e)){if(Math.hypot(hp.x-h.x,hp.y-h.y)<hp.r+9){e.fireCd=0.45;damageEnemy(e,h.dmg,false,Math.atan2(hp.y-h.y,hp.x-h.x),'burn',false,hp);break;}}}continue;}   // your own fire hurts only them, and a foe burns once per tick however many fires it stands in
-  if(Math.hypot(player.x-h.x,player.y-h.y)<9)hurtPlayer(h.dmg||8,{x:h.x,y:h.y+1,name:h.name||"the Witch's fire",burn:fire});}
+  if(!(h.live&&h.t<h.live)&&Math.hypot(player.x-h.x,player.y-h.y)<9)hurtPlayer(h.dmg||8,{x:h.x,y:h.y+1,name:h.name||"the Witch's fire",burn:fire});}
  // The Wyrm's floor: warned tiles turn to lava once the warning runs out.
  if(room.lavaWarn){room.lavaWarn.t-=dt;if(room.lavaWarn.t<=0){for(const t of room.lavaWarn.tiles){room.solid[t.ty][t.tx]=7;if(Math.random()<0.5)burst(t.tx*T+8,t.ty*T+8,4,'#e8a33c');}room.lavaWarn=null;SFX.slam();SFX.boss();shake=Math.max(shake,0.3);}}
  // Shockwaves: an expanding ring that gets one chance to hit as it passes the player (roll through it).
@@ -1528,10 +1552,10 @@ function update(dt){
  ambient(dt);
  for(let i=projs.length-1;i>=0;i--){const q=projs[i];q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;
   if(q.home){const a=Math.atan2(player.y-q.y,player.x-q.x),ca=Math.atan2(q.vy,q.vx);let da=Math.atan2(Math.sin(a-ca),Math.cos(a-ca));da=Math.max(-q.home*dt,Math.min(q.home*dt,da));const sp=Math.hypot(q.vx,q.vy);q.vx=Math.cos(ca+da)*sp;q.vy=Math.sin(ca+da)*sp;}
-  if(q.owner==='p'&&Math.random()<0.5)parts.push({x:q.x,y:q.y,vx:0,vy:0,life:0.2,col:q.col});
+  if(q.owner==='p'){(q.hist||(q.hist=[])).unshift({x:q.x,y:q.y});if(q.hist.length>6)q.hist.pop();if(Math.random()<0.3)parts.push({x:q.x+(Math.random()-.5)*3,y:q.y+(Math.random()-.5)*3,vx:0,vy:-6,life:0.25,col:q.col,noG:true});}
   if(q.life<=0||collides(q.x,q.y,q.r)){burst(q.x,q.y,4,q.col);if(q.onEnd){q.x-=q.vx*dt*1.5;q.y-=q.vy*dt*1.5;q.onEnd(q);}projs.splice(i,1);continue;}
   if(q.owner==='p'){let hb=false;for(const b of room.props){if(b.kind==='brazier'&&!b.lit&&Math.hypot(b.x-q.x,b.y-q.y)<9){hitBrazier(b);burst(q.x,q.y,6,q.col);projs.splice(i,1);hb=true;break;}}if(hb)continue;
-   let hitE=false;for(const e of room.enemies){if(e.dead)continue;for(const hp of hitPoints(e)){if(Math.hypot(hp.x-q.x,hp.y-q.y)<hp.r+q.r+1){damageEnemy(e,q.dmg,false,Math.atan2(q.vy,q.vx),q.fx,false,hp);burst(q.x,q.y,6,q.col);projs.splice(i,1);hitE=true;break;}}if(hitE)break;}}
+   let hitE=false;for(const e of room.enemies){if(e.dead)continue;for(const hp of hitPoints(e)){if(Math.hypot(hp.x-q.x,hp.y-q.y)<hp.r+q.r+1){damageEnemy(e,q.dmg,false,Math.atan2(q.vy,q.vx),q.fx,false,hp);burst(q.x,q.y,6,q.col);vfx.push({kind:'ring',x:q.x,y:q.y,r0:2,r1:q.tag==='lance'?16:11,t:0.2,max:0.2,col:q.col,w:1});projs.splice(i,1);hitE=true;break;}}if(hitE)break;}}
   else if(Math.hypot(player.x-q.x,player.y-q.y)<player.r+q.r){const guarded=player.blocking&&player.state==='free';if(hurtPlayer(q.dmg,q)){
     if(q.hook&&!guarded&&q.from&&!q.from.dead&&q.from.state!=='stagger'){player.pull={from:q.from,t:0.45};q.from.state='windup';q.from.kind='bite';q.from.t=0.5;q.from.dir={x:0,y:0};}
     if(q.onEnd)q.onEnd(q);projs.splice(i,1);}}}
@@ -1808,8 +1832,12 @@ function drawDragon(e){const hx=e.x,hy=e.y+(e.exposed?0:-14),sp=SPR.dragon;
  if(e.state==='windup'&&e.kind==='claw'){const q=1-e.t/0.9;ctx.strokeStyle=hexA('#e04a3a',0.4+0.4*Math.abs(Math.sin(time*14)));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(e.slam.x,e.slam.y,24,17,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(e.slam.x,e.slam.y,8+10*q,5+6*q,0,0,Math.PI*2);ctx.fill();}
  if(e.kind==='tail'&&e.state==='windup'){ctx.strokeStyle=hexA('#e04a3a',0.35+0.35*Math.abs(Math.sin(time*12)));ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(0,e.tailY);ctx.lineTo(room.pw,e.tailY);ctx.stroke();ctx.setLineDash([]);}
  if(e.kind==='tail'&&e.state==='attack'){const tx=e.tailX,ty=e.tailY,dir=e.tailDir;ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(tx-dir*22,ty+4,42,4,0,0,Math.PI*2);ctx.fill();
-  for(let i=8;i>=0;i--){const sx=tx-dir*i*7,r=6-i*0.45;ctx.fillStyle=K;ctx.beginPath();ctx.arc(sx,ty-3,r+1,0,Math.PI*2);ctx.fill();ctx.fillStyle=i%2?'#6a1e1e':'#8a2a2a';ctx.beginPath();ctx.arc(sx,ty-3,r,0,Math.PI*2);ctx.fill();}
+  for(let i=11;i>=0;i--){const sx=tx-dir*i*7,sy=ty-3+Math.sin(time*16-i*0.8)*i*0.55,r=6.5-i*0.4;ctx.fillStyle=K;ctx.beginPath();ctx.arc(sx,sy,r+1,0,Math.PI*2);ctx.fill();ctx.fillStyle=i%2?'#6a1e1e':'#8a2a2a';ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);ctx.fill();if(i%3===0){ctx.fillStyle='#4a1616';ctx.fillRect(Math.round(sx)-1,Math.round(sy-r)-2,2,3);}}   // it snakes as it sweeps, spines along the back
   ctx.fillStyle='#f0ece0';ctx.beginPath();ctx.moveTo(tx+dir*5,ty-3);ctx.lineTo(tx+dir*17,ty-7);ctx.lineTo(tx+dir*7,ty+1);ctx.closePath();ctx.fill();}
+ if(e.kind==='tailslam'&&(e.state==='windup'||e.state==='attack')){const lift=e.state==='windup'?56+Math.sin(time*9)*3:56*Math.max(0,e.t/0.2),q=e.state==='windup'?1-e.t/0.6:1;
+  ctx.strokeStyle=hexA('#e04a3a',0.4+0.4*Math.abs(Math.sin(time*14)));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(e.slam.x,e.slam.y,20,14,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(e.slam.x,e.slam.y+2,6+9*q,4+5*q,0,0,Math.PI*2);ctx.fill();
+  drawTailCurve(tailCurve(e,lift));}
+ if(e.tailDown>0){const k=e.tailDown/0.55;ctx.globalAlpha=Math.min(1,k*2);drawTailCurve(tailCurve(e,0));ctx.globalAlpha=1;}   // it lies in the rubble a moment, then whips away
  if(e.state==='windup'&&e.kind==='fire'){ctx.strokeStyle=hexA('#e8a33c',0.3+0.3*Math.abs(Math.sin(time*12)));ctx.lineWidth=1;ctx.setLineDash([3,3]);for(const a of[e.fireA-0.9,e.fireA+0.9]){ctx.beginPath();ctx.moveTo(hx,hy+8);ctx.lineTo(hx+Math.cos(a)*300,hy+8+Math.sin(a)*300);ctx.stroke();}ctx.setLineDash([]);}
  // wings spread along the top wall behind the head, breathing slowly
  {const br=Math.sin(time*1.3)*1.5;for(const s of[-1,1]){const wx=hx+s*14;ctx.fillStyle=K;ctx.beginPath();ctx.moveTo(wx,-8);ctx.lineTo(wx+s*52,-8);ctx.lineTo(wx+s*126,4+br);ctx.lineTo(wx+s*112,24+br);ctx.lineTo(wx+s*86,15+br);ctx.lineTo(wx+s*58,22+br);ctx.lineTo(wx+s*32,14+br);ctx.lineTo(wx,10);ctx.closePath();ctx.fill();
@@ -1912,6 +1940,24 @@ function drawFlail(p,sx,sy,sa,moving,a){const dtf=Math.max(0,Math.min(0.05,time-
  ctx.fillStyle=K;ctx.beginPath();ctx.arc(bx,by,4,0,Math.PI*2);ctx.fill();ctx.fillStyle=WEAPONS.mace.col;ctx.beginPath();ctx.arc(bx,by,3,0,Math.PI*2);ctx.fill();
  ctx.fillStyle='#9aa4b4';for(let i=0;i<4;i++){const q=p.fa+i*Math.PI/2+Math.PI/4;ctx.fillRect(bx+Math.cos(q)*3.4-0.7,by+Math.sin(q)*3.4-0.7,1.4,1.4);}ctx.fillStyle='#b8c4d4';ctx.fillRect(Math.round(bx)-1,Math.round(by)-1,1,1);
  return[bx,by];}
+// Your projectiles: a fading trail behind a bright core; bone shards tumble, the lance is a tongue of flame.
+function drawPlayerProj(q){const col=q.col,h=q.hist||[],ang=Math.atan2(q.vy,q.vx);
+ for(let i=h.length-1;i>=0;i--){const k=1-i/(h.length+1);ctx.globalAlpha=k*0.45;ctx.fillStyle=col;ctx.beginPath();ctx.arc(h[i].x,h[i].y,Math.max(0.6,q.r*k),0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+ if(q.tag==='shard'){ctx.save();ctx.translate(q.x,q.y);ctx.rotate(ang+Math.sin(time*40+q.x)*0.3);ctx.fillStyle=K;ctx.fillRect(-5,-2,10,4);ctx.fillStyle='#e8e0d0';ctx.fillRect(-4,-1,8,2);ctx.fillStyle='#ffffff';ctx.fillRect(1,-1,2,1);ctx.restore();}
+ else if(q.tag==='lance'){ctx.save();ctx.translate(q.x,q.y);ctx.rotate(ang);ctx.fillStyle='#e04a3a';ctx.beginPath();ctx.ellipse(-4,0,9,3.5,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e8a33c';ctx.beginPath();ctx.ellipse(-2,0,6,2.5,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff0c0';ctx.beginPath();ctx.ellipse(1,0,3,1.5,0,0,Math.PI*2);ctx.fill();ctx.restore();
+  if(Math.random()<0.7)parts.push({x:q.x-Math.cos(ang)*6+(Math.random()-.5)*4,y:q.y-Math.sin(ang)*6+(Math.random()-.5)*4,vx:(Math.random()-.5)*20,vy:-20-Math.random()*20,life:0.3,col:Math.random()<0.5?'#e8a33c':'#e04a3a',noG:true});light(q.x,q.y,18,'rgba(232,163,60,A)',0.5);}
+ else{ctx.fillStyle=col;ctx.beginPath();ctx.arc(q.x,q.y,q.r+0.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(q.x,q.y,Math.max(1,q.r-1.2),0,Math.PI*2);ctx.fill();light(q.x,q.y,16,hexA(col,'A'),0.5);}}
+// Spell effects that aren't particles: expanding rings, rune circles, the Soul Chain, Shade Step's ghosts, and the Wyrm's globs in flight.
+function drawFx(){for(const f of vfx){const k=1-f.t/f.max;
+ if(f.kind==='ring'){const r=f.r0+(f.r1-f.r0)*(1-Math.pow(1-k,2));ctx.strokeStyle=hexA(f.col,Math.max(0,0.9-k));ctx.lineWidth=f.w||2;ctx.beginPath();ctx.ellipse(f.x,f.y,r,r*0.75,0,0,Math.PI*2);ctx.stroke();if(f.inner){ctx.strokeStyle=hexA('#ffffff',Math.max(0,0.5-k*0.5));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(f.x,f.y,Math.max(1,r-3),Math.max(1,r-3)*0.75,0,0,Math.PI*2);ctx.stroke();}}
+ else if(f.kind==='rune'){const a=f.grow?Math.min(1,k*1.5):1-k,rot=time*(f.grow?3:-2),R=f.r||11;ctx.save();ctx.translate(f.x,f.y);ctx.scale(1,0.6);ctx.strokeStyle=hexA(f.col,a*0.9);ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,R,0,Math.PI*2);ctx.stroke();
+  for(const[o,sg]of[[0,1],[1.05,-1]]){ctx.beginPath();for(let i=0;i<3;i++){const q=sg*rot+o+i*2.094;ctx[i?'lineTo':'moveTo'](Math.cos(q)*R,Math.sin(q)*R);}ctx.closePath();ctx.stroke();}
+  ctx.fillStyle=hexA(f.col,a);for(let i=0;i<6;i++){const q=rot*0.5+i*1.047;ctx.fillRect(Math.cos(q)*(R+3)-1,Math.sin(q)*(R+3)-1,2,2);}ctx.restore();light(f.x,f.y,R+8,hexA(f.col,'A'),a*0.4);}
+ else if(f.kind==='chain'){const dx=f.x2-f.x1,dy=f.y2-f.y1,L=Math.hypot(dx,dy),cnt2=Math.max(2,Math.round(L/5));ctx.save();ctx.translate(f.x1,f.y1);ctx.rotate(Math.atan2(dy,dx));ctx.globalAlpha=Math.max(0,1-k);for(let i=0;i<cnt2;i++){const x=i*L/cnt2,sag=Math.sin(i/cnt2*Math.PI)*5*k;ctx.fillStyle=K;ctx.fillRect(x,sag-2,5,4);ctx.fillStyle=i%2?'#cfc4b0':'#8a8296';ctx.fillRect(x+1,sag-1,3,2);}ctx.restore();ctx.globalAlpha=1;}
+ else if(f.kind==='ghost'){ctx.save();ctx.globalAlpha=Math.max(0,0.6*(1-k));drawSpr(SPR.player,f.x,f.y,f.facing,true);ctx.restore();light(f.x,f.y-6,12,'rgba(92,224,208,A)',0.4*(1-k));}}
+ for(const e of room.enemies)if(e.type==='dragon'&&e.globs)for(const g of e.globs){const q=g.t/g.dur,gx=g.x0+(g.x1-g.x0)*q,gy=g.y0+(g.y1-g.y0)*q,z=Math.sin(q*Math.PI)*46;
+  ctx.strokeStyle=hexA('#e8a33c',0.3+0.4*Math.abs(Math.sin(time*14)));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(g.x1,g.y1,12,8,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(gx,gy+2,4+3*q,2.5+2*q,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=K;ctx.beginPath();ctx.arc(gx,gy-z,4.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e04a3a';ctx.beginPath();ctx.arc(gx,gy-z,3.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff0c0';ctx.beginPath();ctx.arc(gx-1,gy-z-1,1.5,0,Math.PI*2);ctx.fill();light(gx,gy-z,16,'rgba(232,163,60,A)',0.5);}}
 function drawPlayer(){
  const p=player;const w=wpn();
  if(state==='dead'){const z=Math.min(1,deadT/0.5);ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(p.x,p.y+p.r,7,2,0,0,Math.PI*2);ctx.fill();ctx.save();ctx.translate(p.x,p.y+p.r);ctx.rotate(Math.PI/2*z*(p.facing>=0?1:-1));ctx.translate(-p.x,-(p.y+p.r));drawSpr(SPR.player,p.x,p.y+p.r,p.facing,deadT<0.15);ctx.restore();return;}
@@ -1929,6 +1975,7 @@ function drawPlayer(){
  else{if(p.inv>0&&Math.floor(p.inv*20)%2===0)ctx.globalAlpha=0.5;if(p.appearT>0){const q=p.appearT/0.3;ctx.translate(p.x,p.y+p.r);ctx.scale(1-0.6*q,1-0.6*q);ctx.translate(-p.x,-(p.y+p.r));}if(idle){ctx.translate(p.x,p.y+p.r);ctx.scale(1-0.015*br,1+0.04*br);ctx.translate(-p.x,-(p.y+p.r));}const wfr=moving?[SPR.walk[0],SPR.player,SPR.walk[1],SPR.player][wframe]:SPR.player;drawSpr(wfr,p.x,p.y+p.r-bob-ib,p.facing,p.flash>0);}
  ctx.restore();
  if(p.burn>0){const f=Math.floor(time*12)%2;ctx.fillStyle='#e04a3a';ctx.fillRect(Math.round(p.x)-3+f,Math.round(p.y)-12,3,3);ctx.fillRect(Math.round(p.x)+1-f,Math.round(p.y)-9,2,2);ctx.fillStyle='#e8a33c';ctx.fillRect(Math.round(p.x)-2+f,Math.round(p.y)-14+f,2,2);light(p.x,p.y-8,14,'rgba(232,163,60,A)',0.3);}
+ if(p.ward>0){for(let i=0;i<3;i++){const a=time*3.2+i*2.094,x=Math.round(p.x+Math.cos(a)*10),y=Math.round(p.y-5+Math.sin(a)*5);ctx.fillStyle=K;ctx.fillRect(x-2,y-2,4,5);ctx.fillStyle='#f4c968';ctx.fillRect(x-1,y-1,2,3);ctx.fillStyle='#fff0c0';ctx.fillRect(x-1,y-1,1,1);}light(p.x,p.y-4,16,'rgba(244,201,104,A)',0.25+0.1*Math.sin(time*6));}   // the Bone Ward circles you
  if(rolling)return;
  if(p.blocking){const bash=p.parryT>0?Math.min(1,p.parryT/0.2):0,pa=p.parryAng||0,par=p.blockT<PARRY_WIN||p.parryT>0,x=Math.round(p.x+Math.cos(pa)*3*bash),y=Math.round(p.y+Math.sin(pa)*2*bash)-4-ib,raise=Math.min(1,p.blockT*8);   // shield held up toward the camera, guarding all sides
   const w=10,h=12,top=y-Math.round(h/2)-Math.round(raise*2);ctx.fillStyle=K;ctx.fillRect(x-w/2-1,top-1,w+2,h);ctx.fillRect(x-w/2,top+h-1,w,2);ctx.fillRect(x-2,top+h+1,4,1);
@@ -2204,12 +2251,14 @@ function draw(){
  for(const h of room.hazards){const hx=Math.round(h.x),hy=Math.round(h.y);
   if(h.delay>0){if(h.warn&&h.delay>h.warn)continue;ctx.strokeStyle=hexA(h.col||'#e8a33c',0.25+0.35*Math.abs(Math.sin(time*14)));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(hx,hy,7,4,0,0,Math.PI*2);ctx.stroke();continue;}
   if(h.kind==='rock'){const f=Math.floor(time*8+h.x)%2;ctx.fillStyle='#2a2a40';ctx.fillRect(hx-6,hy-2,12,4);ctx.fillStyle='#8a8296';ctx.fillRect(hx-4,hy-6-f,3,5);ctx.fillRect(hx+1,hy-8+f,3,7);ctx.fillRect(hx-1,hy-5,2,4);ctx.fillStyle='#d9d0bd';ctx.fillRect(hx-3,hy-6-f,1,1);ctx.fillRect(hx+2,hy-8+f,1,1);continue;}
-  const f=Math.floor(time*10+h.x)%3;ctx.fillStyle='#7a2a14';ctx.fillRect(hx-5,hy-2,10,4);ctx.fillStyle='#e04a3a';ctx.fillRect(hx-4,hy-5-f,8,5);ctx.fillStyle='#e8a33c';ctx.fillRect(hx-2,hy-7-((f+1)%3),4,4);ctx.fillStyle='#fff0c0';ctx.fillRect(hx-1,hy-5,2,2);light(h.x,h.y-4,16,'rgba(232,163,60,A)',0.3);}
+  const f=Math.floor(time*10+h.x)%3;if(h.flash){const k=Math.max(0.1,(h.t-h.live)/0.18),up=Math.round(8*k);ctx.fillStyle='#e04a3a';ctx.fillRect(hx-4,hy-8-up-f,8,6+up);ctx.fillStyle='#e8a33c';ctx.fillRect(hx-3,hy-11-up+f,6,5);ctx.fillStyle='#fff0c0';ctx.fillRect(hx-1,hy-12-up+f,2,3);light(h.x,h.y-8,26,'rgba(232,163,60,A)',0.2+0.35*k);}
+  ctx.fillStyle='#7a2a14';ctx.fillRect(hx-5,hy-2,10,4);ctx.fillStyle='#e04a3a';ctx.fillRect(hx-4,hy-5-f,8,5);ctx.fillStyle='#e8a33c';ctx.fillRect(hx-2,hy-7-((f+1)%3),4,4);ctx.fillStyle='#fff0c0';ctx.fillRect(hx-1,hy-5,2,2);light(h.x,h.y-4,16,'rgba(232,163,60,A)',0.3);}
  drawTelegraphs();
  for(const w of room.waves){const a=0.15+0.75*(1-w.r/w.maxR);ctx.strokeStyle=hexA(w.col,a);ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(w.x,w.y,w.r,w.r*0.75,0,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=hexA('#fff0c0',a*0.5);ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(w.x,w.y,Math.max(1,w.r-2),Math.max(1,w.r-2)*0.75,0,0,Math.PI*2);ctx.stroke();}
  ents.push({y:player.y,f:drawPlayer});room.decor.forEach(d=>{if(!FLAT_DECOR.has(d.kind))ents.push({y:d.kind==='lantern'?d.y+40:d.y,f:()=>drawDecor(d)});});room.items.forEach(it=>ents.push({y:it.y,f:()=>drawItem(it)}));room.props.forEach(b=>{if(b.kind==='plate'||b.kind==='stone')drawProp(b);else ents.push({y:b.y+4,f:()=>drawProp(b)});});
  ents.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
- for(const q of projs){ctx.fillStyle=q.col;if(q.hook){if(q.from&&!q.from.dead){ctx.strokeStyle='#cfc4b0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q.from.x+6,q.from.y-4);ctx.lineTo(q.x,q.y);ctx.stroke();}ctx.fillStyle=K;ctx.fillRect(Math.round(q.x)-2,Math.round(q.y)-2,5,5);ctx.fillStyle='#e8e0d0';ctx.fillRect(Math.round(q.x)-1,Math.round(q.y)-1,3,3);continue;}if(q.sword){ctx.save();ctx.translate(q.x,q.y);ctx.rotate(time*25);ctx.strokeStyle='#b06a2a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(8,0);ctx.stroke();ctx.strokeStyle='#e8a33c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(8,0);ctx.stroke();ctx.restore();continue;}if(q.owner==='p'){ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.fill();}else{ctx.lineWidth=1;ctx.strokeStyle=q.col;ctx.beginPath();ctx.moveTo(q.x,q.y);const l=Math.hypot(q.vx,q.vy);ctx.lineTo(q.x-q.vx/l*6,q.y-q.vy/l*6);ctx.stroke();}}
+ for(const q of projs){ctx.fillStyle=q.col;if(q.hook){if(q.from&&!q.from.dead){ctx.strokeStyle='#cfc4b0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q.from.x+6,q.from.y-4);ctx.lineTo(q.x,q.y);ctx.stroke();}ctx.fillStyle=K;ctx.fillRect(Math.round(q.x)-2,Math.round(q.y)-2,5,5);ctx.fillStyle='#e8e0d0';ctx.fillRect(Math.round(q.x)-1,Math.round(q.y)-1,3,3);continue;}if(q.sword){ctx.save();ctx.translate(q.x,q.y);ctx.rotate(time*25);ctx.strokeStyle='#b06a2a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(8,0);ctx.stroke();ctx.strokeStyle='#e8a33c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(8,0);ctx.stroke();ctx.restore();continue;}if(q.owner==='p'){drawPlayerProj(q);}else{ctx.lineWidth=1;ctx.strokeStyle=q.col;ctx.beginPath();ctx.moveTo(q.x,q.y);const l=Math.hypot(q.vx,q.vy);ctx.lineTo(q.x-q.vx/l*6,q.y-q.vy/l*6);ctx.stroke();}}
+ drawFx();
  if(parryFx){const f=parryFx,k=1-f.t/f.max,e=1-Math.pow(1-k,3);   // the parry flash: a star that snaps out, a ring that races away, a shield-arc facing the blow
   ctx.save();ctx.translate(Math.round(f.x),Math.round(f.y));
   const rr=4+e*26;ctx.strokeStyle=hexA('#f4c968',Math.max(0,0.9-e));ctx.lineWidth=Math.max(1,3-e*2.5);ctx.beginPath();ctx.ellipse(0,0,rr,rr*0.7,0,0,Math.PI*2);ctx.stroke();

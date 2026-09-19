@@ -266,7 +266,9 @@ const K='#12101a';
 // Each bearing has its own pixel art (12 wide, 16 tall, feet on the last two rows). Walk frames are derived by nudging the legs apart/together;
 // locked bearings show their silhouette in shadow so you can see the shape you are working toward.
 const SKINS={
- footman:{name:'Footman',desc:'Plain steel. It will do.',rows:['....kkkk....','...kaaaak...','..kaaaaaak..','..kaaaaaak..','..kAkeekAk..','..kAAAAAAk..','..krrrrrrk..','.kaakrcrkaak','kaakcCCckaak','kAAkcCCckAAk','.kkkcCCckkk.','...kcCCck...','...kkcckk...','..kaak.kaak.','..kaak.kaak.','..kkkk.kkkk.'],pal:{k:K,a:'#9a9a98',A:'#5c5c5a',c:'#4a4038',C:'#302a24',e:'#e8e0d0',o:null,r:'#c8302a'}},
+ footman:{name:'Footman',desc:'Plain steel. It will do.',rows:['....kkkk....','...kaaaak...','..kaaaaaak..','..kaaaaaak..','..kAkeekAk..','..kAAAAAAk..','..krrrrrrk..','.kaakrcrkaak','kaakcCCckaak','kAAkcCCckAAk','.kkkcCCckkk.','...kcCCck...','...kkcckk...','..kaak.kaak.','..kaak.kaak.','..kkkk.kkkk.'],pal:{k:K,a:'#9a9a98',A:'#5c5c5a',c:'#4a4038',C:'#302a24',e:'#e8e0d0',o:null,r:'#c8302a'},
+  views:{back:['....kkkk....','...kaaaak...','..kaaAAaak..','..kaaAAaak..','..kaaAAaak..','..kAAAAAAk..','..krrrrrrk..','.kaakrrrkaak','kaakArrAkaak','kAAkAaaAkAAk','.kkkAaaAkkk.','...kAaaAk...','...kkAAkk...','..kaak.kaak.','..kaak.kaak.','..kkkk.kkkk.'],side:['....kkkk....','...kaaaaak..','..kaaaaaaak.','..kaaaaAAek.','..kaaaaAAAk.','..kAAAAAAAk.','.rkrrrrrrk..','rrkccccckak.','..kcCCcckak.','..kcCCcckak.','..kkcCcckk..','...kcCcck...','...kkcckk...','...kaakaak..','...kaakaak..','...kkkkkkk..'],fd:['....kkkk....','...kaaaak...','..kaaaaaak..','..kaaaaaak..','..kAAkekek..','..kAAAAAAk..','..krrrrrrk..','.kakrccrkaak','.kakcCCcckak','.kAkcCCcckAk','..kkcCCcckk.','...kcCCcck..','...kkccckk..','..kaak.kaak.','..kaak.kaak.','..kkkk.kkkk.'],bd:['....kkkk....','...kaaaak...','..kaaaAaak..','..kaaaAaak..','..kaaaAaak..','..kAAAAAAk..','..krrrrrrk..','.kaakrrAkak.','kaakArrAkak.','kAAkAaaAkAk.','.kkkAaaAkk..','...kAaaAk...','...kkAAkk...','..kaak.kaak.','..kaak.kaak.','..kkkk.kkkk.']}},   // eight directions from five drawings: front, back, side, front-diagonal, back-diagonal; the other three are mirrors
+
  hollow:{name:'Hollow',desc:'Fell 40 hollows',rows:['....kkkk....','...kCCCCk...','..kCCCCCCk..','.kCkwwwwkCk.','.kCkwewewkCk','.kCkwwwwkCk.','..kCkkkkCk..','.kCCCCCCCCk.','kCCcCCCCcCCk','kCCcCCCCcCCk','.kCCCCCCCCk.','.kCkCCCCkCk.','.kk.kCCk.kk.','...kwk.kwk..','...kwk.kwk..','...kkk.kkk..'],pal:{k:K,a:'#3a3440',A:'#2a2430',c:'#3a3440',C:'#2a2430',e:'#e04a3a',o:null,w:'#cfc4b0'},cond:t=>t.gruntKills>=40,prog:t=>[t.gruntKills,40]},
  cultist:{name:'Cultist',desc:'Fell 20 cultists',rows:['.....kk.....','....kCCk....','....kCCk....','...kCCCCk...','...kCCCCk...','..kCkekekCk.','..kCCCCCCk..','.kCCCCCCCCk.','kCCCkggkCCCk','kCCCkggkCCCk','.kCCCCCCCCk.','.kCCCCCCCCk.','.kCCCCCCCCk.','.kCCCCCCCCk.','.kCCkCCkCCk.','.kkkk..kkkk.'],pal:{k:K,a:'#5a3a7a',A:'#3a2450',c:'#5a3a7a',C:'#3a2450',e:'#f4c968',o:null,g:'#f4c968'},cond:t=>t.archerKills>=20,prog:t=>[t.archerKills,20]},
  duelist:{name:'Duelist',desc:'Parry 10 strikes',rows:['.......oo...','.....kkko...','....kaaak...','.kkkkaaakkkk','....ksssk...','....kseesk..','....ksssk...','...kkkkkk...','..kcCcccCck.','.kCkcccccck.','.kCkccccckk.','.kCCkcccck..','..kkkkkkkk..','...kAk.kAk..','...kAk.kAk..','...kkk.kkk..'],pal:{k:K,a:'#3a4050',A:'#2a2a3a',c:'#c8302a',C:'#7a1e1a',e:'#5ce0d0',o:'#f0ece0',s:'#d8c0a0'},cond:t=>t.parries>=10,prog:t=>[t.parries,10]},
@@ -287,8 +289,12 @@ const SKINS={
 };
 const legWalk=(rows,spread)=>rows.map((r,i)=>{if(i<rows.length-2)return r;const m=r.length>>1,L=r.slice(0,m),R=r.slice(m),sl=s=>s.slice(1)+'.',sr=s=>'.'+s.slice(0,-1);return spread?sl(L)+sr(R):sr(L)+sl(R);});
 const ROLL_ROWS=["..kkkkkk..",".kAAaaAAk.","kAcCkkCcAk","kAckaakcAk","kAckAAkcAk","kAcCkkCcAk",".kAAaaAAk.","..kkkkkk.."];
-const SKIN_IDS=Object.keys(SKINS);const skinSprites={},rollSprites={},walkSprites={},lockedSprites={};
-for(const id of SKIN_IDS){const sk=SKINS[id];skinSprites[id]=mkSpr(sk.rows,sk.pal);rollSprites[id]=mkSpr(ROLL_ROWS,sk.pal);walkSprites[id]=[mkSpr(legWalk(sk.rows,true),sk.pal),mkSpr(legWalk(sk.rows,false),sk.pal)];const dark={};for(const k in sk.pal)dark[k]=sk.pal[k]?'#1e1d2c':null;lockedSprites[id]=mkSpr(sk.rows,dark);}
+const SKIN_IDS=Object.keys(SKINS);const skinSprites={},rollSprites={},walkSprites={},lockedSprites={},skinViews={};
+for(const id of SKIN_IDS){const sk=SKINS[id];skinSprites[id]=mkSpr(sk.rows,sk.pal);rollSprites[id]=mkSpr(ROLL_ROWS,sk.pal);walkSprites[id]=[mkSpr(legWalk(sk.rows,true),sk.pal),mkSpr(legWalk(sk.rows,false),sk.pal)];const dark={};for(const k in sk.pal)dark[k]=sk.pal[k]?'#1e1d2c':null;lockedSprites[id]=mkSpr(sk.rows,dark);
+ if(sk.views){const v={front:{spr:skinSprites[id],walk:walkSprites[id]}};for(const nm in sk.views){const r=sk.views[nm];v[nm]={spr:mkSpr(r,sk.pal),walk:[mkSpr(legWalk(r,true),sk.pal),mkSpr(legWalk(r,false),sk.pal)]};}skinViews[id]=v;}}
+// Which drawing faces the way you aim. Eight sectors of the aim angle; y runs down, so sector 2 is south (the front view) and 6 is north (the back).
+function playerView(p){const v=SPR.views;if(!v)return{spr:SPR.player,walk:SPR.walk,flip:p.facing};const d=((Math.round(p.aim/(Math.PI/4))%8)+8)%8;
+ const pick=[['side',1],['fd',1],['front',1],['fd',-1],['side',-1],['bd',-1],['back',1],['bd',1]][d];const set=v[pick[0]]||v.front;return{spr:set.spr,walk:set.walk,flip:pick[1]};}
 // ---------- save (this device only) ----------
 const SAVE_KEY='gloomhollow_save_v1';
 let save={stats:{gruntKills:0,archerKills:0,bossKills:0,parries:0,corpses:0,secrets:0,puzzles:0},unlocked:['footman'],skin:'footman'};
@@ -296,7 +302,7 @@ try{const raw=localStorage.getItem(SAVE_KEY);if(raw){const o=JSON.parse(raw);sav
 function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}}
 function stat(k,n=1){save.stats[k]=(save.stats[k]||0)+n;checkUnlocks();persist();}
 function checkUnlocks(){for(const id of SKIN_IDS){const sk=SKINS[id];if(sk.cond&&!save.unlocked.includes(id)&&sk.cond(save.stats)){save.unlocked.push(id);showMsg('Bearing unlocked: '+sk.name,3.5);SFX.unlock();}}}
-function equipSkin(id){save.skin=id;persist();SPR.player=skinSprites[id];SPR.roll=rollSprites[id];SPR.walk=walkSprites[id];}
+function equipSkin(id){save.skin=id;persist();SPR.player=skinSprites[id];SPR.roll=rollSprites[id];SPR.walk=walkSprites[id];SPR.views=skinViews[id]||null;}
 let skinCursor=0;
 // Boss rows are kept separately so the ascended (tier 2) forms can reuse them with their own palettes.
 const ROWS_BRUTE=[  // the Warden, 26x32: hunched, bone pauldrons, one horn whole and one snapped
@@ -304,7 +310,7 @@ const ROWS_BRUTE=[  // the Warden, 26x32: hunched, bone pauldrons, one horn whol
 const ROWS_KNIGHT=[".....kkkk.....","....kaaaak....","...kaaaaaak...","...kAeAAeAk...","...kaAaaAak...","....kkaakk....","..kkkAAAAkkk..",".kAAkaAAakAAk.","kAAAkaAAakAAAk","kAAkkAAAAkkAAk","kAkkkaAAakkkAk","kkk.kAAAAk.kkk","....kkaakk....","....kAAAAk....","....kAkkAk....","...kAAk.kAAk..","...kAAk.kAAk..","...kkkk.kkkk.."];
 const ROWS_WITCH=[".....kk.....","....kppk....","...kppppk...","..kppppppk..","..kpkkkkpk..","..kpkokokpk.","..kpkkkkpk..","..kppppppk..",".kppppppppk.",".kppPPPPppk.","kppPPPPPPppk","kppPPPPPPppk","kppPPPPPPppk",".kpPPPPPPpk.",".kPPPPPPPPk.",".kkkkkkkkkk."];
 const SPR={
- player:skinSprites[save.skin],roll:rollSprites[save.skin],walk:walkSprites[save.skin],
+ player:skinSprites[save.skin],roll:rollSprites[save.skin],walk:walkSprites[save.skin],views:skinViews[save.skin]||null,
  grunt:mkSpr([
   "...kkkk...","..kbbbbk..",".kbrbbrbk.",".kbbBBbbk.","..kbkkbk..","..kkBBkk..",".kdkBbBkdk",".kdkbBbkdk","..kkBBkk..","..kBkkBk..","..kBk.kBk.","..kkk.kkk."],
   {k:K,b:'#cfc4b0',B:'#9a8f7c',r:'#e04a3a',d:'#2a2430'}),
@@ -2124,13 +2130,13 @@ function drawPlayer(){
  const idle=p.state==='free'&&!moving,br=idle?Math.sin(time*2.6):0,ib=idle&&br>0.35?1:0;
  ctx.save();
  if(rolling){const prog=1-p.t/0.34,dir=p.rollDir.x>=0?1:-1;
-  if(prog<0.18||prog>0.84){const sq=prog<0.18?prog/0.18:(1-prog)/0.16;ctx.translate(p.x,p.y+p.r);ctx.scale(1+0.25*sq,1-0.3*sq);ctx.translate(-p.x,-(p.y+p.r));drawSpr(SPR.player,p.x,p.y+p.r,p.facing,p.flash>0);}
+  if(prog<0.18||prog>0.84){const sq=prog<0.18?prog/0.18:(1-prog)/0.16,pv=playerView(p);ctx.translate(p.x,p.y+p.r);ctx.scale(1+0.25*sq,1-0.3*sq);ctx.translate(-p.x,-(p.y+p.r));drawSpr(pv.spr,p.x,p.y+p.r,pv.flip,p.flash>0);}
   else{const q=(prog-0.18)/0.66,hop=Math.sin(q*Math.PI)*4;ctx.translate(p.x,p.y+1-hop);ctx.rotate(q*Math.PI*2*dir);ctx.drawImage(SPR.roll.img,-5,-4);
    if(Math.random()<0.6)parts.push({x:p.x-p.rollDir.x*4+(Math.random()-.5)*4,y:p.y+p.r-1,vx:-p.rollDir.x*20,vy:-6-Math.random()*8,life:0.25,col:'#6d6578'});}}
  else if(p.state==='fall'){const k=1-p.t/0.75,sc=Math.max(0.15,1-0.85*k*k),drop=10*k;ctx.globalAlpha=Math.max(0,1-k*1.1);ctx.translate(p.x,p.y+p.r+drop);ctx.scale(sc,sc);ctx.rotate(Math.sin(k*9)*0.35*k);ctx.translate(-p.x,-(p.y+p.r));drawSpr(SPR.roll,p.x,p.y+p.r,p.facing,false);}
- else{if(p.inv>0&&Math.floor(p.inv*20)%2===0)ctx.globalAlpha=0.5;if(p.appearT>0){const q=p.appearT/0.3;ctx.translate(p.x,p.y+p.r);ctx.scale(1-0.6*q,1-0.6*q);ctx.translate(-p.x,-(p.y+p.r));}const wfr=moving?[SPR.walk[0],SPR.player,SPR.walk[1],SPR.player][wframe]:SPR.player;
-  if(idle){const sp=SPR.player,H=sp.h,fy=p.y+p.r,legs=3,neck=7,swell=1+0.08*Math.max(0,br),wh=p.flash>0;drawSprRows(sp,p.x,fy,p.facing,wh,H-legs,H,0,1);drawSprRows(sp,p.x,fy,p.facing,wh,neck,H-legs,-ib,swell);drawSprRows(sp,p.x,fy,p.facing,wh,0,neck,-ib,1);}   // breathing from the chest
-  else drawSpr(wfr,p.x,p.y+p.r-bob,p.facing,p.flash>0);}
+ else{if(p.inv>0&&Math.floor(p.inv*20)%2===0)ctx.globalAlpha=0.5;if(p.appearT>0){const q=p.appearT/0.3;ctx.translate(p.x,p.y+p.r);ctx.scale(1-0.6*q,1-0.6*q);ctx.translate(-p.x,-(p.y+p.r));}const pv=playerView(p),wfr=moving?[pv.walk[0],pv.spr,pv.walk[1],pv.spr][wframe]:pv.spr;
+  if(idle){const sp=pv.spr,H=sp.h,fy=p.y+p.r,legs=3,neck=7,swell=1+0.08*Math.max(0,br),wh=p.flash>0;drawSprRows(sp,p.x,fy,pv.flip,wh,H-legs,H,0,1);drawSprRows(sp,p.x,fy,pv.flip,wh,neck,H-legs,-ib,swell);drawSprRows(sp,p.x,fy,pv.flip,wh,0,neck,-ib,1);}   // breathing from the chest
+  else drawSpr(wfr,p.x,p.y+p.r-bob,pv.flip,p.flash>0);}
  ctx.restore();
  if(p.burn>0){const f=Math.floor(time*12)%2;ctx.fillStyle='#e04a3a';ctx.fillRect(Math.round(p.x)-3+f,Math.round(p.y)-12,3,3);ctx.fillRect(Math.round(p.x)+1-f,Math.round(p.y)-9,2,2);ctx.fillStyle='#e8a33c';ctx.fillRect(Math.round(p.x)-2+f,Math.round(p.y)-14+f,2,2);light(p.x,p.y-8,14,'rgba(232,163,60,A)',0.3);}
  if(p.stunT>0){for(let i=0;i<3;i++){const a=time*6+i*2.094;ctx.fillStyle=i===Math.floor(time*9)%3?'#fff0c0':'#f4c968';ctx.fillRect(Math.round(p.x+Math.cos(a)*7)-1,Math.round(p.y-17+Math.sin(a)*2)-1,2,2);}}   // stars while the toll rings in your ears

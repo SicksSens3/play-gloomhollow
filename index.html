@@ -930,7 +930,7 @@ function giveAffix(e){const pool=AFFIXES.filter(a=>!(a==='burning'&&(e.type==='s
  e.name='a '+e.affix+' '+ETYPES[e.type].name.replace(/^an? /,'');}
 // per-frame trailing effects for affixes, plus the Warden's footfalls
 function enemyTick(e,dt){if(e.dead)return;if(e.thornCd>0)e.thornCd-=dt;
- if(e.type==='brute'&&e.moving&&!e.z){e.stepT=(e.stepT||0)+dt;if(e.stepT>0.4){e.stepT=0;SFX.stomp();shake=Math.max(shake,0.04);}}
+ if((e.type==='brute'||e.type==='hellsbell')&&e.moving&&!e.z){e.stepT=(e.stepT||0)+dt;if(e.stepT>(e.type==='hellsbell'?0.48:0.4)){e.stepT=0;SFX.stomp();shake=Math.max(shake,0.04);if(e.type==='hellsbell')tone(120,0.12,'sine',0.05,90);}}   // giants stomp; the bell rings faintly with each of his
  if(!e.affix)return;
  if(e.affix==='burning'){if(Math.random()<0.35)parts.push({x:e.x+(Math.random()-.5)*8,y:e.y-2-Math.random()*6,vx:0,vy:-22,life:0.3,col:Math.random()<0.5?'#e8a33c':'#e04a3a',noG:true});if(e.moving){e.fireT=(e.fireT||0)+dt;if(e.fireT>0.3){e.fireT=0;room.hazards.push({x:e.x,y:e.y+2,t:0.9,dmg:5,name:e.name+"'s fire"});}}}
  else if(e.affix==='swift'){if(e.moving&&Math.random()<0.6)parts.push({x:e.x+(Math.random()-.5)*4,y:e.y-4+(Math.random()-.5)*8,vx:0,vy:0,life:0.18,col:'#9fb8ff',noG:true});}
@@ -2011,6 +2011,13 @@ function drawEnemy(e){
   else if(e.moving&&e.state==='chase'){const cyc=(e.walk||0)*7.85,s2=Math.sin(cyc),fall=Math.pow(1-Math.abs(s2),3);rot=s2*0.07+fd*0.06;sx=1+0.06*fall;sy=1-0.07*fall;dy=-Math.abs(s2)*3;swx=Math.round(s2*1.5);}   // the lumber: rise, sway, and a heavy drop on each footfall, in time with the stomps
   else if(e.state==='chase'||e.state==='recover'||e.state==='idle'){const brth=Math.sin(time*2.2);sy=1+0.035*brth;sx=1-0.015*brth;rot=0.02*Math.sin(time*1.1);}   // standing: a slow, heavy breath and a shift of weight
   if(e.squashT>0){const k=e.squashT/0.15;sx*=1+0.18*k;sy*=1-0.22*k;}
+  if(sx!==1||sy!==1||rot||dy||swx){ctx.translate(e.x+swx,e.y+e.r+dy);ctx.rotate(rot);ctx.scale(sx,sy);ctx.translate(-e.x,-(e.y+e.r));}}
+ if(e.type==='hellsbell'){let sx=1,sy=1,rot=0,dy=0,swx=0;const fd=e.facing>=0?1:-1;   // Hells Bell: the same lumber, slower; he rears up for the slam, trembles with the toll, kneels to ring
+  if(e.moving&&e.state==='chase'){const cyc=(e.walk||0)*6.5,s2=Math.sin(cyc),fall=Math.pow(1-Math.abs(s2),3);rot=s2*0.06+fd*0.05;sx=1+0.05*fall;sy=1-0.06*fall;dy=-Math.abs(s2)*2.5;swx=Math.round(s2*1.5);}
+  else if(e.state==='windup'&&e.kind==='slam'){const q=1-Math.max(0,e.t)/(e.windT||0.7);sy=1+0.07*q;sx=1-0.03*q;}
+  else if(e.state==='windup'&&e.kind==='toll')rot=Math.sin(time*22)*0.03;
+  else if(e.state==='ringing'){sy=0.9;sx=1.04;}
+  else if(e.state==='chase'||e.state==='recover'||e.state==='idle'){const brth=Math.sin(time*1.8);sy=1+0.03*brth;sx=1-0.012*brth;rot=0.015*Math.sin(time*0.9);}
   if(sx!==1||sy!==1||rot||dy||swx){ctx.translate(e.x+swx,e.y+e.r+dy);ctx.rotate(rot);ctx.scale(sx,sy);ctx.translate(-e.x,-(e.y+e.r));}}
  const wcyc=(e.moving&&e.state==='chase')?Math.floor((e.walk||0)*8)%4:0,wf=[1,0,-1,0][wcyc],eb=(e.moving&&e.state==='chase')?[1,0,1,0][wcyc]:0;
  drawSpr(sp,e.x,e.y+e.r-(e.z||0)-hov-eb,e.facing,e.flash>0||wind,wf);if(e.type==='hellsbell')drawHandBell(e);

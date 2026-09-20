@@ -417,9 +417,57 @@ function deriveViewsImg(spr,eyeCols,faceCols){const w=spr.w,h=spr.h,src=spr.img.
  const neck=Math.round(h*0.45),side=fd.map((r,y)=>y<neck&&r[w-1]===null?[null].concat(r.slice(0,w-1)):r.slice());
  const mk=g=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');for(let y=0;y<h;y++)for(let xx=0;xx<w;xx++)if(g[y][xx]){x.fillStyle=g[y][xx];x.fillRect(xx,y,1,1);}return sprFromCanvas(c);};
  const B=mk(back);return{back:B,bd:B,fd:mk(fd),side:mk(side)};}
+// ---------- hands, not arms ----------
+// Every walking foe and boss loses its arm pixels (the blocks below, in sprite space) and gets two hands drawn in code: a lead hand on the facing side that holds the weapon and
+// does the work, and an off hand behind. The animator moves them by state: drawn back through a wind-up, thrust (or slammed, or raised to cast) through the attack.
+const HANDS={
+ grunt:{blank:[[0,2,6,7],[7,9,6,7]],col:'#cfc4b0',rest:[6,-4],reach:7},
+ archer:{blank:[[0,1,7,8],[8,9,7,8]],col:'#5a3a7a',rest:[5,-4],reach:4,weapon:'bow'},
+ brawler:{blank:[[0,2,5,8],[8,9,5,6]],col:'#d8c0a0',rest:[5,-6],reach:9,guard:true},
+ shield:{blank:[[0,2,6,7],[7,9,6,7]],col:'#8a94a4',rest:[5,-4],reach:6,weapon:'shield'},
+ bell:{blank:[[10,11,0,8]],col:'#8a8296',rest:[5,-5],reach:3,weapon:'bellpole'},
+ drowned:{blank:[[0,1,4,7],[8,9,4,7]],col:'#3d7a72',rest:[6,-4],reach:7,slam:true},
+ angler:{blank:[[0,2,5,7],[11,11,5,5]],col:'#3d7a72',rest:[6,-3],reach:6,weapon:'rod'},
+ toller:{blank:[[0,4,8,8],[7,11,8,8],[0,2,9,9],[9,11,9,9]],col:'#8a8296',rest:[7,-6],reach:7,weapon:'club'},
+ brute:{blank:[[1,5,16,28],[20,24,16,28]],col:'#cfc4b0',rest:[13,-8],reach:12,size:2,slam:true,sweep:true},
+ knight:{blank:[[0,3,7,11],[10,13,7,11]],col:'#b06a2a',rest:[8,-6],reach:9,weapon:'sword'},
+ witch:{blank:[],col:'#d8c0a0',rest:[7,-6],reach:5,cast:true},
+ hellsbell:{blank:[[1,5,18,24],[18,22,18,24]],col:'#a07868',rest:[12,-6],reach:8,size:2,onMace:true},
+ king:{blank:[[0,3,8,12],[10,13,8,12]],col:'#f4c968',rest:[8,-8],reach:9,cast:true,slam:true}};
+const HAND_COL2={knight2:'#c8d4e4',brute2:'#e8e0d0',hellsbell2:'#7a6a72',witch2:'#e8e0d0'};
+// Cut the arm blocks out of a sprite in place, then make sure every row still ends in an outline pixel.
+function cutArms(spr,blocks){if(!blocks.length)return;const x=spr.img.getContext('2d'),w=spr.w,rowsTouched=new Set();for(const[x0,x1,y0,y1]of blocks){x.clearRect(x0,y0,x1-x0+1,y1-y0+1);for(let y=y0;y<=y1;y++)rowsTouched.add(y);}
+ const d=x.getImageData(0,0,w,spr.h),px=d.data,kr=parseInt(K.slice(1,3),16),kg=parseInt(K.slice(3,5),16),kb=parseInt(K.slice(5,7),16);
+ for(const y of rowsTouched){let a=-1,b=-1;for(let xx=0;xx<w;xx++){if(px[(y*w+xx)*4+3]>40){if(a<0)a=xx;b=xx;}}for(const xx of[a,b]){if(xx<0)continue;const i=(y*w+xx)*4;px[i]=kr;px[i+1]=kg;px[i+2]=kb;px[i+3]=255;}}
+ x.putImageData(d,0,0);const wx=spr.white.getContext('2d');wx.clearRect(0,0,w,spr.h);wx.drawImage(spr.img,0,0);wx.globalCompositeOperation='source-in';wx.fillStyle='#fff';wx.fillRect(0,0,w,spr.h);wx.globalCompositeOperation='source-over';}
+for(const k in HANDS){for(const key of[k,k+'2'])if(SPR[key])cutArms(SPR[key],HANDS[k].blank);}
+// A weapon at the lead hand, pointing along `a`. Small, code-drawn, so it can swing.
+function drawHeldWeapon(kind,x,y,a,e,col){const c=Math.cos(a),sn=Math.sin(a),px=-sn,py=c,line=(x1,y1,x2,y2,cl,lw)=>{ctx.strokeStyle=cl;ctx.lineWidth=lw;ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();};
+ if(kind==='bow'){ctx.strokeStyle='#8a6a3a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x-c*2,y-sn*2,6,a-1.3,a+1.3);ctx.stroke();const pull=e.state==='windup'?3:0;ctx.strokeStyle='#d9d0bd';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-c*2+Math.cos(a-1.3)*6,y-sn*2+Math.sin(a-1.3)*6);ctx.lineTo(x-c*(2+pull),y-sn*(2+pull));ctx.lineTo(x-c*2+Math.cos(a+1.3)*6,y-sn*2+Math.sin(a+1.3)*6);ctx.stroke();if(pull){line(x-c*(2+pull),y-sn*(2+pull),x+c*5,y+sn*5,'#c8b070',1);}}
+ else if(kind==='shield'){ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.rotate(a);ctx.fillStyle=K;ctx.fillRect(-1,-5,5,10);ctx.fillStyle='#8a94a4';ctx.fillRect(0,-4,3,8);ctx.fillStyle='#4a5262';ctx.fillRect(2,-4,1,8);ctx.fillStyle='#f4c968';ctx.fillRect(1,-1,1,2);ctx.restore();}
+ else if(kind==='bellpole'){const sh=e.state==='windup'&&e.kind==='ring'?Math.sin(time*30)*2:0;line(x,y,x,y-13,'#5a3a2a',2);ctx.fillStyle=K;ctx.fillRect(Math.round(x)-3+sh,Math.round(y)-18,6,6);ctx.fillStyle='#c9a227';ctx.fillRect(Math.round(x)-2+sh,Math.round(y)-17,4,4);ctx.fillStyle='#8a7020';ctx.fillRect(Math.round(x)+1+sh,Math.round(y)-16,1,3);}
+ else if(kind==='rod'){line(x,y,x+c*9,y+sn*9-3,'#5a3a2a',2);if(e.state==='windup'&&e.kind==='hook'){ctx.strokeStyle='#cfc4b0';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.beginPath();ctx.moveTo(x+c*9,y+sn*9-3);ctx.lineTo(player.x,player.y);ctx.stroke();ctx.setLineDash([]);}}
+ else if(kind==='club'){line(x,y,x+c*9,y+sn*9,'#3a3a52',3);ctx.fillStyle=K;ctx.fillRect(Math.round(x+c*9)-2,Math.round(y+sn*9)-2,4,4);ctx.fillStyle='#8a7020';ctx.fillRect(Math.round(x+c*9)-1,Math.round(y+sn*9)-1,2,2);}
+ else if(kind==='sword'){if(e.swordOut)return;const bl=e.tier===2?'#c8d4e4':'#b06a2a';line(x-c*2,y-sn*2,x+c*12,y+sn*12,bl,2);line(x+c*1-px*2.5,y+sn*1-py*2.5,x+c*1+px*2.5,y+sn*1+py*2.5,'#5a3a2a',2);ctx.fillStyle='#fff0c0';ctx.fillRect(Math.round(x+c*11),Math.round(y+sn*11),1,1);}}
+function drawEnemyHands(e){const H=HANDS[e.type];if(!H||H.onMace)return;const k=H.size||1,col=e.flash>0?'#ffffff':(HAND_COL2[sprKey(e)]||H.col),f=e.facing>=0?1:-1;
+ const a=e.viewAng!==undefined?e.viewAng:Math.atan2(player.y-e.y,player.x-e.x),dx=Math.cos(a),dy=Math.sin(a),wt=e.windT||0.5,q=e.state==='windup'?1-Math.max(0,e.t)/wt:0,ap=e.state==='attack'?1-Math.max(0,e.t)/(e.atkT||0.2):0;
+ const bob=e.moving?Math.round(Math.sin((e.walk||0)*10)):Math.round(Math.sin(time*2.5+e.x)*0.6);
+ let lx=e.x+f*H.rest[0],ly=e.y+H.rest[1]+bob,ox=e.x-f*H.rest[0],oy=e.y+H.rest[1]-bob,wa=a,wep=H.weapon;
+ if(H.guard){ly-=3;oy-=3;lx-=f*1;ox+=f*1;}   // fists up
+ const slamming=H.slam&&(e.kind==='slam'||e.kind==='leap'||e.kind==='stomp'),casting=H.cast&&(e.kind==='bolts'||e.kind==='volley'||e.kind==='ring'||e.kind==='summon'||e.kind==='wall'||e.kind==='meteor'||e.kind==='call');
+ if(slamming){if(e.state==='windup'){lx=e.x+f*H.rest[0]*0.5;ox=e.x-f*H.rest[0]*0.5;ly=oy=e.y+H.rest[1]-(9*k)*q;}else if(e.state==='attack'||e.squashT>0){const sx=e.slam?e.slam.x:e.x,sy=e.slam?e.slam.y:e.y+e.r;lx=sx+4*k;ox=sx-4*k;ly=oy=sy-1;}}
+ else if(H.sweep&&e.kind==='sweep'){const sg=e.phase===2?-1:1;if(e.state==='windup'){lx=e.x-dx*10*q+f*6;ly=e.y-6-8*q;}else if(e.state==='attack'){const ang=a+sg*(-1.4+2.8*ap);lx=e.x+Math.cos(ang)*16;ly=e.y-2+Math.sin(ang)*12;}}
+ else if(casting&&(e.state==='windup'||e.state==='attack')){lx=e.x+dx*9+f*3;ly=e.y-9+dy*4;ox=e.x+dx*9-f*3;oy=ly;const gc=e.type==='witch'?'rgba(232,163,60,A)':'rgba(138,106,170,A)';light((lx+ox)/2,ly,14+8*q,gc,0.4+0.4*q);}
+ else if(e.state==='windup'){lx-=dx*H.reach*0.6*q;ly-=dy*H.reach*0.3*q+2*q;ox+=dx*2*q;}
+ else if(e.state==='attack'){lx+=dx*H.reach*ap;ly+=dy*H.reach*0.6*ap;ox-=dx*3;if(H.guard&&e.phase===2){const t=lx;lx=ox;ox=t;const t2=ly;ly=oy;oy=t2;}}   // the brawler's second punch comes from the other hand
+ if(wep==='shield'){wa=e.faceAng||a;lx=e.x+Math.cos(wa)*6;ly=e.y-3+Math.sin(wa)*3;}
+ if(wep==='bellpole'){wa=-Math.PI/2;}
+ if(wep==='club'&&e.state==='attack'){wa=a+(-0.9+1.8*ap);}if(wep==='sword'){if(e.kind==='whirl'&&e.state==='attack')wa=time*22;else if(e.kind==='combo'&&e.state==='attack')wa=a+(e.phase%2?-1:1)*(-0.8+1.6*ap);else if(e.state==='windup')wa=a-f*0.9*q;}
+ if(wep)drawHeldWeapon(wep,lx,ly,wa,e,col);
+ drawHand(ox,oy,col,k);drawHand(lx,ly,col,k);}
 const BOSS_VIEWS={};for(const[k,eyes,face]of[['brute',['#e04a3a','#ff8a7a'],['#f0ece0']],['brute2',['#ff5a3a','#ff8a7a'],['#f0ece0']],['knight',['#e04a3a'],[]],['knight2',['#5ce0d0'],[]],['witch',['#e8a33c'],[]],['witch2',['#fff0c0'],[]],['hellsbell',['#e04a3a'],[]],['hellsbell2',['#ff5a3a'],[]],['king',['#e04a3a'],[]]])BOSS_VIEWS[k]=deriveViewsImg(SPR[k],eyes,face);
 // Attack frames for the giants, cut from their pixels: the arm blocks lifted for the wind-up, brought down and inward for the impact. Built per view the first time they are needed.
-const ARM_BLOCKS={brute:{L:[1,5,16,28],R:[20,24,16,28],raise:[0,-11],slam:[5,2]},brute2:{L:[1,5,16,28],R:[20,24,16,28],raise:[0,-11],slam:[5,2]},hellsbell:{L:[1,5,18,24],R:[18,22,18,24],raise:[0,-9],slam:[5,3]},hellsbell2:{L:[1,5,18,24],R:[18,22,18,24],raise:[0,-9],slam:[5,3]}};
+const ARM_BLOCKS={};   // the giants' arm frames are retired: their hands are drawn in code now (HANDS)
 const FRAME_CACHE=new Map();
 function frameOf(spr,key,frame){const def=ARM_BLOCKS[key];if(!def)return spr;const ck=key+'|'+frame;let m=FRAME_CACHE.get(spr);if(m&&m[ck])return m[ck];if(!m){m={};FRAME_CACHE.set(spr,m);}
  const w=spr.w,h=spr.h,src=spr.img.getContext('2d'),c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(spr.img,0,0);
@@ -990,7 +1038,7 @@ function giveAffix(e){const pool=AFFIXES.filter(a=>!(a==='burning'&&(e.type==='s
  if(e.affix==='swift'){e.speed*=1.45;e.windMul=0.8;}if(e.affix==='warded')e.ward=3;if(e.affix==='vampiric'){e.hp=Math.round(e.hp*0.85);e.maxHp=e.hp;}
  e.name='a '+e.affix+' '+ETYPES[e.type].name.replace(/^an? /,'');}
 // per-frame trailing effects for affixes, plus the Warden's footfalls
-function enemyTick(e,dt){if(e.dead)return;if(e.thornCd>0)e.thornCd-=dt;
+function enemyTick(e,dt){if(e.dead)return;if(e.thornCd>0)e.thornCd-=dt;if(e.state==='attack'&&e.pstate!=='attack')e.atkT=e.t;
  if((e.type==='brute'||e.type==='hellsbell')&&e.moving&&!e.z){e.stepT=(e.stepT||0)+dt;if(e.stepT>(e.type==='hellsbell'?0.48:0.4)){e.stepT=0;SFX.stomp();shake=Math.max(shake,0.04);if(e.type==='hellsbell')tone(120,0.12,'sine',0.05,90);}}   // giants stomp; the bell rings faintly with each of his
  if(!e.affix)return;
  if(e.affix==='burning'){if(Math.random()<0.35)parts.push({x:e.x+(Math.random()-.5)*8,y:e.y-2-Math.random()*6,vx:0,vy:-22,life:0.3,col:Math.random()<0.5?'#e8a33c':'#e04a3a',noG:true});if(e.moving){e.fireT=(e.fireT||0)+dt;if(e.fireT>0.3){e.fireT=0;room.hazards.push({x:e.x,y:e.y+2,t:0.9,dmg:5,name:e.name+"'s fire"});}}}
@@ -2035,6 +2083,7 @@ function drawHandBell(e){const f=e.facing>=0?1:-1,q=1-Math.max(0,e.t)/(e.windT||
  const ex=bx+Math.cos(ang)*L,ey=by+Math.sin(ang)*L;
  ctx.lineCap='round';ctx.strokeStyle=K;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(ex,ey);ctx.stroke();ctx.strokeStyle='#5a3a2a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(ex,ey);ctx.stroke();ctx.lineCap='butt';
  for(const t of[7,11,15]){ctx.fillStyle='#8a8296';ctx.fillRect(Math.round(bx+Math.cos(ang)*t)-1,Math.round(by+Math.sin(ang)*t)-1,2,2);}   // bindings
+ {const hc=e.flash>0?'#ffffff':(e.tier===2?'#7a6a72':'#a07868');drawHand(bx+Math.cos(ang)*3,by+Math.sin(ang)*3,hc,2);drawHand(bx+Math.cos(ang)*12,by+Math.sin(ang)*12,hc,2);}   // both hands on the haft
  ctx.save();ctx.translate(ex,ey);ctx.rotate(ang+Math.PI/2);   // the bell hangs off the end of the haft, mouth away from the hands
  ctx.fillStyle=K;ctx.fillRect(-4,-9,8,2);ctx.fillRect(-6,-7,12,7);ctx.fillRect(-8,0,16,4);ctx.fillStyle='#c9a227';ctx.fillRect(-3,-8,6,1);ctx.fillRect(-5,-6,10,6);ctx.fillRect(-7,0,14,3);ctx.fillStyle='#8a7020';ctx.fillRect(2,-6,3,6);ctx.fillRect(3,0,4,3);ctx.fillRect(-7,2,14,1);
  ctx.fillStyle='#2a2418';ctx.fillRect(-2,-6,1,2);ctx.fillRect(-1,-4,1,2);ctx.fillRect(0,-2,1,3);ctx.fillStyle='#4aa08a';ctx.fillRect(-4,-3,1,1);ctx.fillStyle='#fff0c0';ctx.fillRect(-4,-6,1,2);ctx.fillStyle='#3a3a52';ctx.fillRect(-1,3,2,2);ctx.restore();
@@ -2088,7 +2137,7 @@ function drawEnemy(e){
   else if(e.state==='chase'||e.state==='recover'||e.state==='idle'){const brth=Math.sin(time*1.8);sy=1+0.03*brth;sx=1-0.012*brth;rot=0.015*Math.sin(time*0.9);}
   if(sx!==1||sy!==1||rot||dy||swx){ctx.translate(e.x+swx,e.y+e.r+dy);ctx.rotate(rot);ctx.scale(sx,sy);ctx.translate(-e.x,-(e.y+e.r));}}
  const wcyc=(e.moving&&e.state==='chase')?Math.floor((e.walk||0)*8)%4:0,wf=[1,0,-1,0][wcyc],eb=(e.moving&&e.state==='chase')?[1,0,1,0][wcyc]:0;
- drawSpr(sp,e.x,e.y+e.r-(e.z||0)-hov-eb,bv.flip,e.flash>0||wind,wf);if(e.type==='hellsbell')drawHandBell(e);
+ drawSpr(sp,e.x,e.y+e.r-(e.z||0)-hov-eb,bv.flip,e.flash>0||wind,wf);if(e.type==='hellsbell')drawHandBell(e);drawEnemyHands(e);
  if(e.riposte&&player.riposteT>0&&!e.dead){for(let i=0;i<3;i++){const a=time*5+i*2.094,ox=Math.cos(a)*7,oy=Math.sin(a)*2-e.r-13;ctx.fillStyle=K;ctx.fillRect(Math.round(e.x+ox)-1,Math.round(e.y+oy)-1,3,3);ctx.fillStyle=i===Math.floor(time*8)%3?'#fff0c0':'#f4c968';ctx.fillRect(Math.round(e.x+ox),Math.round(e.y+oy),1,1);}}
  if(e.affix==='warded'&&e.ward>0){ctx.strokeStyle=hexA('#f4c968',0.45+0.25*Math.sin(time*6+e.x));ctx.lineWidth=1;ctx.beginPath();ctx.arc(e.x,e.y-4,e.r+6+Math.sin(time*3),0,Math.PI*2);ctx.stroke();for(let i=0;i<e.ward;i++){const a=time*1.5+i*2.094;ctx.fillStyle='#fff0c0';ctx.fillRect(Math.round(e.x+Math.cos(a)*(e.r+6))-1,Math.round(e.y-4+Math.sin(a)*(e.r+6))-1,2,2);}}
  if(e.affix==='thorned'){for(let i=0;i<6;i++){const a=time*0.8+i*1.047,rr=e.r+4,tx=e.x+Math.cos(a)*rr,ty=e.y-3+Math.sin(a)*rr*0.7;ctx.fillStyle=K;ctx.fillRect(Math.round(tx)-1,Math.round(ty)-1,3,3);ctx.fillStyle='#6a7a3a';ctx.fillRect(Math.round(tx),Math.round(ty),1,1);}}

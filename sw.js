@@ -1,6 +1,6 @@
 // Gloomhollow service worker — caches the game so it launches offline.
 // Bump CACHE whenever you upload a new index.html.
-const CACHE = 'gloomhollow-v51';
+const CACHE = 'gloomhollow-v52';
 const CORE = ['./', './index.html', './manifest.json',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-512-maskable.png', './icons/icon-180.png', './icons/favicon-32.png'];
 

@@ -242,7 +242,7 @@ Twenty, one copy of each per run, chests only. Every one bends a rule. Some are 
 
 <p align="center"><img src="readme/bearings.png" alt="Eighteen bearings" width="960"></p>
 
-Eighteen looks for your knight, each unlocked by a deed. Cosmetic, and kept across runs.
+Eighteen looks for your knight, each unlocked by a deed. Cosmetic, kept across runs, and every one turns to face where you aim.
 
 | Bearing | Deed |
 |---|---|

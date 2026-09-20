@@ -71,7 +71,7 @@ body.touch #pad{display:block}body.touch #help{display:none}
 </div>
 <script>
 (()=>{
-const W=384,H=224,T=16;let CH=224;   // the view is 24x14 tiles: a standard 20x12 room sits inside a wall border, and the pixel scale drops a step
+const W=352,H=208,T=16;let CH=208;   // the view is 22x13 tiles: a standard 20x12 room sits inside a thin wall border; on a 1080p screen this is one pixel-scale step in from the 24x14 view
 // The build number shown on the title screen is read from sw.js, so the cache version is the one source of truth.
 let BUILD='';fetch('sw.js').then(r=>r.text()).then(t=>{const m=t.match(/gloomhollow-v(\d+)/);if(m)BUILD='build '+m[1];}).catch(()=>{});
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
@@ -85,9 +85,12 @@ function fit(){const touch=document.body.classList.contains('touch');let s;let R
  else{CH=Math.max(H,ph);s=Math.max(1,Math.floor(Math.min(innerWidth/W,(innerHeight-40)/CH)));}
  cv.height=CH;baseOY=Math.floor((CH-ph)/2);baseOX=Math.floor((W-pw)/2);OFFX=baseOX;OFFY=baseOY;
  cv.style.width=W*s+'px';cv.style.height=CH*s+'px';try{updateCamera(0,true);}catch(e){}}
+// The camera follows you with a dead zone of a few pixels. camX/camY are the offset from the room's centre: a room bigger than the view scrolls to its edges and no further;
+// a room that fits still gives a little (up to `give`, never past its own edge) so you stay near the middle of the screen.
 function updateCamera(dt,snap){let R=null,P=null;try{R=room;P=player;}catch(e){}if(!R||!P){OFFX=baseOX;OFFY=baseOY;return;}
- const tx=R.pw>W?Math.max(0,Math.min(R.pw-W,P.x-W/2)):0,ty=R.ph>CH?Math.max(0,Math.min(R.ph-CH,P.y-CH/2)):0;
- if(snap){camX=tx;camY=ty;}else{const k=Math.min(1,dt*7);camX+=(tx-camX)*k;camY+=(ty-camY)*k;}
+ const give=20,dz=10,bigX=R.pw>W,bigY=R.ph>CH,lx=Math.min(give,(W-R.pw)/2),ly=Math.min(give,(CH-R.ph)/2);   // fit() left-aligns rooms wider than the view (baseOX 0), so those scroll in [0, pw-W]; fitting rooms give around their centred spot
+ const tx=bigX?Math.max(0,Math.min(R.pw-W,P.x-W/2)):Math.max(-lx,Math.min(lx,P.x-R.pw/2)),ty=bigY?Math.max(0,Math.min(R.ph-CH,P.y-CH/2)):Math.max(-ly,Math.min(ly,P.y-R.ph/2));
+ if(snap){camX=tx;camY=ty;}else{const k=Math.min(1,dt*7),dx=tx-camX,dy=ty-camY;if(Math.abs(dx)>dz)camX+=(dx-Math.sign(dx)*dz)*k;if(Math.abs(dy)>dz)camY+=(dy-Math.sign(dy)*dz)*k;}
  OFFX=baseOX-Math.round(camX);OFFY=baseOY-Math.round(camY);}
 addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,200));document.addEventListener('fullscreenchange',()=>setTimeout(fit,200));fit();
 // ---------- audio ----------
@@ -285,13 +288,30 @@ const SKINS={
  ashen:{name:'Ashen One',desc:'Reach floor 5',rows:['....kkkk....','...kaaaak...','..kaaaaaak..','..kAkeekAk..','..kAAAAAAk..','...kkkkkk...','.kCCCCCCCCk.','kCCCCCCCCCCk','kCCcCCCCcCCk','kCCCCCCCCCCk','.kCCCCCCCCk.','.kCkCCCCkCk.','kCk.kCCk.kCk','k...kaak...k','....kaak....','....kkkk....'],pal:{k:K,a:'#8a8296',A:'#5a5a6a',c:'#2e2838',C:'#3a3a52',e:'#e8a33c',o:null},cond:t=>t.bestFloor>=5,prog:t=>[t.bestFloor||1,5]},
  reaper:{name:'Reaper',desc:'300 kills in total',rows:['....kkkk....','...kCCCCk...','..kCCCCCCk..','.kCCkwwkCCk.','.kCkwewewkCk','.kCkwwwwwkCk','.kCkkwkwkkCk','.kCCCCCCCCk.','.kCCCCCCCCk.','.kCCCCCCCCk.','.kCCCCCCCCk.','.kCCCCCCCCk.','.kCCCCCCCCk.','.kCCCCCCCCk.','.kCCkCCkCCk.','.kkkk..kkkk.'],pal:{k:K,a:'#2a2430',A:'#1e1d2c',c:'#2a2430',C:'#1e1d2c',e:'#e04a3a',o:null,w:'#cfc4b0'},cond:t=>t.totalKills>=300,prog:t=>[t.totalKills||0,300]},
  dawn:{name:'Dawnbringer',desc:'Clear floor 2 of a daily run',rows:['..o.o..o.o..','...oooooo...','..okkkkkkko.','..kaaaaaak..','..kAkeekAk..','..kAAAAAAk..','...kkkkkk...','.kakccccckak','kakcCggCckak','kAkcCggCckAk','.kkkcCCCckkk','...kcCCCck..','...kkgggkk..','..kaak.kaak.','..kaak.kaak.','..kkkk.kkkk.'],pal:{k:K,a:'#fff0c0',A:'#e8a33c',c:'#7fa8ff',C:'#4a6fd0',e:'#fff0c0',o:'#f4c968',g:'#f4c968'},cond:t=>t.dailyClears>=1,prog:t=>[t.dailyClears||0,1]},
- king:{name:'Unhollowed',desc:'Slay the Ashen Wyrm',rows:['.kk......kk.','..kk.kk.kk..','...kkaakk...','..kaaaaaak..','..kAkeekAk..','..kAAAAAAk..','...kkkkkk...','.kaakCcCkaak','kaakCcCcCkak','kAAkcCcCckAk','.kkkCcCcCkkk','...kcCcCck..','...kkgggkk..','..kaak.kaak.','..kAAk.kAAk.','..kkkk.kkkk.'],pal:{k:K,a:'#f4c968',A:'#8a7530',c:'#8a2a2a',C:'#5a1a1a',e:'#e04a3a',o:'#f4c968',g:'#f4c968'},cond:t=>t.wins>=1,prog:t=>[t.wins||0,1]}
+ king:{name:'Unhollowed',desc:'Slay the Ashen Wyrm',rows:['.kk......kk.','..kk.kk.kk..','...kkaakk...','..kaaaaaak..','..kAkeekAk..','..kAAAAAAk..','...kkkkkk...','.kaakCcCkaak','kaakCcCcCkak','kAAkcCcCckAk','.kkkCcCcCkkk','...kcCcCck..','...kkgggkk..','..kaak.kaak.','..kAAk.kAAk.','..kkkk.kkkk.'],pal:{k:K,a:'#f4c968',A:'#8a7530',c:'#8a2a2a',C:'#5a1a1a',e:'#e04a3a',o:'#f4c968',g:'#f4c968'},cond:t=>t.wins>=1,prog:t=>[t.wins||0,1]},
+ bellwarden:{name:'Bellwarden',desc:'Slay Hells Bell',rows:['....kkkk....','...kggggk...','..kggggggk..','..kgggggGk..','..kgeggegk..','.kGGGGGGGGk.','.kkkkkkkkkk.','.kaakccckaak','kaakcCCckaak','kAAkcGGckAAk','.kkkcCCckkk.','...kcCCck...','...kkgckk...','..kaak.kaak.','..kaak.kaak.','..kkkk.kkkk.'],pal:{k:K,g:'#c9a227',G:'#8a7020',a:'#8a8296',A:'#5a5a6a',c:'#3a3a52',C:'#2a2a40',e:'#e04a3a',o:null},cond:t=>(t.hellsbellSlain||0)>=1,prog:t=>[t.hellsbellSlain||0,1]},   // his bell, worn as a helm
+ toller:{name:'Toller',desc:'Fell 20 tollers',rows:['....kkkk....','...kggggk...','..kggvgggk..','..kgeggegk..','.kggggggggk.','.kGGGGGGGGk.','.kkkkkkkkkk.','.kcckccckcck','kcckcCCckcck','kCCkcCCckCCk','.kkkcCCckkk.','...kcCCck...','...kkcckk...','..kcck.kcck.','..kcck.kcck.','..kkkk.kkkk.'],pal:{k:K,g:'#c9a227',G:'#8a7020',v:'#4aa08a',c:'#3a3a52',C:'#2a2a40',a:'#3a3a52',A:'#2a2a40',e:'#e04a3a',o:null},cond:t=>(t.tollerKills||0)>=20,prog:t=>[t.tollerKills||0,20]}
 };
 const legWalk=(rows,spread)=>rows.map((r,i)=>{if(i<rows.length-2)return r;const m=r.length>>1,L=r.slice(0,m),R=r.slice(m),sl=s=>s.slice(1)+'.',sr=s=>'.'+s.slice(0,-1);return spread?sl(L)+sr(R):sr(L)+sl(R);});
 const ROLL_ROWS=["..kkkkkk..",".kAAaaAAk.","kAcCkkCcAk","kAckaakcAk","kAckAAkcAk","kAcCkkCcAk",".kAAaaAAk.","..kkkkkk.."];
+// Views derived from a front drawing, for bearings without hand-drawn ones. The face rows (the eye rows and any row sharing the face colour next to the eyes) are hidden behind the crown or hood colour
+// for the back views, chest emblems are flattened, and the three-quarter and side views keep one eye toward the facing side. Legs are left alone so the walk frames still work.
+function deriveViews(rows){const H=rows.length,eyeRows=rows.map((r,i)=>r.includes('e')?i:-1).filter(i=>i>=0);if(!eyeRows.length)return{back:rows.slice(),side:rows.slice(),fd:rows.slice(),bd:rows.slice()};
+ const e0=eyeRows[0],neck=(()=>{for(let i=e0;i<H;i++)if(/^\.*k+\.*$/.test(rows[i])||i>=6&&rows[i].indexOf('e')<0&&i>eyeRows[eyeRows.length-1]&&!/[^.k]/.test(rows[i]))return i;return Math.min(H-1,e0+2);})();
+ const faceLetters=new Set();for(const i of eyeRows){const r=rows[i];for(let x=0;x<r.length;x++)if(r[x]==='e'){for(const y of[x-1,x+1])if(r[y]&&r[y]!=='k'&&r[y]!=='.'&&r[y]!=='e')faceLetters.add(r[y]);}}
+ const inner=r=>{const m=r.match(/^\.*k(.)/);return m?m[1]:null;};
+ let crown=null;for(let i=e0-1;i>=0;i--){const c=inner(rows[i]);if(c&&c!=='k'&&!faceLetters.has(c)){crown=c;break;}}if(!crown){const c=inner(rows[e0]);crown=c&&c!=='k'?c:'a';}
+ const isFace=(r,i)=>i>=Math.max(0,e0-1)&&i<neck&&(r.includes('e')||[...faceLetters].some(f=>r.includes(f)));
+ const hide=r=>{const a=r.indexOf('k'),b=r.lastIndexOf('k');if(a<0||b<=a)return r;let o=r.split('');for(let x=a+1;x<b;x++)if(o[x]!=='.')o[x]=crown;return o.join('');};
+ const flatten=r=>{let o=r.split('');const c=o[4]!=='k'?o[4]:o[5]!=='k'?o[5]:null;if(!c||c==='.')return r;for(let x=4;x<=7;x++)if(o[x]!=='k'&&o[x]!=='.')o[x]=c;return o.join('');};
+ const back=rows.map((r,i)=>isFace(r,i)?hide(r):(i>neck&&i<H-3?flatten(r):r));
+ const oneEye=r=>{const xs=[];for(let x=0;x<r.length;x++)if(r[x]==='e')xs.push(x);if(xs.length<2)return r;let o=r.split('');for(let j=0;j<xs.length-1;j++){const x=xs[j];o[x]=(o[x-1]&&o[x-1]!=='k'&&o[x-1]!=='e'&&o[x-1]!=='.')?o[x-1]:crown;}return o.join('');};
+ const fd=rows.map(r=>r.includes('e')?oneEye(r):r);
+ const shift=r=>r.endsWith('.')?'.'+r.slice(0,-1):r;const side=fd.map((r,i)=>i<neck?shift(r):r);
+ return{back,side,fd,bd:back};}
 const SKIN_IDS=Object.keys(SKINS);const skinSprites={},rollSprites={},walkSprites={},lockedSprites={},skinViews={};
 for(const id of SKIN_IDS){const sk=SKINS[id];skinSprites[id]=mkSpr(sk.rows,sk.pal);rollSprites[id]=mkSpr(ROLL_ROWS,sk.pal);walkSprites[id]=[mkSpr(legWalk(sk.rows,true),sk.pal),mkSpr(legWalk(sk.rows,false),sk.pal)];const dark={};for(const k in sk.pal)dark[k]=sk.pal[k]?'#1e1d2c':null;lockedSprites[id]=mkSpr(sk.rows,dark);
- if(sk.views){const v={front:{spr:skinSprites[id],walk:walkSprites[id]}};for(const nm in sk.views){const r=sk.views[nm];v[nm]={spr:mkSpr(r,sk.pal),walk:[mkSpr(legWalk(r,true),sk.pal),mkSpr(legWalk(r,false),sk.pal)]};}skinViews[id]=v;}}
+ {const views=sk.views||deriveViews(sk.rows),v={front:{spr:skinSprites[id],walk:walkSprites[id]}};for(const nm in views){const r=views[nm];v[nm]={spr:mkSpr(r,sk.pal),walk:[mkSpr(legWalk(r,true),sk.pal),mkSpr(legWalk(r,false),sk.pal)]};}skinViews[id]=v;}}
 // Which drawing faces the way you aim. Eight sectors of the aim angle; y runs down, so sector 2 is south (the front view) and 6 is north (the back).
 function playerView(p){const v=SPR.views;if(!v)return{spr:SPR.player,walk:SPR.walk,flip:p.facing};const d=((Math.round(p.aim/(Math.PI/4))%8)+8)%8;
  const pick=[['side',1],['fd',1],['front',1],['fd',-1],['side',-1],['bd',-1],['back',1],['bd',1]][d];const set=v[pick[0]]||v.front;return{spr:set.spr,walk:set.walk,flip:pick[1]};}
@@ -1281,7 +1301,7 @@ function killEnemy(e){run.kills++;deaths.push({type:sprKey(e),x:e.x,y:e.y+e.r,fa
   if(run.daily){const d=save.daily&&save.daily.date===todayStr()?save.daily:{date:todayStr(),floor:0,souls:0};if(floor>d.floor||(floor===d.floor&&souls>d.souls)){d.floor=floor;d.souls=souls;}save.daily=d;persist();if(floor>=2)stat('dailyClears');}SFX.clear();hitstop=Math.max(hitstop,0.15);
   if(e.type==='dragon'){showMsg('The Ashen Wyrm falls.',3.5);winning=true;winT=0;burst(e.x,e.y,40,'#f4c968');burst(e.x,e.y+24,40,'#e8a33c');if(loop>(save.stats.bestLoop||0))save.stats.bestLoop=loop;stat('wins');}
   else{showMsg((e.name.charAt(0).toUpperCase()+e.name.slice(1))+' falls. Stairs open below.',3.5);dropItem({kind:'stairs',x:room.pw/2,y:room.ph/2+20,price:0});burst(room.pw/2,room.ph/2+20,20,'#f4c968');}}
- else stat(e.type==='archer'?'archerKills':e.type==='drowned'?'drownedKills':e.type==='imp'?'impKills':'gruntKills');
+ else stat(e.type==='archer'?'archerKills':e.type==='drowned'?'drownedKills':e.type==='imp'?'impKills':e.type==='toller'?'tollerKills':'gruntKills');
  save.stats.totalKills=(save.stats.totalKills||0)+1;checkUnlocks();
  if(e.champion){dropItem({kind:'weapon',id:unownedWeapon(),x:e.x-10,y:e.y,price:0},{kind:'spell',id:unownedSpell(),x:e.x+10,y:e.y,price:0});burst(e.x,e.y,22,'#f4c968');showMsg('The champion falls',1.8);}
  else if(e.elite){const wep=Math.random()<0.5;dropItem(wep?{kind:'weapon',id:unownedWeapon(),x:e.x,y:e.y,price:0}:{kind:'spell',id:unownedSpell(),x:e.x,y:e.y,price:0});burst(e.x,e.y,12,'#f4c968');}

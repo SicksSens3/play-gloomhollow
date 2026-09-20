@@ -400,6 +400,36 @@ const SPR={
   ".kkk........","koeok..kk...","koookooooOk.",".kkoooooooOk","..kok.kok.Ok","..k.k.k.k..k"],
   {k:K,o:'#e8a33c',O:'#c8503a',e:'#fff0c0'})
 };
+// Eight-way views for the walking bosses, derived from their pixels: eyes (and the Warden's teeth) hide behind the neighbouring colour for the back views, the left eye cluster
+// goes for the three-quarter view, and the side view is that with the head shifted a pixel. The Wyrm is drawn in code and keeps his one face.
+function sprFromCanvas(c){const wc=document.createElement('canvas');wc.width=c.width;wc.height=c.height;const wx=wc.getContext('2d');wx.drawImage(c,0,0);wx.globalCompositeOperation='source-in';wx.fillStyle='#fff';wx.fillRect(0,0,c.width,c.height);return{img:c,white:wc,w:c.width,h:c.height};}
+function deriveViewsImg(spr,eyeCols,faceCols){const w=spr.w,h=spr.h,src=spr.img.getContext('2d').getImageData(0,0,w,h).data,hex=(x,y)=>{const i=(y*w+x)*4;return src[i+3]<40?null:'#'+[src[i],src[i+1],src[i+2]].map(v=>v.toString(16).padStart(2,'0')).join('');};
+ const grid=[];for(let y=0;y<h;y++){const r=[];for(let x=0;x<w;x++)r.push(hex(x,y));grid.push(r);}
+ const isEye=c=>c&&eyeCols.includes(c),isFace=c=>c&&(eyeCols.includes(c)||faceCols.includes(c)),isK=c=>c===K;
+ const fillFrom=(g,x,y,bad)=>{for(let d=1;d<w;d++){for(const xx of[x-d,x+d]){const c=g[y][xx];if(c&&!isK(c)&&!bad(c))return c;}}return K;};
+ const back=grid.map(r=>r.slice());for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(isFace(grid[y][x]))back[y][x]=fillFrom(grid,x,y,isFace);
+ const fd=grid.map(r=>r.slice());for(let y=0;y<h;y++){const runs=[];let x=0;while(x<w){if(isEye(grid[y][x])){let x2=x;while(x2<w&&isEye(grid[y][x2]))x2++;runs.push([x,x2]);x=x2;}else x++;}
+  if(runs.length>=2){const[a,b]=runs[0];for(let xx=a;xx<b;xx++)fd[y][xx]=fillFrom(grid,xx,y,isEye);}}
+ const neck=Math.round(h*0.45),side=fd.map((r,y)=>y<neck&&r[w-1]===null?[null].concat(r.slice(0,w-1)):r.slice());
+ const mk=g=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');for(let y=0;y<h;y++)for(let xx=0;xx<w;xx++)if(g[y][xx]){x.fillStyle=g[y][xx];x.fillRect(xx,y,1,1);}return sprFromCanvas(c);};
+ const B=mk(back);return{back:B,bd:B,fd:mk(fd),side:mk(side)};}
+const BOSS_VIEWS={};for(const[k,eyes,face]of[['brute',['#e04a3a','#ff8a7a'],['#f0ece0']],['brute2',['#ff5a3a','#ff8a7a'],['#f0ece0']],['knight',['#e04a3a'],[]],['knight2',['#5ce0d0'],[]],['witch',['#e8a33c'],[]],['witch2',['#fff0c0'],[]],['hellsbell',['#e04a3a'],[]],['hellsbell2',['#ff5a3a'],[]],['king',['#e04a3a'],[]]])BOSS_VIEWS[k]=deriveViewsImg(SPR[k],eyes,face);
+// Attack frames for the giants, cut from their pixels: the arm blocks lifted for the wind-up, brought down and inward for the impact. Built per view the first time they are needed.
+const ARM_BLOCKS={brute:{L:[1,5,16,28],R:[20,24,16,28],raise:[0,-11],slam:[5,2]},brute2:{L:[1,5,16,28],R:[20,24,16,28],raise:[0,-11],slam:[5,2]},hellsbell:{L:[1,5,18,24],R:[18,22,18,24],raise:[0,-9],slam:[5,3]},hellsbell2:{L:[1,5,18,24],R:[18,22,18,24],raise:[0,-9],slam:[5,3]}};
+const FRAME_CACHE=new Map();
+function frameOf(spr,key,frame){const def=ARM_BLOCKS[key];if(!def)return spr;const ck=key+'|'+frame;let m=FRAME_CACHE.get(spr);if(m&&m[ck])return m[ck];if(!m){m={};FRAME_CACHE.set(spr,m);}
+ const w=spr.w,h=spr.h,src=spr.img.getContext('2d'),c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(spr.img,0,0);
+ const[mx,my]=def[frame];for(const side of['L','R']){const[x0,x1,y0,y1]=def[side],bw=x1-x0+1,bh=y1-y0+1,dx=side==='L'?mx:-mx;const block=src.getImageData(x0,y0,bw,bh);x.clearRect(x0,y0,bw,bh);
+  const tmp=document.createElement('canvas');tmp.width=bw;tmp.height=bh;tmp.getContext('2d').putImageData(block,0,0);x.drawImage(tmp,x0+dx,y0+my);}   // drawImage keeps what is already there under the moved arm
+ return m[ck]=sprFromCanvas(c);}
+// Which view a boss shows: the sector of the angle from him to you (the last one he took while free to turn), like the player's own.
+// Which attack frame a giant shows right now, if any.
+function bossFrame(e){const wt=e.windT||0.7,q=1-Math.max(0,e.t)/wt;
+ if(e.type==='brute'){if(e.state==='windup'&&(e.kind==='slam'||e.kind==='leap')&&q>0.25)return'raise';if(e.state==='attack'&&(e.kind==='slam'||e.kind==='leap'&&e.t<0.08)||e.squashT>0)return'slam';return null;}
+ if(e.type==='hellsbell'){if(e.state==='windup'&&(e.kind==='slam'&&q>0.2||e.kind==='toll'))return'raise';if(e.state==='recover'&&e.kind==='slam'&&e.t>0.45)return'slam';return null;}
+ return null;}
+function bossView(e,sp){const v=BOSS_VIEWS[sprKey(e)];if(!v)return{spr:sp,flip:e.facing};const a=e.viewAng===undefined?Math.atan2(player.y-e.y,player.x-e.x):e.viewAng,d=((Math.round(a/(Math.PI/4))%8)+8)%8;
+ const pick=[['side',1],['fd',1],['front',1],['fd',-1],['side',-1],['bd',-1],['back',1],['bd',1]][d];return{spr:pick[0]==='front'?sp:v[pick[0]],flip:pick[1]};}
 // Rows r0..r1 of a sprite, feet at y: the torso can be drawn a hair wider (sx) and the upper body a pixel higher (dy) without the head growing or the feet leaving the floor.
 function drawSprRows(s,x,y,flip,white,r0,r1,dy,sx){ctx.save();ctx.translate(Math.round(x),Math.round(y));if(flip<0)ctx.scale(-1,1);if(sx&&sx!==1)ctx.scale(sx,1);const img=white?s.white:s.img;ctx.drawImage(img,0,r0,s.w,r1-r0,-Math.floor(s.w/2),-s.h+r0+(dy||0),s.w,r1-r0);ctx.restore();}
 function drawSpr(s,x,y,flip,white,wf){ctx.save();ctx.translate(Math.round(x),Math.round(y));if(flip<0)ctx.scale(-1,1);const img=white?s.white:s.img,ox=-Math.floor(s.w/2);
@@ -1378,7 +1408,7 @@ function updateEnemy(e,dt){
  if(e.buffT>0){e.buffT-=dt;if(Math.random()<0.2)parts.push({x:e.x+(Math.random()-.5)*10,y:e.y-2-Math.random()*8,vx:0,vy:-14,life:0.35,col:'#f4c968',noG:true});if(e.buffT<=0){e.speed=e.baseSpeed;e.dmg=e.baseDmg;}}
  const dx=p.x-e.x,dy=p.y-e.y,dist=Math.hypot(dx,dy),nx=dx/(dist||1),ny=dy/(dist||1),toP=Math.atan2(dy,dx);
  if(e.type==='dragon'){updateDragon(e,dt);return;}
- if(e.state!=='windup'&&e.state!=='attack')e.facing=dx>=0?1:-1;
+ if(e.state!=='windup'&&e.state!=='attack'){e.facing=dx>=0?1:-1;e.viewAng=toP;}
  // shieldbearer turns slowly
  if(e.type==='shield'){let da=toP-e.faceAng;da=Math.atan2(Math.sin(da),Math.cos(da));const rate=(e.state==='stagger'?0.6:1.9)*dt;e.faceAng+=Math.abs(da)<rate?da:Math.sign(da)*rate;}
  const lunge=(spd,reach)=>{moveEnt(e,e.dir.x*spd*dt,e.dir.y*spd*dt);if(!e.hit&&dist<e.r+p.r+reach){e.hit=true;hurtPlayer(e.dmg,e);}};
@@ -2030,7 +2060,8 @@ function drawEnemy(e){
  if(e.type==='angler'&&e.state==='windup'&&e.kind==='hook'){ctx.strokeStyle='rgba(207,196,176,.3)';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(e.x,e.y-4);ctx.lineTo(player.x,player.y);ctx.stroke();ctx.setLineDash([]);}
  if(e.type==='bell'&&e.state==='windup'&&e.kind==='ring'){ctx.strokeStyle=hexA('#f4c968',0.15+0.2*Math.abs(Math.sin(time*10)));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(e.x,e.y,100,75,0,0,Math.PI*2);ctx.stroke();light(e.x+6,e.y-14,18,'rgba(244,201,104,A)',0.5);}
  if(e.buffT>0){ctx.strokeStyle=hexA('#f4c968',0.35+0.25*Math.sin(time*8));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(e.x,e.y+e.r,e.r+5,3,0,0,Math.PI*2);ctx.stroke();}
- const wind=e.state==='windup'&&e.t<0.3&&Math.floor(e.t*16)%2===0;const sp=SPR[sprKey(e)],t2=e.boss&&e.tier===2;
+ const wind=e.state==='windup'&&e.t<0.3&&Math.floor(e.t*16)%2===0;const sp0=SPR[sprKey(e)],t2=e.boss&&e.tier===2,bv=e.boss?bossView(e,sp0):{spr:sp0,flip:e.facing};
+   let sp=bv.spr;if(ARM_BLOCKS[sprKey(e)]){const fr=bossFrame(e);if(fr)sp=frameOf(bv.spr,sprKey(e),fr);}
  const hov=e.type==='witch'&&t2?4+Math.sin(time*3)*2:0;   // the Ascended Witch floats
  if(e.type==='knight'&&t2){const f=e.facing,w1=Math.sin(time*5)*2,w2=Math.sin(time*5+1)*2.5;ctx.fillStyle=K;ctx.beginPath();ctx.moveTo(e.x-f*3,e.y-13);ctx.lineTo(e.x-f*11-w1,e.y-3);ctx.lineTo(e.x-f*9-w2,e.y+e.r);ctx.lineTo(e.x-f*1,e.y+e.r-2);ctx.closePath();ctx.fill();ctx.fillStyle='#7a1e1a';ctx.beginPath();ctx.moveTo(e.x-f*3,e.y-12);ctx.lineTo(e.x-f*10-w1,e.y-3);ctx.lineTo(e.x-f*8-w2,e.y+e.r-1);ctx.lineTo(e.x-f*2,e.y+e.r-2);ctx.closePath();ctx.fill();}
  ctx.save();if(big!==1){ctx.translate(e.x,e.y+e.r);ctx.scale(big,big);ctx.translate(-e.x,-(e.y+e.r));}
@@ -2053,8 +2084,7 @@ function drawEnemy(e){
   else if(e.state==='chase'||e.state==='recover'||e.state==='idle'){const brth=Math.sin(time*1.8);sy=1+0.03*brth;sx=1-0.012*brth;rot=0.015*Math.sin(time*0.9);}
   if(sx!==1||sy!==1||rot||dy||swx){ctx.translate(e.x+swx,e.y+e.r+dy);ctx.rotate(rot);ctx.scale(sx,sy);ctx.translate(-e.x,-(e.y+e.r));}}
  const wcyc=(e.moving&&e.state==='chase')?Math.floor((e.walk||0)*8)%4:0,wf=[1,0,-1,0][wcyc],eb=(e.moving&&e.state==='chase')?[1,0,1,0][wcyc]:0;
- drawSpr(sp,e.x,e.y+e.r-(e.z||0)-hov-eb,e.facing,e.flash>0||wind,wf);if(e.type==='hellsbell')drawHandBell(e);
- if(e.type==='brute'&&e.state==='windup'&&(e.kind==='slam'||e.kind==='leap')){const q=1-Math.max(0,e.t)/(e.windT||0.7);for(const s2 of[-1,1]){const fx=Math.round(e.x+s2*11),fy=Math.round(e.y-16-q*12);ctx.fillStyle=K;ctx.fillRect(fx-3,fy-3,7,7);ctx.fillStyle='#cfc4b0';ctx.fillRect(fx-2,fy-2,5,5);ctx.fillStyle='#9a8f7c';ctx.fillRect(fx-2,fy+1,5,2);}}   // both fists up
+ drawSpr(sp,e.x,e.y+e.r-(e.z||0)-hov-eb,bv.flip,e.flash>0||wind,wf);if(e.type==='hellsbell')drawHandBell(e);
  if(e.riposte&&player.riposteT>0&&!e.dead){for(let i=0;i<3;i++){const a=time*5+i*2.094,ox=Math.cos(a)*7,oy=Math.sin(a)*2-e.r-13;ctx.fillStyle=K;ctx.fillRect(Math.round(e.x+ox)-1,Math.round(e.y+oy)-1,3,3);ctx.fillStyle=i===Math.floor(time*8)%3?'#fff0c0':'#f4c968';ctx.fillRect(Math.round(e.x+ox),Math.round(e.y+oy),1,1);}}
  if(e.affix==='warded'&&e.ward>0){ctx.strokeStyle=hexA('#f4c968',0.45+0.25*Math.sin(time*6+e.x));ctx.lineWidth=1;ctx.beginPath();ctx.arc(e.x,e.y-4,e.r+6+Math.sin(time*3),0,Math.PI*2);ctx.stroke();for(let i=0;i<e.ward;i++){const a=time*1.5+i*2.094;ctx.fillStyle='#fff0c0';ctx.fillRect(Math.round(e.x+Math.cos(a)*(e.r+6))-1,Math.round(e.y-4+Math.sin(a)*(e.r+6))-1,2,2);}}
  if(e.affix==='thorned'){for(let i=0;i<6;i++){const a=time*0.8+i*1.047,rr=e.r+4,tx=e.x+Math.cos(a)*rr,ty=e.y-3+Math.sin(a)*rr*0.7;ctx.fillStyle=K;ctx.fillRect(Math.round(tx)-1,Math.round(ty)-1,3,3);ctx.fillStyle='#6a7a3a';ctx.fillRect(Math.round(tx),Math.round(ty),1,1);}}

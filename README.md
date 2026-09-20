@@ -89,7 +89,7 @@ Cast with E, aimed where you look. Mana refills between rooms only.
 
 | Foe | Where | Health / hit | How it fights |
 |---|---|---|---|
-| **A hollow** | Floor 1 on | 34 / 14 | The rank and file. Closes in, curving from a side, and lunges. Cheap souls, and there are always more. |
+| **A hollow** | Floor 1 on | 34 / 14 | The rank and file. Closes in, curving from a side, and lunges. Cheap souls, and there are always more. The Warden throws them. |
 | **A cultist** | Floor 1 on | 26 / 14 | Shoots arrows from range and ducks behind pillars and crates to reload, peeking out to fire. Take the cover away from it. |
 | **A brawler** | Floor 1, deeper rooms | 48 / 13 | Sidesteps at mid range, then comes in with a two-hit lunge combo. The second hit follows quickly. |
 | **A shieldbearer** | Floor 1, deeper rooms | 60 / 20 | Slow, and turns slowly. Blocks strikes from the front; a charged heavy or a parry breaks the guard. Lunges when it gets close. |
@@ -117,7 +117,7 @@ Each gets a title card as you walk in, and roars. Nothing moves until the card i
 
 *Keeper of Gloomhollow.* 300 health, 34 a hit on the first descent.
 
-Slams the ground where you stand, sweeps a hook at arm's length, and charges if you keep away. At two thirds health he roars (a shockwave) and rages: leaps onto you, charges from closer, slams twice. At a third he roars again and goes berserk: faster, every slam cracks the floor into a shockwave, the sweep comes back the other way, the charge ends in a crater.
+A masked, gaping troll with a timber in one fist and a dead hollow in the other. He brings the timber down where you stand and it breaks the floor along its length; at arm's length he sweeps it wide; from range he hurls the hollow at you, and it gets up where it lands. Once that hand is empty and you are close, he snatches you and flings you across the room. He charges if you keep away, and tears another corpse from the floor every ten seconds. At two thirds health he roars (a shockwave) and rages: leaps onto you, charges from closer, slams twice. At a third he roars again and goes berserk: faster, every slam cracks a shockwave, the sweep comes back the other way, the charge ends in a crater.
 
 **On a loop, as Warden Unchained (It remembers you).** Charges and leaps from the first second, and every slam sends a shockwave.
 

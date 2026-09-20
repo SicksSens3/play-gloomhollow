@@ -71,7 +71,7 @@ body.touch #pad{display:block}body.touch #help{display:none}
 </div>
 <script>
 (()=>{
-const W=336,H=200,T=16;let CH=200;   // the view is 21 x 12.5 tiles: a standard 20x12 room sits inside a thin border, 8 px at the sides and 4 px top and bottom
+const W=304,H=176,T=16;let CH=176;   // the view is 19 x 11 tiles: a standard 20x12 room is a shade bigger than it, so the camera follows you a little in every room
 // The build number shown on the title screen is read from sw.js, so the cache version is the one source of truth.
 let BUILD='';fetch('sw.js').then(r=>r.text()).then(t=>{const m=t.match(/gloomhollow-v(\d+)/);if(m)BUILD='build '+m[1];}).catch(()=>{});
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
@@ -79,10 +79,10 @@ cv.width=W;cv.height=H;
 const isCoarse=matchMedia('(pointer:coarse)').matches;
 let touchMode=isCoarse;if(isCoarse)document.body.classList.add('touch');
 let BAND=0,OFFY=0,OFFX=0,baseOX=0,baseOY=0,camX=0,camY=0;const VIEW_MAX_H=320;
-// The view is at most W x VIEW_MAX_H. Rooms that fit are centred as before; bigger rooms (loop templates) scroll with the player.
-function fit(){const touch=document.body.classList.contains('touch');let s;let R=null;try{R=room;}catch(e){}const ph=R?Math.min(R.ph,VIEW_MAX_H):H,pw=R?Math.min(R.pw,W):W;
+// On desktop the view is exactly W x H and any room bigger than it scrolls with you. On touch the canvas grows to show a whole room up to VIEW_MAX_H tall.
+function fit(){const touch=document.body.classList.contains('touch');let s;let R=null;try{R=room;}catch(e){}let ph=R?Math.min(R.ph,VIEW_MAX_H):H;const pw=R?Math.min(R.pw,W):W;
  if(touch){s=innerWidth/W;const half=innerHeight*0.5;let total=Math.round(half/s);total=Math.max(ph,Math.min(H+200,total));if(total*s>half){s=half/total;}CH=total;}
- else{CH=Math.max(H,ph);const dpr=devicePixelRatio||1;s=Math.max(1,Math.floor(Math.min(innerWidth/W,(innerHeight-40)/CH)*dpr)/dpr);}   /* a whole number of device pixels per game pixel: on a scaled display that is a finer step than whole CSS pixels, so the view fills more of the window */
+ else{CH=H;ph=Math.min(ph,CH);const dpr=devicePixelRatio||1;s=Math.max(1,Math.floor(Math.min(innerWidth/W,(innerHeight-32)/CH)*dpr)/dpr);}   /* a whole number of device pixels per game pixel: on a scaled display that is a finer step than whole CSS pixels, so the view fills more of the window */
  cv.height=CH;baseOY=Math.floor((CH-ph)/2);baseOX=Math.floor((W-pw)/2);OFFX=baseOX;OFFY=baseOY;
  cv.style.width=W*s+'px';cv.style.height=CH*s+'px';try{updateCamera(0,true);}catch(e){}}
 // The camera follows you with a dead zone of a few pixels. camX/camY are the offset from the room's centre: a room bigger than the view scrolls to its edges and no further;

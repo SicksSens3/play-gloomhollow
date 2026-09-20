@@ -188,39 +188,37 @@ It fills the top of the arena. Its claws slam down and stay planted where they l
 
 **Events.** Some rooms carry one: **An ambush**, reinforcements drop in mid-fight. **A blood moon**, double souls, and every foe an elite. **The torches die**, you see only a few steps around you. **The fallen stir**, the corpses on the floor get up.
 
-## Gear
+## Items
 
-<p align="center"><img src="readme/gear.png" alt="Stat gear and school gear" width="600"></p>
+<p align="center"><img src="readme/gear.png" alt="Stat gear, school gear and the cursed" width="600"></p>
 
-From shrines, chests and merchants. Stackable, and every copy counts.
+One pool, one copy of each per run, nothing stacks. Chests and shrines hand them out; the merchant sells only drinks. Every item carries a card when you take it.
 
 | Piece | Does |
 |---|---|
-| **Amulet of Deep Root** | +40 max HP |
-| **Boots of Long Road** | +40 stamina |
+| **Amulet of Deep Root** | +50 max health |
+| **Boots of Long Road** | +50 stamina |
 | **Gauntlet of Ash** | +35% damage |
-| **Stillwater Circlet** | +40 mana, +60% spells |
-| **Cloak of the Wind** | +20% speed |
-| **Vial of Old Blood** | +35 max health |
-| **Bone Prayer Beads** | +35 max mana |
-| **Pilgrim's Gourd** | +1 flask |
+| **Stillwater Circlet** | +60% spells |
+| **Cloak of the Wind** | +25% speed |
 
-**Schools.** Twelve pieces that build a specialty. Stack them with a matching weapon or spell and it becomes a run.
+**Drinks.** Not items: swallowed on the spot and gone. Vial of Old Blood (+35 max health), Bone Prayer Beads (+35 max mana), Pilgrim's Gourd (+1 flask), the smith's Whetstone (+20% weapon damage, again for each one). These you can take as often as you find them.
+
+
+**Schools.** Twelve pieces, three to a school; each one is stronger on its own now that nothing stacks, and a full school with a matching weapon or spell is a run.
 
 | School | Pieces |
 |---|---|
-| **Fire** | **Kindling Charm**, +25% fire damage; **Wildfire Ash**, burning foes spread fire; **Cinder Heart**, longer fires; +20% vs burning |
-| **Frost** | **Rime Tooth**, +20% vs the chilled; **Hoarfrost Band**, chills last twice as long; **Brittle Bone**, a chilled kill chills its neighbours |
-| **Blood** | **Leech Fang**, melee drinks 5% as health; **Ruin Nail**, +25% vs the bleeding; **Sanguine Cup**, kills mend 3 |
-| **Arcane** | **Focus Lens**, +30% spells; **Echo Stone**, spells cost a quarter less; **Conduit Ring**, melee hits return 2 mana |
+| **Fire** | **Kindling Charm**, +50% fire damage; **Wildfire Ash**, burning foes spread fire; **Cinder Heart**, longer fires; +35% vs burning |
+| **Frost** | **Rime Tooth**, +35% vs the chilled; **Hoarfrost Band**, chills last twice as long; **Brittle Bone**, a chilled kill chills its neighbours |
+| **Blood** | **Leech Fang**, melee drinks 8% as health; **Ruin Nail**, +40% vs the bleeding; **Sanguine Cup**, kills mend 5 |
+| **Arcane** | **Focus Lens**, +40% spells; **Echo Stone**, spells cost a third less; **Conduit Ring**, melee hits return 3 mana |
 
-## Relics
+**Rule-benders.** Twenty pieces that each bend a rule of the hollow. Some are rarer than others; it will not tell you which.
 
-<p align="center"><img src="readme/relics.png" alt="Twenty relics" width="600"></p>
+<p align="center"><img src="readme/relics.png" alt="Twenty rule-benders" width="600"></p>
 
-Twenty, one copy of each per run, chests only. Every one bends a rule. Some are rarer than others; it will not tell you which.
-
-| Relic | Rule it bends |
+| Piece | Rule it bends |
 |---|---|
 | **Thorn Band** | parries wound the attacker |
 | **Ember Idol** | every strike burns |
@@ -242,6 +240,18 @@ Twenty, one copy of each per run, chests only. Every one bends a rule. Some are 
 | **Gargoyle Heart** | no blow interrupts your swing |
 | **Crimson Tithe** | +40% damage, flasks heal half |
 | **Feather Charm** | pits do not hurt |
+
+**Cursed.** Anything with a bite in it is marked CURSED, on the floor and in the satchel. They turn up rarely in chests and at shrines; the hag keeps three on her carpet and sells them cheap.
+
+| Cursed piece | Gives; takes |
+|---|---|
+| **Hollow Fang** | +35% damage; -30 max health |
+| **Ash Tongue** | +50% fire damage; blows hurt +25% |
+| **Witch's Thread** | +80% spells; -40 stamina |
+| **Hare's Foot** | +25% speed; shots and traps hurt +40% |
+| **Black Whetstone** | weapon +2; fire hurts twice as hard |
+| **Marrow Tithe** | +50% souls; flasks heal less |
+| **Leaden Gourd** | +1 flask; -20% speed |
 
 ## Bearings
 

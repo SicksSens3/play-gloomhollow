@@ -561,22 +561,22 @@ const CURSED={
  leaden:{name:'Leaden Gourd',desc:'+1 flask; -20% speed',price:140,apply:p=>{p.maxFlasks++;p.flasks=Math.min(p.maxFlasks,p.flasks+1);p.speed*=0.8;}}};
 // Run upgrades are gear you carry. ITEMS names them for the satchel; BUFFS/UPG/the shop still apply the effects.
 const ITEMS={
- vigor:{name:'Amulet of Deep Root',desc:'+40 max health'},
- endurance:{name:'Boots of Long Road',desc:'+40 stamina'},
+ vigor:{name:'Amulet of Deep Root',desc:'+50 max health'},
+ endurance:{name:'Boots of Long Road',desc:'+50 stamina'},
  might:{name:'Gauntlet of Ash',desc:'+35% damage'},
  attune:{name:'Stillwater Circlet',desc:'+60% spells'},
- swift:{name:'Cloak of the Wind',desc:'+20% speed'},
+ swift:{name:'Cloak of the Wind',desc:'+25% speed'},
  hpup:{name:'Vial of Old Blood',desc:'+35 max health'},
  manaup:{name:'Bone Prayer Beads',desc:'+35 max mana'},
  sharp:{name:'Whetstone',desc:'+20% weapon dmg'},
  gourd:{name:"Pilgrim's Gourd",desc:'+1 flask'},
  // the hag's wares (see CURSED)
- fang:{name:'Hollow Fang',desc:'+35% damage; -30 max health'},ashtongue:{name:'Ash Tongue',desc:'+50% fire damage; blows hurt +25%'},thread:{name:"Witch's Thread",desc:'+80% spells; -40 stamina'},hare:{name:"Hare's Foot",desc:'+25% speed; shots and traps hurt +40%'},blackstone:{name:'Black Whetstone',desc:'weapon +2; fire hurts twice as hard'},marrow:{name:'Marrow Tithe',desc:'+50% souls; flasks heal less'},leaden:{name:'Leaden Gourd',desc:'+1 flask; -20% speed'},
- // school gear (shrines and chests, stackable): fire, frost, blood, arcane
- kindling:{name:'Kindling Charm',desc:'+25% fire damage'},wildfire:{name:'Wildfire Ash',desc:'burning foes spread fire'},cinderheart:{name:'Cinder Heart',desc:'longer fires; +20% vs burning'},
- rime:{name:'Rime Tooth',desc:'+20% vs the chilled'},hoarfrost:{name:'Hoarfrost Band',desc:'chills last twice as long'},brittle:{name:'Brittle Bone',desc:'a chilled kill chills its neighbours'},
- leech:{name:'Leech Fang',desc:'melee drinks 5% as health'},ruin:{name:'Ruin Nail',desc:'+25% vs the bleeding'},sanguine:{name:'Sanguine Cup',desc:'kills mend 3'},
- focus:{name:'Focus Lens',desc:'+30% spells'},echo:{name:'Echo Stone',desc:'spells cost a quarter less'},conduit:{name:'Conduit Ring',desc:'melee hits return 2 mana'},
+ fang:{name:'Hollow Fang',desc:'+35% damage; -30 max health',cursed:true},ashtongue:{name:'Ash Tongue',desc:'+50% fire damage; blows hurt +25%',cursed:true},thread:{name:"Witch's Thread",desc:'+80% spells; -40 stamina',cursed:true},hare:{name:"Hare's Foot",desc:'+25% speed; shots and traps hurt +40%',cursed:true},blackstone:{name:'Black Whetstone',desc:'weapon +2; fire hurts twice as hard',cursed:true},marrow:{name:'Marrow Tithe',desc:'+50% souls; flasks heal less',cursed:true},leaden:{name:'Leaden Gourd',desc:'+1 flask; -20% speed',cursed:true},
+ // school gear: fire, frost, blood, arcane. One copy each, like everything else you carry
+ kindling:{name:'Kindling Charm',desc:'+50% fire damage'},wildfire:{name:'Wildfire Ash',desc:'burning foes spread fire'},cinderheart:{name:'Cinder Heart',desc:'longer fires; +35% vs burning'},
+ rime:{name:'Rime Tooth',desc:'+35% vs the chilled'},hoarfrost:{name:'Hoarfrost Band',desc:'chills last twice as long'},brittle:{name:'Brittle Bone',desc:'a chilled kill chills its neighbours'},
+ leech:{name:'Leech Fang',desc:'melee drinks 8% as health'},ruin:{name:'Ruin Nail',desc:'+40% vs the bleeding'},sanguine:{name:'Sanguine Cup',desc:'kills mend 5'},
+ focus:{name:'Focus Lens',desc:'+40% spells'},echo:{name:'Echo Stone',desc:'spells cost a third less'},conduit:{name:'Conduit Ring',desc:'melee hits return 3 mana'},
  // relics: one of each, chests only; each one bends a rule of the hollow
  // rar weights the chest roll (common 3, uncommon 2, rare 1); never shown to the player
  band:{name:'Thorn Band',desc:'parries wound the attacker',relic:true,rar:'uncommon'},
@@ -601,27 +601,32 @@ const ITEMS={
  feather:{name:'Feather Charm',desc:'pits do not hurt',relic:true,rar:'common'}};
 const RELICS=Object.keys(ITEMS).filter(k=>ITEMS[k].relic);
 const hasRelic=id=>!!player&&player.items.some(i=>i.id===id);
-// School gear stacks: count the copies carried. Fire, frost, blood and arcane each have three pieces that build on one another.
-const cnt=id=>{const it=player&&player.items.find(i=>i.id===id);return it?it.n:0;},fireMul=()=>1+0.25*cnt('kindling')+0.5*cnt('ashtongue'),slowFor=b=>b*(1+cnt('hoarfrost')),spellCost=sp=>Math.max(4,Math.round(sp.cost*Math.pow(0.75,cnt('echo'))));
-function unownedRelic(){const c=RELICS.filter(k=>!hasRelic(k));if(!c.length)return null;const w=c.map(k=>({common:3,uncommon:2,rare:1})[ITEMS[k].rar||'uncommon']);let t=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<c.length;i++){t-=w[i];if(t<0)return c[i];}return c[c.length-1];}
+// cnt: 1 if you carry the piece, else 0. Nothing stacks any more; the multipliers below are tuned for one copy.
+const cnt=id=>{const it=player&&player.items.find(i=>i.id===id);return it?it.n:0;},fireMul=()=>1+0.5*cnt('kindling')+0.5*cnt('ashtongue'),slowFor=b=>b*(1+cnt('hoarfrost')),spellCost=sp=>Math.max(4,Math.round(sp.cost*Math.pow(0.67,cnt('echo'))));
+// One pool: the rule-benders, the stat gear and the school gear are all just items, one copy each per run, weighted by rar (never shown).
+// Cursed pieces (the hag's) can turn up anywhere, rarely: cursedChance says how often a roll reaches for one.
+const UNIQUE=()=>Object.keys(ITEMS).filter(k=>(ITEMS[k].relic||BUFFS[k])&&!ITEMS[k].cursed);
+function rollItem(cursedChance){cursedChance=cursedChance===undefined?0.1:cursedChance;const cu=Object.keys(CURSED).filter(k=>!hasRelic(k));if(cu.length&&Math.random()<cursedChance)return{id:pick(cu),cursed:true};
+ const c=UNIQUE().filter(k=>!hasRelic(k));if(!c.length)return cu.length?{id:pick(cu),cursed:true}:null;const w=c.map(k=>({common:3,uncommon:2,rare:1})[ITEMS[k].rar||'uncommon']);let t=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<c.length;i++){t-=w[i];if(t<0)return{id:c[i]};}return{id:c[c.length-1]};}
+function uniqueDrop(x,y){const ri=rollItem();return ri?{kind:ri.cursed?'cursed':'relic',id:ri.id,x,y,price:0,chest:true}:{kind:'hpup',x,y,price:0,chest:true};}
 const priceOf=it=>Math.round((it.price||0)*(hasRelic('seal')?0.75:1));   // the Merchant's Seal knocks a quarter off
 const soulMul=()=>(hasRelic('miser')?1.5:1)*Math.pow(1.5,cnt('marrow'));   // the Miser's Ring and the hag's Marrow Tithe both swell what the dead leave
-function relicKill(e){const p=player;if(p.hp<=0)return;if(hasRelic('lantern'))p.hp=Math.min(p.maxHp,p.hp+4);if(hasRelic('candle'))p.mana=Math.min(p.maxMana,p.mana+12);if(cnt('sanguine'))p.hp=Math.min(p.maxHp,p.hp+3*cnt('sanguine'));
+function relicKill(e){const p=player;if(p.hp<=0)return;if(hasRelic('lantern'))p.hp=Math.min(p.maxHp,p.hp+4);if(hasRelic('candle'))p.mana=Math.min(p.maxMana,p.mana+12);if(cnt('sanguine'))p.hp=Math.min(p.maxHp,p.hp+5*cnt('sanguine'));
  if(e&&e.slow>0&&cnt('brittle'))for(const o of room.enemies){if(o===e||o.dead)continue;if(Math.hypot(o.x-e.x,o.y-e.y)<40){o.slow=Math.max(o.slow||0,2*cnt('brittle'));burst(o.x,o.y-4,6,'#7fa8ff');}}}   // a chilled kill shatters cold onto its neighbours
 // The Bloodstone: the first killing blow each floor leaves you standing at 30 instead.
 function spare(){const p=player;if(p.hp>0||!hasRelic('bloodstone')||!run||run.spared)return false;run.spared=true;p.hp=30;p.inv=1.2;p.flash=0.3;burst(p.x,p.y-4,26,'#c8302a');banner={t:2.6,title:'BLOODSTONE',sub:'It cracks. You do not.',col:'#c8302a'};msg.t=0;SFX.relic();shake=Math.max(shake,0.3);hitstop=Math.max(hitstop,0.15);return true;}
 const BUFFS={
- vigor:{name:ITEMS.vigor.name,desc:'+40 max HP',apply:p=>{p.maxHp+=40;p.hp+=40;}},
- endurance:{name:ITEMS.endurance.name,desc:'+40 stamina',apply:p=>{p.maxStam+=40;p.stam+=40;}},
+ vigor:{name:ITEMS.vigor.name,desc:ITEMS.vigor.desc,apply:p=>{p.maxHp+=50;p.hp+=50;}},
+ endurance:{name:ITEMS.endurance.name,desc:ITEMS.endurance.desc,apply:p=>{p.maxStam+=50;p.stam+=50;}},
  might:{name:ITEMS.might.name,desc:'+35% damage',apply:p=>{p.dmgMul*=1.35;}},
  attune:{name:ITEMS.attune.name,desc:'+40 mana, +60% spells',apply:p=>{p.maxMana+=40;p.mana+=40;p.spellPow+=0.6;}},
- swift:{name:ITEMS.swift.name,desc:'+20% speed',apply:p=>{p.speed*=1.2;}},
+ swift:{name:ITEMS.swift.name,desc:ITEMS.swift.desc,apply:p=>{p.speed*=1.25;}},
  kindling:{name:ITEMS.kindling.name,desc:ITEMS.kindling.desc,apply:p=>{}},wildfire:{name:ITEMS.wildfire.name,desc:ITEMS.wildfire.desc,apply:p=>{}},cinderheart:{name:ITEMS.cinderheart.name,desc:ITEMS.cinderheart.desc,apply:p=>{}},
  rime:{name:ITEMS.rime.name,desc:ITEMS.rime.desc,apply:p=>{}},hoarfrost:{name:ITEMS.hoarfrost.name,desc:ITEMS.hoarfrost.desc,apply:p=>{}},brittle:{name:ITEMS.brittle.name,desc:ITEMS.brittle.desc,apply:p=>{}},
  leech:{name:ITEMS.leech.name,desc:ITEMS.leech.desc,apply:p=>{}},ruin:{name:ITEMS.ruin.name,desc:ITEMS.ruin.desc,apply:p=>{}},sanguine:{name:ITEMS.sanguine.name,desc:ITEMS.sanguine.desc,apply:p=>{}},
- focus:{name:ITEMS.focus.name,desc:ITEMS.focus.desc,apply:p=>{p.spellPow+=0.3;}},echo:{name:ITEMS.echo.name,desc:ITEMS.echo.desc,apply:p=>{}},conduit:{name:ITEMS.conduit.name,desc:ITEMS.conduit.desc,apply:p=>{}}
+ focus:{name:ITEMS.focus.name,desc:ITEMS.focus.desc,apply:p=>{p.spellPow+=0.4;}},echo:{name:ITEMS.echo.name,desc:ITEMS.echo.desc,apply:p=>{}},conduit:{name:ITEMS.conduit.name,desc:ITEMS.conduit.desc,apply:p=>{}}
 };
-function addItem(id){const it=player.items.find(x=>x.id===id);if(it)it.n++;else player.items.push({id,n:1});}
+function addItem(id){if(!player.items.some(x=>x.id===id))player.items.push({id,n:1});}   // one copy of each, never two
 const ICON_ART={
  fang:{pal:{k:K,w:'#e8e0d0',d:'#b8b0a0',r:'#c8302a'},rows:["....kkkk....","...krrrrk...","...krrrrk...","...kwwwwk...","...kwwwwk...","...kwwdwk...","....kwdwk...","....kwdwk...",".....kwwk...",".....kwk....","......kk....","............"]},
  ashtongue:{pal:{k:K,o:'#e8a33c',r:'#e04a3a',g:'#6d6578'},rows:["....kk......","...kggk.....","..kgggk.....","..kggkk.....","...kkrrk....","..krrorrk...",".krroorrrk..",".krooorrrk..",".krrooorrk..","..krrrrrk...","...kkkkk....","............"]},
@@ -886,7 +891,7 @@ function buildRoomInner(r){
   else if(ch==='U'){r.items.push({kind:'upgrade',id:null,x:px,y:py,price:0,ped:true});}else if(ch==='K'){r.solid[ty][tx]=8;r.decor.push({kind:'smith',x:px,y:py});}else if(ch==='V')r.decor.push({kind:'anvil',x:px,y:py});else if(ch==='^'){r.solid[ty][tx]=3;r.spikes.push({tx,ty,phase:((tx+ty)%4)*0.45});}
   else if(ch==='$'){const roll=Math.random();const it=roll<0.3?{kind:'flask',price:priced(80)}:roll<0.48?{kind:'hpup',price:priced(180)}:roll<0.62?{kind:'manaup',price:priced(140)}:roll<0.7?{kind:'gourd',price:priced(300)}:(roll<0.87&&r.shopWeapon&&!r.weaponGiven)?(r.weaponGiven=true,{kind:'weapon',id:unownedWeapon(),price:priced(220)}):{kind:'spell',id:unownedSpell(),price:priced(200)};it.x=px;it.y=py;it.ped=true;if(r.decor.some(d=>d.kind==='counter'&&d.x===px&&d.y===py-T))it.dy=-T;r.items.push(it);}   /* on the counter behind, not on the floor in front of it */
   else if(ch==='A'){r.items.push({kind:'buff',id:null,x:px,y:py,price:0,altar:true});}
-  else if(ch==='C'){let it;if(r.weaponRoom&&!r.weaponGiven){r.weaponGiven=true;it={kind:'weapon',id:unownedWeapon()};}else{const rr=Math.random(),rel=rr<0.65?unownedRelic():null;it=rel?{kind:'relic',id:rel}:rr<0.85?{kind:'relic',id:pick(Object.keys(BUFFS))}:{kind:(q=>q<0.34?'gourd':q<0.67?'hpup':'manaup')(Math.random())};}Object.assign(it,{x:px,y:py,price:0,chest:true});r.items.push(it);}
+  else if(ch==='C'){let it;if(r.weaponRoom&&!r.weaponGiven){r.weaponGiven=true;it={kind:'weapon',id:unownedWeapon()};}else{const ri=Math.random()<0.85?rollItem():null;it=ri?{kind:ri.cursed?'cursed':'relic',id:ri.id}:{kind:(q=>q<0.34?'gourd':q<0.67?'hpup':'manaup')(Math.random())};}Object.assign(it,{x:px,y:py,price:0,chest:true});r.items.push(it);}
   else if(ch==='S'){r.items.push({kind:'spell',id:unownedSpell(),x:px,y:py,price:0});}
   else if(ch==='H'){r.items.push({kind:'souls',n:50+Math.floor(Math.random()*50),x:px,y:py,price:0});}
   else if(ch==='B'){r.solid[ty][tx]=4;r.props.push({kind:'brazier',x:px,y:py,idx:r.props.length,lit:false});}
@@ -910,8 +915,8 @@ function buildRoomInner(r){
    ids.forEach((b,i)=>{b.ring=i;const dx=pl.x-b.x,dy=pl.y-b.y;b.target=Math.abs(dx)>Math.abs(dy)?(dx>0?0:2):(dy>0?1:3);b.dir=b.target;});
    const m=ids.length,turn=i=>[i,(i+1)%m,(i-1+m)%m].forEach(j=>ids[j].dir=(ids[j].dir+1)%4),k=3+Math.floor(Math.random()*3);for(let t=0;t<k;t++)turn(Math.floor(Math.random()*m));if(ids.every(b=>b.dir===b.target))turn(0);}}   // scrambled by real turns, so it always unwinds
  if(r.type==='smith'){const ids=Object.keys(UPG).sort(()=>Math.random()-0.5);r.items.filter(it=>it.kind==='upgrade').forEach((it,i)=>{it.id=ids[i];it.price=priced(UPG[ids[i]].price);});}
- if(r.type==='shrine'){const ids=Object.keys(BUFFS).sort(()=>Math.random()-0.5);r.items.forEach((it,i)=>it.id=ids[i]);}
- if(r.type==='hag'){const ids=Object.keys(CURSED).sort(()=>Math.random()-0.5);r.items.filter(it=>it.kind==='cursed').forEach((it,i)=>{it.id=ids[i];it.price=priced(CURSED[ids[i]].price);});}
+ if(r.type==='shrine'){const used=new Set();r.items.forEach(it=>{let ri=null;for(let k=0;k<8;k++){ri=rollItem(0.08);if(!ri||!used.has(ri.id))break;}if(ri&&!used.has(ri.id)){used.add(ri.id);it.id=ri.id;it.kind=ri.cursed?'cursed':'relic';}else{it.kind='hpup';it.id=null;}});}   /* three offerings from the one pool; when it runs dry the altar holds a vial */
+ if(r.type==='hag'){const ids=Object.keys(CURSED).filter(k=>!hasRelic(k)).sort(()=>Math.random()-0.5);r.items.filter(it=>it.kind==='cursed').forEach((it,i)=>{it.id=ids[i]||null;if(it.id)it.price=priced(CURSED[it.id].price);});r.items=r.items.filter(it=>it.kind!=='cursed'||it.id);}
  if(r.type==='shop'){const seen=new Set();r.items.forEach(it=>{if((it.kind==='weapon'||it.kind==='spell')&&seen.has(it.kind+it.id))it.id=it.kind==='weapon'?unownedWeapon():unownedSpell();seen.add(it.kind+it.id);});}
  r.doors={};DIRS.forEach(d=>{const n=dungeon[key(r.x+d.x,r.y+d.y)];if(!n)return;
   if(r.type==='secret'){if(key(n.x,n.y)===r.parent)r.doors[d.n]=true;return;}
@@ -1240,16 +1245,15 @@ function takeItem(it){if(it.kind==='talk'){talkTo(it.d);return;}if(it.kind==='lo
   case'weapon':{const old=p.weapon,oi=p.inf,os=p.sharp;p.weapon=it.id;p.inf=it.inf||null;p.sharp=it.sharp||0;it.id=old;it.inf=oi;it.sharp=os;it.price=0;it.chest=false;it.ped=false;keep=true;const w=WEAPONS[p.weapon];showMsg(w.name+(w.trait!=='plain'?' - '+w.trait:''),2.2);break;}
   case'spell':{const old=p.spell;p.spell=it.id;it.id=old;it.price=0;it.ped=false;keep=true;const sp=SPELLS[p.spell];showMsg(sp.name+(sp.trait!=='plain'?' - '+sp.trait:''),2.2);break;}
   case'flask':p.flasks=Math.min(p.maxFlasks,p.flasks+1);showMsg('Flask refilled',1.2);break;
-  case'hpup':p.maxHp+=35;p.hp+=35;addItem('hpup');showMsg(ITEMS.hpup.name+': +35 health',1.6);break;
-  case'manaup':p.maxMana+=35;p.mana+=35;addItem('manaup');showMsg(ITEMS.manaup.name+': +35 mana',1.6);break;
-  case'gourd':p.maxFlasks++;p.flasks=Math.min(p.maxFlasks,p.flasks+1);addItem('gourd');showMsg(ITEMS.gourd.name+': +1 flask',1.8);SFX.flask();break;
+  case'hpup':p.maxHp+=35;p.hp+=35;showMsg(ITEMS.hpup.name+': +35 health',1.6);break;
+  case'manaup':p.maxMana+=35;p.mana+=35;showMsg(ITEMS.manaup.name+': +35 mana',1.6);break;
+  case'gourd':p.maxFlasks++;p.flasks=Math.min(p.maxFlasks,p.flasks+1);showMsg(ITEMS.gourd.name+': +1 flask',1.8);SFX.flask();break;
   case'blessing':{p.maxFlasks++;p.flasks=p.maxFlasks;const f=room.decor.find(d=>d.kind==='fountain');if(f)f.spent=true;showMsg('Blessed water: +1 flask, all refilled',2.4);burst(it.x,it.y-6,18,'#5ce0d0');SFX.relic();SFX.flask();break;}
-  case'buff':BUFFS[it.id].apply(p);addItem(it.id);showMsg(BUFFS[it.id].name,1.8);room.items=room.items.filter(x=>x.kind!=='buff');keep=true;break;
-  case'relic':if(ITEMS[it.id]&&ITEMS[it.id].relic){addItem(it.id);if(it.id==='tithe')p.dmgMul*=1.4;banner={t:3.2,title:ITEMS[it.id].name.toUpperCase(),sub:ITEMS[it.id].desc,col:'#f4c968'};msg.t=0;SFX.relic();burst(it.x,it.y-4,18,'#f4c968');stat('relics');}else{BUFFS[it.id].apply(p);addItem(it.id);showMsg(BUFFS[it.id].name,1.8);}break;
+  case'buff':case'relic':{const d=ITEMS[it.id];if(BUFFS[it.id])BUFFS[it.id].apply(p);addItem(it.id);if(it.id==='tithe')p.dmgMul*=1.4;banner={t:2.8,title:d.name.toUpperCase(),sub:d.desc,col:'#f4c968'};msg.t=0;SFX.relic();burst(it.x,it.y-4,18,'#f4c968');if(d.relic)stat('relics');if(it.altar){room.items=room.items.filter(x=>!x.altar);keep=true;}break;}   /* every item gets its card; a shrine gives one of its three */
   case'stairs':descend();return;
   case'key':p.keys++;showMsg('A rusted key',1.5);break;
-  case'cursed':{const c=CURSED[it.id];c.apply(p);addItem(it.id);showMsg(c.name+': '+c.desc,2.6);burst(it.x,it.y-4,16,'#b06ac8');SFX.relic();const hg=room.decor.find(d=>d.kind==='hag');if(hg)hg.talkUntil=time+2;break;}
-  case'upgrade':{const u=UPG[it.id];if(it.id==='sharp'){p.sharp++;addItem('sharp');showMsg(wpn().name+' +'+p.sharp,1.8);}else{p.inf=it.id;showMsg(wpn().name+': '+u.desc,2);}burst(it.x,it.y-4,14,'#e8a33c');SFX.hitH();break;}
+  case'cursed':{const c=CURSED[it.id];c.apply(p);addItem(it.id);banner={t:2.8,title:c.name.toUpperCase(),sub:'CURSED   '+c.desc,col:'#b06ac8'};msg.t=0;burst(it.x,it.y-4,16,'#b06ac8');SFX.relic();const hg=room.decor.find(d=>d.kind==='hag');if(hg)hg.talkUntil=time+2;if(it.altar){room.items=room.items.filter(x=>!x.altar);keep=true;}break;}
+  case'upgrade':{const u=UPG[it.id];if(it.id==='sharp'){p.sharp++;showMsg(wpn().name+' +'+p.sharp,1.8);}else{p.inf=it.id;showMsg(wpn().name+': '+u.desc,2);}burst(it.x,it.y-4,14,'#e8a33c');SFX.hitH();break;}
   case'souls':{const n=Math.round(it.n*soulMul());souls+=n;dmgNum(it.x,it.y-10,'+'+n,'#f4c968');showMsg('+'+n+' souls',1.2);break;}
   case'camp':overlayOpen='skins';skinCursor=Math.max(0,SKIN_IDS.indexOf(save.skin));SFX.door();return;
   case'heart':{room.items.splice(room.items.indexOf(it),1);room.cleared=false;room.spawned=true;room.wave=1;room.waveT=0;room.decals.push({x:it.x,y:it.y+4,r:5,s:Math.random()*99},{x:it.x-6,y:it.y+2,r:3,s:Math.random()*99},{x:it.x+7,y:it.y+5,r:3,s:Math.random()*99});
@@ -1374,9 +1378,9 @@ function attackHits(range,arc,dmg,stagger,ang){
   if(!at)continue;
   player.atk.hitSet.add(e);const wasRip=e.riposte&&player.riposteT>0;let mul=1;
   if(A==='shatter'&&e.slow>0){mul=1.5;dmgNum(at.x,at.y-e.r-14,'SHATTER','#7fa8ff');}else if(A==='butcher'&&e.hp<e.maxHp*0.35){mul=3;dmgNum(at.x,at.y-e.r-14,'BUTCHER','#c8302a');}
-  if(e.burn>0)mul*=1+0.2*cnt('cinderheart');if(e.slow>0)mul*=1+0.2*cnt('rime');if(e.bleed>0)mul*=1+0.25*cnt('ruin');   // the schools: hit the burning, the chilled, the bleeding harder
+  if(e.burn>0)mul*=1+0.35*cnt('cinderheart');if(e.slow>0)mul*=1+0.35*cnt('rime');if(e.bleed>0)mul*=1+0.4*cnt('ruin');   // the schools: hit the burning, the chilled, the bleeding harder
   damageEnemy(e,dmg*mul*(1+0.2*player.sharp)*(hasRelic('mask')&&player.hp<player.maxHp*0.4?1.35:1),stagger,ang,wpn().effect||(player.inf&&UPG[player.inf].fx)||(hasRelic('idol')?'burn':undefined),!!wpn().heavy||!!player.atk.heavy,at);artAfterHit(e,A,ang);
-  {const q=player;if(cnt('leech'))q.hp=Math.min(q.maxHp,q.hp+Math.ceil(dmg*mul*0.05*cnt('leech')));if(cnt('conduit'))q.mana=Math.min(q.maxMana,q.mana+2*cnt('conduit'));}
+  {const q=player;if(cnt('leech'))q.hp=Math.min(q.maxHp,q.hp+Math.ceil(dmg*mul*0.08*cnt('leech')));if(cnt('conduit'))q.mana=Math.min(q.maxMana,q.mana+3*cnt('conduit'));}
   if(e.affix==='thorned'&&!e.dead&&!wasRip&&!(e.thornCd>0)){e.thornCd=0.5;const q=player;q.hp-=4;dmgNum(q.x,q.y-14,4,'#c8302a');burst(q.x,q.y-4,6,'#8a4a2a');SFX.hurt();buzz(20);if(run)run.killedBy='the thorns of '+e.name;if(q.hp<=0&&!spare())die();}}
  for(const b of room.props){if(!((b.kind==='brazier'&&!b.lit)||b.kind==='idol')||player.atk.hitSet.has(b))continue;const dx=b.x-player.x,dy=b.y-player.y,d=Math.hypot(dx,dy);if(d>range+8)continue;
   let a=Math.atan2(dy,dx)-ang;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)>arc/2)continue;player.atk.hitSet.add(b);if(b.kind==='idol')hitIdol(b);else hitBrazier(b);}
@@ -1398,7 +1402,7 @@ function raiseHollow(x,y){if(room.enemies.filter(e=>!e.dead).length>=3)return;co
 // Turning idols: a hit turns the idol you struck and its two ring neighbours a quarter turn. All must face the stone.
 function hitIdol(b){if(room.solved)return;const ids=room.props.filter(q=>q.kind==='idol').sort((a,c)=>a.ring-c.ring),m=ids.length,i=ids.indexOf(b);[i,(i+1)%m,(i-1+m)%m].forEach(j=>{ids[j].dir=(ids[j].dir+1)%4;ids[j].spin=0.3;});SFX.block();burst(b.x,b.y-6,6,'#9a8f7c');room.turns++;
  if(ids.every(q=>q.dir===q.target)){room.solved=true;showMsg('The idols face the stone',2.5);SFX.clear();const pl=room.props.find(q=>q.kind==='plinth');if(pl)pl.lit=true;const cx=pl?pl.x:room.pw/2,cy=(pl?pl.y:room.ph/2)+22;burst(cx,cy,20,'#f4c968');
-  dropItem(room.weaponRoom?{kind:'weapon',id:unownedWeapon(),x:cx,y:cy,price:0,chest:true}:{kind:'relic',id:unownedRelic()||pick(Object.keys(BUFFS)),x:cx,y:cy,price:0,chest:true},{kind:'spell',id:unownedSpell(),x:cx-24,y:cy+6,price:0},{kind:'souls',n:60,x:cx+24,y:cy+6,price:0});stat('puzzles');}
+  dropItem(room.weaponRoom?{kind:'weapon',id:unownedWeapon(),x:cx,y:cy,price:0,chest:true}:uniqueDrop(cx,cy),{kind:'spell',id:unownedSpell(),x:cx-24,y:cy+6,price:0},{kind:'souls',n:60,x:cx+24,y:cy+6,price:0});stat('puzzles');}
  else if(room.turns%6===0)raiseHollow(b.x,b.y);}
 // The stone walk: every stone lit in one unbroken walk. A second step on a lit stone, or leaving the stones, darkens them all.
 function walkReset(x,y){const real=room.walkCount>=3;room.props.forEach(b=>{if(b.kind==='stone')b.lit=false;});room.walkCount=0;room.lastStone=null;SFX.guardbreak();shake=Math.max(shake,0.1);showMsg('The stones go dark',1.2);if(real)raiseHollow(x,y);}   // a broken attempt wakes a hollow; a stray step only darkens the stones
@@ -1411,7 +1415,7 @@ function hitBrazier(b){
  if(room.seq[room.step]===b.idx){b.lit=true;room.step++;SFX.pickup();burst(b.x,b.y-8,10,BCOL[b.idx]);
   if(room.step===room.props.length){room.solved=true;showMsg(room.type==='kiln'?'The kiln roars':b.kind==='plate'?'The stones sing':'The braziers roar',2.5);SFX.clear();const cx=room.pw/2,cy=room.ph/2;burst(cx,cy,20,'#f4c968');
    if(room.type==='kiln')dropItem({kind:'upgrade',id:'burn',x:cx,y:cy,price:0,ped:true},{kind:'souls',n:100,x:cx-22,y:cy+10,price:0},{kind:'souls',n:100,x:cx+22,y:cy+10,price:0});
-   else dropItem(room.weaponRoom?{kind:'weapon',id:unownedWeapon(),x:cx,y:cy,price:0,chest:true}:{kind:'relic',id:unownedRelic()||pick(Object.keys(BUFFS)),x:cx,y:cy,price:0,chest:true},{kind:'souls',n:80,x:cx-22,y:cy+10,price:0},{kind:'souls',n:80,x:cx+22,y:cy+10,price:0});stat('puzzles');}}
+   else dropItem(room.weaponRoom?{kind:'weapon',id:unownedWeapon(),x:cx,y:cy,price:0,chest:true}:uniqueDrop(cx,cy),{kind:'souls',n:80,x:cx-22,y:cy+10,price:0},{kind:'souls',n:80,x:cx+22,y:cy+10,price:0});stat('puzzles');}}
  else{room.props.forEach(q=>q.lit=false);room.step=0;SFX.guardbreak();shake=Math.max(shake,0.1);showMsg(b.kind==='plate'?'The stones fall silent':'The flames die',1.2);burst(b.x,b.y-8,8,'#6d6578');raiseHollow(b.x,b.y);}
 }
 function damageEnemy(e,d,heavy,ang,fx,isHeavy,at){
@@ -1425,7 +1429,7 @@ function damageEnemy(e,d,heavy,ang,fx,isHeavy,at){
    return;}}
  if(e.ward>0){const willRip=e.riposte&&player.riposteT>0;if(isHeavy||willRip){e.ward=0;burst(hx,hy-4,14,'#f4c968');SFX.guardbreak();dmgNum(hx,hy-e.r-10,'BREAK','#f4c968');if(!willRip){e.state='stagger';e.t=0.8;e.flash=0.2;hitstop=Math.max(hitstop,0.05);return;}}
   else{e.ward--;burst(hx,hy-4,8,'#f4c968');SFX.block();dmgNum(hx,hy-e.r-10,e.ward?'WARD':'BREAK','#f4c968');hitstop=Math.max(hitstop,0.03);return;}}
- if(fx==='burn'&&e.affix!=='burning'&&e.type!=='dragon'){e.burn=3+1.5*cnt('cinderheart');e.burnT=0;}if(fx==='slow'){e.slow=slowFor(isHeavy?3:1.6);}if(fx==='lifesteal'){player.hp=Math.min(player.maxHp,player.hp+Math.ceil(d*0.2));}if(e.riposte&&player.riposteT>0){d*=3;rip=true;e.riposte=false;}
+ if(fx==='burn'&&e.affix!=='burning'&&e.type!=='dragon'){e.burn=3+2*cnt('cinderheart');e.burnT=0;}if(fx==='slow'){e.slow=slowFor(isHeavy?3:1.6);}if(fx==='lifesteal'){player.hp=Math.min(player.maxHp,player.hp+Math.ceil(d*0.2));}if(e.riposte&&player.riposteT>0){d*=3;rip=true;e.riposte=false;}
  d=Math.round(d);e.hp-=d;e.flash=rip?0.25:0.12;if(rip)buzz(40);
  if((e.type!=='brute'&&e.type!=='king'&&!e.anchored)||rip){moveEnt(e,Math.cos(ang)*(heavy?10:4),Math.sin(ang)*(heavy?10:4));if((heavy||rip)&&e.state!=='attack'){e.state='stagger';e.t=0.7;}else if(e.type==='archer'&&e.state!=='attack'){e.state='stagger';e.t=Math.max(e.state==='stagger'?e.t:0,0.45);}}
  burst(hx,hy-2,heavy?8:4,'#e8e0d0');shake=Math.max(shake,rip?0.25:heavy?0.12:0.05);hitstop=Math.max(hitstop,rip?0.13:heavy?0.06:0.025);
@@ -1511,7 +1515,7 @@ function updateEnemy(e,dt){
  if(e.fireCd>0)e.fireCd-=dt;
  if(e.burn>0){e.burn-=dt;e.burnT=(e.burnT||0)+dt;if(Math.random()<0.3)parts.push({x:e.x+(Math.random()-.5)*6,y:e.y-4,vx:0,vy:-25,life:0.3,col:Math.random()<0.5?'#e8a33c':'#e04a3a'});
   if(e.burnT>=0.5){e.burnT-=0.5;const bd=Math.round(4*fireMul());e.hp-=bd;dmgNum(e.x,e.y-e.r-6,bd,'#e8a33c');
-   if(cnt('wildfire')&&Math.random()<0.35*cnt('wildfire'))for(const o of room.enemies){if(o===e||o.dead||o.burn>0||o.affix==='burning'||o.type==='dragon')continue;if(Math.hypot(o.x-e.x,o.y-e.y)<30){o.burn=2+1.5*cnt('cinderheart');o.burnT=0;burst(o.x,o.y-4,8,'#e8a33c');break;}}   // wildfire leaps to a neighbour
+   if(cnt('wildfire')&&Math.random()<0.5*cnt('wildfire'))for(const o of room.enemies){if(o===e||o.dead||o.burn>0||o.affix==='burning'||o.type==='dragon')continue;if(Math.hypot(o.x-e.x,o.y-e.y)<30){o.burn=2+1.5*cnt('cinderheart');o.burnT=0;burst(o.x,o.y-4,8,'#e8a33c');break;}}   // wildfire leaps to a neighbour
    if(e.hp<=0){if(tryRevive(e))return;e.dead=true;souls+=Math.round(e.souls*(room.event==='blood'?2:1)*soulMul());relicKill(e);burst(e.x,e.y,16,'#e8a33c');SFX.kill();killEnemy(e);return;}}}
  if(e.bleed>0){e.bleed-=dt;e.bleedT=(e.bleedT||0)+dt;if(Math.random()<0.25)parts.push({x:e.x+(Math.random()-.5)*6,y:e.y-2,vx:0,vy:12,life:0.3,col:'#c8302a'});
   if(e.bleedT>=0.5){e.bleedT-=0.5;e.hp-=3;dmgNum(e.x,e.y-e.r-6,3,'#c8302a');if(e.hp<=0){if(tryRevive(e))return;e.dead=true;souls+=Math.round(e.souls*(room.event==='blood'?2:1)*soulMul());relicKill(e);burst(e.x,e.y,16,'#c8302a');SFX.kill();killEnemy(e);return;}}}
@@ -1840,7 +1844,7 @@ function update(dt){
  if(room.type==='arena'&&!room.cleared&&room.spawned&&room.wave<3&&room.enemies.every(e=>e.dead)){room.waveT+=dt;if(room.waveT>1.3){room.wave++;room.waveT=0;spawnGroup(room,2+room.wave,room.wave===3);showMsg('Wave '+room.wave,1.2);SFX.boss();}}
  else if(!room.cleared&&room.spawned&&room.enemies.every(e=>e.dead)){room.cleared=true;roomsCleared++;run.rooms++;SFX.door();if(room.type!=='boss')setTimeout(SFX.clear,250);
   if(room.keyRoom){dropItem({kind:'key',x:room.pw/2,y:room.ph/2,price:0});burst(room.pw/2,room.ph/2,12,'#f4c968');showMsg('A key falls from the last one',2.5);}
-  if(room.type==='arena'){stat('arenas');const cx=room.pw/2,cy=room.ph/2;dropItem(room.weaponRoom?{kind:'weapon',id:unownedWeapon(),x:cx-12,y:cy,price:0,chest:true}:{kind:'relic',id:unownedRelic()||pick(Object.keys(BUFFS)),x:cx-12,y:cy,price:0,chest:true},{kind:'spell',id:unownedSpell(),x:cx+12,y:cy,price:0},{kind:'souls',n:120,x:cx,y:cy+14,price:0});showMsg('The arena falls silent',2.5);}
+  if(room.type==='arena'){stat('arenas');const cx=room.pw/2,cy=room.ph/2;dropItem(room.weaponRoom?{kind:'weapon',id:unownedWeapon(),x:cx-12,y:cy,price:0,chest:true}:uniqueDrop(cx-12,cy),{kind:'spell',id:unownedSpell(),x:cx+12,y:cy,price:0},{kind:'souls',n:120,x:cx,y:cy+14,price:0});showMsg('The arena falls silent',2.5);}
   if(room.type==='combat'){if(roomsCleared%2===0&&player.flasks<player.maxFlasks){player.flasks++;showMsg('Flask restored',1.8);}else if(!room.keyRoom)showMsg('Room cleared',1.5);}
   else if(room.type==='flooded'||room.type==='ossuary')showMsg('Quiet again',1.4);}
  msg.t-=dt;shake=Math.max(0,shake-dt);transT=Math.max(0,transT-dt);if(banner){banner.t-=dt;if(banner.t<=0)banner=null;}
@@ -2123,7 +2127,7 @@ function drawProp(b){const x=Math.round(b.x),y=Math.round(b.y);
 function drawItem(it){
  const x=Math.round(it.x),y=Math.round(it.y+(it.dy||0));   // dy lifts shop goods onto the counter; the pick-up spot stays on the floor tile in front
  if(it.kind==='camp')return;
- if(it.kind==='cursed'){ctx.fillStyle='#120a18';ctx.fillRect(x-7,y-3,14,7);ctx.fillStyle='#3a2450';ctx.fillRect(x-6,y-2,12,5);const g=Math.round(Math.sin(time*2.5+x)*1);drawIcon(it.id,x-6,y-14+g);light(x,y-8,12,'rgba(176,106,200,A)',0.22);return;}   /* laid on a square of dark cloth on the carpet */
+ if(it.kind==='cursed'&&!it.chest&&!it.altar){ctx.fillStyle='#120a18';ctx.fillRect(x-7,y-3,14,7);ctx.fillStyle='#3a2450';ctx.fillRect(x-6,y-2,12,5);const g=Math.round(Math.sin(time*2.5+x)*1);drawIcon(it.id,x-6,y-14+g);light(x,y-8,12,'rgba(176,106,200,A)',0.22);return;}   /* laid on a square of dark cloth on the carpet */
  if(it.kind==='key'){const by2=y-6-Math.round(Math.sin(time*3+x)*1.5);ctx.fillStyle=K;ctx.fillRect(x-5,by2-3,10,6);ctx.fillStyle='#f4c968';ctx.fillRect(x-4,by2-2,3,4);ctx.fillRect(x-1,by2-1,5,2);ctx.fillRect(x+2,by2+1,1,1);ctx.fillStyle='#8a7530';ctx.fillRect(x-3,by2-1,1,2);light(x,by2,10,'rgba(244,201,104,A)',0.25);return;}
  if(it.kind==='upgrade'){if(it.ped&&!it.dy){ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-5,y+3,10,2);ctx.fillStyle='#464666';ctx.fillRect(x-4,y-2,8,6);ctx.fillStyle='#5a5a7c';ctx.fillRect(x-5,y-3,10,2);}const by2=y-7-Math.round(Math.sin(time*3+x)*1.5),u=UPG[it.id];
   if(it.id==='sharp'){ctx.fillStyle='#8a94a4';ctx.fillRect(x-4,by2-1,8,3);ctx.fillStyle='#d9d0bd';ctx.fillRect(x-3,by2-1,6,1);}else{const c=it.id==='burn'?'#e8a33c':it.id==='frost'?'#7fa8ff':'#c8302a';ctx.fillStyle='#2a2430';ctx.fillRect(x-2,by2-3,4,6);ctx.fillStyle=c;ctx.fillRect(x-1,by2-1,2,3);ctx.fillRect(x-2,by2-4,4,1);light(x,by2,10,hexA(c,'A'),0.25);}return;}
@@ -2136,7 +2140,7 @@ function drawItem(it){
  if(it.kind==='corpse'){drawCorpse(it);const g=Math.sin(time*3)*1.5;ctx.fillStyle='#f4c968';ctx.fillRect(x-1,y-12+Math.round(g),2,2);return;}
  if(it.ped&&!it.dy){ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-5,y+3,10,2);ctx.fillStyle='#464666';ctx.fillRect(x-4,y-2,8,6);ctx.fillStyle='#5a5a7c';ctx.fillRect(x-5,y-3,10,2);}
  if(it.altar){ctx.fillStyle='#464666';ctx.fillRect(x-5,y-4,10,8);ctx.fillStyle='#5a5a7c';ctx.fillRect(x-6,y-5,12,2);ctx.fillStyle='#2a2a40';ctx.fillRect(x-5,y+2,10,2);
-  const g=Math.round(Math.sin(time*3+x)*1.5);if(it.id)drawIcon(it.id,x-4,y-15+g);light(x,y-10,12,'rgba(92,224,208,A)',0.25);return;}
+  const g=Math.round(Math.sin(time*3+x)*1.5);if(it.id)drawIcon(it.id,x-4,y-15+g);light(x,y-10,12,it.kind==='cursed'?'rgba(176,106,200,A)':'rgba(92,224,208,A)',0.25);return;}
  if(it.chest){ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-6,y+3,12,2);ctx.fillStyle='#7a4a1e';ctx.fillRect(x-6,y-3,12,7);ctx.fillStyle='#b06a2a';ctx.fillRect(x-6,y-5,12,3);ctx.fillStyle='#f4c968';ctx.fillRect(x-1,y-2,2,2);ctx.fillStyle=K;ctx.fillRect(x-6,y-1,12,1);return;}
  const by=y-6-Math.round(Math.sin(time*3+x)*1.5);
  if(it.kind==='weapon'){const w=WEAPONS[it.id],L=Math.max(7,Math.min(13,w.len));drawWeapon(it.id,x-Math.cos(-Math.PI/4)*L/2,by-Math.sin(-Math.PI/4)*L/2+1,-Math.PI/4,L);}
@@ -2393,7 +2397,7 @@ function drawPlayer(){
   drawHand(ox,oy,hc);}
 }
 function bar(x,y,w,val,max,col){ctx.fillStyle=K;ctx.fillRect(x-1,y-1,w+2,5);ctx.fillStyle='#2e2838';ctx.fillRect(x,y,w,3);ctx.fillStyle=col;ctx.fillRect(x,y,Math.round(w*Math.max(0,val)/max),3);}
-function itemLabel(it){switch(it.kind){case'weapon':{const w=WEAPONS[it.id];return w.name+(w.hv&&w.hv.name?' \u00b7 '+w.hv.name:'');}case'spell':return SPELLS[it.id].name+' ('+spellCost(SPELLS[it.id])+' mana)';case'flask':return 'Flask refill';case'hpup':return ITEMS.hpup.name+' (+35 max HP)';case'manaup':return ITEMS.manaup.name+' (+35 max mana)';case'gourd':return ITEMS.gourd.name+' (+1 flask)';case'blessing':return 'Drink from the well (+1 flask)';case'buff':case'relic':return ITEMS[it.id]&&ITEMS[it.id].relic?ITEMS[it.id].name+' ('+ITEMS[it.id].desc+')':BUFFS[it.id].name+' ('+BUFFS[it.id].desc+')';case'corpse':return 'Search the fallen';case'souls':return 'Gather souls';case'stairs':return floor+1>=FINAL?'Descend to the maw':floor+1===FINAL-1?'Descend to the throne':'Descend to floor '+(floor+1);case'key':return 'Take the key';case'lock':return player.keys>0?'Unlock the door':'Locked';case'talk':return 'Talk';case'cursed':return CURSED[it.id].name+' ('+CURSED[it.id].desc+')';case'upgrade':return UPG[it.id].name+' ('+UPG[it.id].desc+')';case'camp':return 'Rest at the fire';case'heart':return 'Pierce the heart';}}
+function itemLabel(it){switch(it.kind){case'weapon':{const w=WEAPONS[it.id];return w.name+(w.hv&&w.hv.name?' \u00b7 '+w.hv.name:'');}case'spell':return SPELLS[it.id].name+' ('+spellCost(SPELLS[it.id])+' mana)';case'flask':return 'Flask refill';case'hpup':return ITEMS.hpup.name+' (+35 max HP)';case'manaup':return ITEMS.manaup.name+' (+35 max mana)';case'gourd':return ITEMS.gourd.name+' (+1 flask)';case'blessing':return 'Drink from the well (+1 flask)';case'buff':case'relic':return ITEMS[it.id].name+' ('+ITEMS[it.id].desc+')';case'corpse':return 'Search the fallen';case'souls':return 'Gather souls';case'stairs':return floor+1>=FINAL?'Descend to the maw':floor+1===FINAL-1?'Descend to the throne':'Descend to floor '+(floor+1);case'key':return 'Take the key';case'lock':return player.keys>0?'Unlock the door':'Locked';case'talk':return 'Talk';case'cursed':return 'CURSED  '+CURSED[it.id].name+' ('+CURSED[it.id].desc+')';case'upgrade':return UPG[it.id].name+' ('+UPG[it.id].desc+')';case'camp':return 'Rest at the fire';case'heart':return 'Pierce the heart';}}
 function bigBar(x,y,w,h,val,max,col,dark){ctx.fillStyle=K;ctx.fillRect(x-1,y-1,w+2,h+2);ctx.fillStyle=dark;ctx.fillRect(x,y,w,h);const f=Math.round(w*Math.max(0,val)/max);ctx.fillStyle=col;ctx.fillRect(x,y,f,h);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(x,y,f,1);}
 function drawBand(){
  const p=player,y0=H,b=BAND;ctx.fillStyle=FP().bg;ctx.fillRect(0,y0,W,b);ctx.fillStyle=FP().wl;ctx.fillRect(0,y0,W,1);ctx.fillStyle=FP().wd;ctx.fillRect(0,y0+1,W,1);
@@ -2565,13 +2569,13 @@ function drawItems(){
  txt(SKINS[save.skin].name+'   flasks '+p.flasks+'/'+p.maxFlasks+(p.keys?'   keys '+p.keys:''),W/2,72,'#8a8296','center');
  // the grid of what you have picked up
  const gx0=GX0,gy=84;for(let i=0;i<16;i++){const cx=gx0+i*16,it=p.items[i];ctx.fillStyle=it?(i===itemSel?'#2e2d42':'#1c1b28'):'#0e0d14';ctx.fillRect(cx,gy,14,14);
-  if(it){drawIcon(it.id,cx+1,gy+1);if(it.n>1)drawMini(String(it.n),cx+13,gy+9,'#f4c968');if(ITEMS[it.id].relic){ctx.fillStyle='#8a7530';ctx.fillRect(cx,gy+13,14,1);}}
+  if(it){drawIcon(it.id,cx+1,gy+1);if(ITEMS[it.id].cursed){ctx.fillStyle='#b06ac8';ctx.fillRect(cx,gy+13,14,1);}}
   else{ctx.fillStyle='#1c1b28';ctx.fillRect(cx,gy,14,1);ctx.fillRect(cx,gy,1,14);}
   if(it&&i===itemSel){ctx.strokeStyle='#f4c968';ctx.strokeRect(cx-0.5,gy-0.5,15,15);}}
  // the chosen piece, large, with what it does
- if(!p.items.length){txt('nothing yet',W/2,108,'#464666','center');txt('the hollow keeps its gifts in chests',W/2,120,'#2e2d42','center');}
+ if(!p.items.length){txt('nothing yet',W/2,108,'#464666','center');txt('chests and shrines hand them out, one of each',W/2,120,'#2e2d42','center');}
  else{const it=p.items[Math.min(itemSel,p.items.length-1)],d=ITEMS[it.id];ctx.fillStyle='#14131c';ctx.fillRect(8,104,W-16,34);ctx.fillStyle=K;ctx.fillRect(14,108,26,26);ctx.fillStyle='#1c1b28';ctx.fillRect(15,109,24,24);drawIcon(it.id,15,109,2);
-  txt(d.name+(it.n>1?'  x'+it.n:''),46,110,d.relic?'#f4c968':'#d9d0bd');txt(d.desc,46,121,'#8a8296');if(d.relic)txt('relic',W-12,110,'#8a7530','right');}
+  txt(d.name,46,110,d.cursed?'#b06ac8':'#d9d0bd');txt(d.desc,46,121,'#8a8296');if(d.cursed)txt('CURSED',W-12,110,'#b06ac8','right');}
  txt(touchMode?'stick or tap: browse   MAP close':'arrows or mouse browse   I / Esc close',W/2,CH-14,'#464666','center');
 }
 function drawWin(){

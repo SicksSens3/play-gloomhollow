@@ -71,7 +71,7 @@ body.touch #pad{display:block}body.touch #help{display:none}
 </div>
 <script>
 (()=>{
-const W=352,H=208,T=16;let CH=208;   // the view is 22x13 tiles: a standard 20x12 room sits inside a thin wall border; on a 1080p screen this is one pixel-scale step in from the 24x14 view
+const W=336,H=200,T=16;let CH=200;   // the view is 21 x 12.5 tiles: a standard 20x12 room sits inside a thin border, 8 px at the sides and 4 px top and bottom
 // The build number shown on the title screen is read from sw.js, so the cache version is the one source of truth.
 let BUILD='';fetch('sw.js').then(r=>r.text()).then(t=>{const m=t.match(/gloomhollow-v(\d+)/);if(m)BUILD='build '+m[1];}).catch(()=>{});
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
@@ -82,7 +82,7 @@ let BAND=0,OFFY=0,OFFX=0,baseOX=0,baseOY=0,camX=0,camY=0;const VIEW_MAX_H=320;
 // The view is at most W x VIEW_MAX_H. Rooms that fit are centred as before; bigger rooms (loop templates) scroll with the player.
 function fit(){const touch=document.body.classList.contains('touch');let s;let R=null;try{R=room;}catch(e){}const ph=R?Math.min(R.ph,VIEW_MAX_H):H,pw=R?Math.min(R.pw,W):W;
  if(touch){s=innerWidth/W;const half=innerHeight*0.5;let total=Math.round(half/s);total=Math.max(ph,Math.min(H+200,total));if(total*s>half){s=half/total;}CH=total;}
- else{CH=Math.max(H,ph);s=Math.max(1,Math.floor(Math.min(innerWidth/W,(innerHeight-40)/CH)));}
+ else{CH=Math.max(H,ph);const dpr=devicePixelRatio||1;s=Math.max(1,Math.floor(Math.min(innerWidth/W,(innerHeight-40)/CH)*dpr)/dpr);}   /* a whole number of device pixels per game pixel: on a scaled display that is a finer step than whole CSS pixels, so the view fills more of the window */
  cv.height=CH;baseOY=Math.floor((CH-ph)/2);baseOX=Math.floor((W-pw)/2);OFFX=baseOX;OFFY=baseOY;
  cv.style.width=W*s+'px';cv.style.height=CH*s+'px';try{updateCamera(0,true);}catch(e){}}
 // The camera follows you with a dead zone of a few pixels. camX/camY are the offset from the room's centre: a room bigger than the view scrolls to its edges and no further;
@@ -519,6 +519,7 @@ const WEAPONS={
  ember:{hv:{art:'firewake',name:'Firewake',text:'leaves a crescent of fire burning',chg:0.6,slow:0.55,mul:1.6},shape:'ember',name:'Ember Blade',trait:'hits burn',effect:'burn',col:'#e8a33c',len:10,atk:{cost:14,dmg:15,range:17,arc:1.8,wind:0.1,active:0.09,rec:0.2,step:30}},
  frost:{hv:{art:'shatter',name:'Shatter',text:'freezes; a chilled foe takes half again',chg:0.9,slow:0.4,mul:1.6},shape:'axe',heavy:true,name:'Frost Axe',trait:'hits slow',effect:'slow',col:'#7fa8ff',len:11,atk:{cost:24,dmg:34,range:21,arc:2.4,wind:0.3,active:0.12,rec:0.38,step:16}},
  chain:{hv:{art:'haul',name:'Haul',text:'drags every foe hit to your feet',chg:0.7,slow:0.5,mul:1.6,range:1.25},shape:'chain',name:"Hollow's Chain",trait:'wide reach, weak',col:'#9a8f7c',len:22,atk:{cost:13,dmg:14,range:32,arc:3.0,wind:0.16,active:0.14,rec:0.28,step:6}},
+ ropedart:{hv:{art:'reel',name:'Reel In',text:'drags the foe to your feet and stuns it: time for a strike, or a roll',chg:0.65,slow:0.5,mul:1.3,range:1.3},shape:'chain',name:'Rope Dart',trait:'long throw, weak',col:'#cfc4b0',len:24,atk:{cost:12,dmg:12,range:40,arc:0.5,wind:0.14,active:0.12,rec:0.3,step:4}},
  scythe:{hv:{art:'reap',name:'Reap',text:'mends you for every foe hit',chg:1,slow:0.4,mul:1.6},shape:'scythe',heavy:true,name:'Soul Scythe',trait:'drinks blood',effect:'lifesteal',col:'#8a6aaa',len:15,atk:{cost:24,dmg:36,range:26,arc:3.0,wind:0.3,active:0.14,rec:0.4,step:12}},
  rapier:{hv:{art:'blink',name:'Blink',text:'step through the foe, strike from behind',chg:0.5,slow:0.6,mul:1.6,arc:1,range:1.4,step:1.5},shape:'rapier',name:'Storm Rapier',trait:'every strike lunges',col:'#d9e8ff',len:13,atk:{cost:14,dmg:22,range:24,arc:0.8,wind:0.1,active:0.14,rec:0.2,step:120}},
  cleaver:{hv:{art:'butcher',name:'Butcher',text:'triple damage to the nearly dead',chg:0.7,slow:0.5,mul:1.75},shape:'cleaver',name:'Cursed Cleaver',trait:'+50% dmg, bleeds you',effect:'cursed',col:'#c8302a',len:12,atk:{cost:18,dmg:30,range:19,arc:2.1,wind:0.16,active:0.1,rec:0.28,step:24}},
@@ -528,7 +529,7 @@ const WEAPONS={
  katar:{hv:{art:'frenzy',name:'Frenzy',text:'four cuts; each one returns stamina',chg:0.35,slow:0.7,mul:0.6,hits:4,arc:1.1,range:1.1,step:2.2},shape:'katar',name:'Gravedirt Katar',trait:'fastest, short',col:'#a89a8a',len:6,atk:{cost:9,dmg:13,range:13,arc:1.2,wind:0.04,active:0.06,rec:0.08,step:60}}
 };
 const HV_DEF={chg:0.7,slow:0.5,mul:1.6,arc:1.3,range:1.15,hits:1,step:1};
-const TWO_HANDED=new Set(['spear','mace','greatsword','frost','scythe','halberd','hammer','chain']);   // both hands on the haft
+const TWO_HANDED=new Set(['spear','mace','greatsword','frost','scythe','halberd','hammer','chain','ropedart']);   // both hands on the haft
 const hv=()=>{const h=Object.assign({},HV_DEF,wpn().hv||{});if(hasRelic('brand'))h.chg*=0.6;return h;};
 const SPELLS={
  bolt:{name:'Soul Bolt',trait:'plain',cost:20,cast:0.3,col:'#7fa8ff'},
@@ -1206,6 +1207,7 @@ function artAfterHit(e,A,ang){const p=player;if(!A)return;const mob=!e.boss&&!e.
  else if(A==='cleave'&&mob){moveEnt(e,Math.cos(ang)*22,Math.sin(ang)*22);if(!e.dead){e.state='stagger';e.t=Math.max(e.t||0,1.5);}}
  else if(A==='shatter'){e.slow=slowFor(4);if(mob&&!e.dead){e.state='stagger';e.t=Math.max(e.t||0,1.2);}}
  else if(A==='haul'&&mob&&!e.dead){for(let i=0;i<20;i++){const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy);if(d<=22)break;moveEnt(e,dx/d*3,dy/d*3);}e.state='stagger';e.t=Math.max(e.t||0,1);burst(e.x,e.y-4,6,'#cfc4b0');}
+ else if(A==='reel'&&mob&&!e.dead){for(let i=0;i<30;i++){const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy);if(d<=18)break;moveEnt(e,dx/d*3,dy/d*3);}e.state='stagger';e.t=Math.max(e.t||0,1.4);burst(e.x,e.y-4,8,'#fff0c0');dmgNum(e.x,e.y-e.r-10,'REELED','#f4c968');}   /* the rope dart's heavy: reeled to your feet and left standing stunned long enough for a strike or a roll */
  else if(A==='reap'){p.hp=Math.min(p.maxHp,p.hp+8);dmgNum(p.x,p.y-14,'+8','#5aa04a');}
  else if(A==='tremor'&&mob&&!e.dead){e.state='stagger';e.t=Math.max(e.t||0,1.4);}
  else if(A==='frenzy'){p.stam=Math.min(p.maxStam,p.stam+4);}}
@@ -2272,7 +2274,7 @@ function drawWeapon(id,sx,sy,a,len){const w=WEAPONS[id];const ex=sx+Math.cos(a)*
   case'mace':{line(sx,sy,...g(len-3),'#5a3a2a',2);const[mx,my]=g(len-2);dot(mx,my,3,w.col);ctx.fillStyle='#9aa4b4';for(let i=0;i<4;i++){const q=a+i*Math.PI/2+Math.PI/4;ctx.fillRect(mx+Math.cos(q)*3.2-0.7,my+Math.sin(q)*3.2-0.7,1.4,1.4);}break;}
   case'great':{line(sx,sy,ex,ey,w.col,3);line(...g(len*0.5),ex,ey,'#f0ece0',1);guard(3,4,'#8a7530',2);dot(sx,sy,1.5,'#5a3a2a');break;}
   case'axe':{line(sx,sy,...g(len-2),'#5a3a2a',2);const[hx,hy]=g(len-5);ctx.fillStyle=w.col;ctx.beginPath();ctx.moveTo(hx-px*1.5,hy-py*1.5);ctx.lineTo(hx+px*6+Math.cos(a)*1,hy+py*6+Math.sin(a)*1);ctx.lineTo(hx+px*5+Math.cos(a)*6,hy+py*5+Math.sin(a)*6);ctx.lineTo(hx+Math.cos(a)*5-px*1.5,hy+Math.sin(a)*5-py*1.5);ctx.closePath();ctx.fill();ctx.fillStyle='#d9e8ff';ctx.fillRect(hx+px*5+Math.cos(a)*3-0.5,hy+py*5+Math.sin(a)*3-0.5,1,1);break;}
-  case'chain':{for(let t=1;t<len-3;t+=2.4){const[cx,cy]=g(t);const wob=Math.sin(time*9+t*0.7)*0.9;dot(cx+px*wob,cy+py*wob,1.1,(t/2.4|0)%2?'#9a8f7c':'#6d6578');}dot(ex,ey,2.4,'#cfc4b0');ctx.fillStyle=K;ctx.fillRect(ex-0.5,ey-0.5,1,1);break;}
+  case'chain':{if(id==='ropedart'){line(sx,sy,ex,ey,'#b8a888',1);ctx.fillStyle=K;ctx.beginPath();ctx.moveTo(ex+Math.cos(a)*4,ey+Math.sin(a)*4);ctx.lineTo(ex+px*2.5,ey+py*2.5);ctx.lineTo(ex-px*2.5,ey-py*2.5);ctx.closePath();ctx.fill();ctx.fillStyle='#d9e8ff';ctx.beginPath();ctx.moveTo(ex+Math.cos(a)*3,ey+Math.sin(a)*3);ctx.lineTo(ex+px*1.4,ey+py*1.4);ctx.lineTo(ex-px*1.4,ey-py*1.4);ctx.closePath();ctx.fill();break;}for(let t=1;t<len-3;t+=2.4){const[cx,cy]=g(t);const wob=Math.sin(time*9+t*0.7)*0.9;dot(cx+px*wob,cy+py*wob,1.1,(t/2.4|0)%2?'#9a8f7c':'#6d6578');}dot(ex,ey,2.4,'#cfc4b0');ctx.fillStyle=K;ctx.fillRect(ex-0.5,ey-0.5,1,1);break;}
   case'scythe':{line(sx,sy,...g(len-1),'#5a3a2a',2);const[hx,hy]=g(len-1);ctx.strokeStyle=w.col;ctx.lineWidth=2;ctx.beginPath();ctx.arc(hx+px*6,hy+py*6,6.5,a-Math.PI/2,a-0.15);ctx.stroke();ctx.strokeStyle='#d9d0bd';ctx.lineWidth=1;ctx.beginPath();ctx.arc(hx+px*6,hy+py*6,7.5,a-Math.PI/2+0.3,a-0.3);ctx.stroke();break;}
   case'rapier':{line(sx,sy,ex,ey,w.col,1);dot(...g(2.5),1.8,'#8a7530');dot(sx,sy,1,K);break;}
   case'cleaver':{line(sx,sy,...g(3),'#5a3a2a',2);line(...g(3),...g(len-1),w.col,4);const[tx,ty]=g(len-1);line(tx,ty,tx+px*2.5+Math.cos(a)*1,ty+py*2.5+Math.sin(a)*1,w.col,3);line(...g(4),...g(len-2),'#7a1e1a',1);break;}
@@ -2297,14 +2299,18 @@ function drawFlail(p,sx,sy,sa,moving,a){const dtf=Math.max(0,Math.min(0.05,time-
  ctx.fillStyle='#9aa4b4';for(let i=0;i<4;i++){const q=p.fa+i*Math.PI/2+Math.PI/4;ctx.fillRect(bx+Math.cos(q)*3.4-0.7,by+Math.sin(q)*3.4-0.7,1.4,1.4);}ctx.fillStyle='#b8c4d4';ctx.fillRect(Math.round(bx)-1,Math.round(by)-1,1,1);
  return[bx,by];}
 // The Hollow's Chain hangs from the hand as a run of links (a small rope simulation): at rest it droops and sways with each step, held back for a charge it dangles, and a swing whips it out behind the hand so the hook arrives last.
-function drawChain(p,sx,sy,sa,moving,a,len){const N=7,L=Math.max(2,len/(N-1)),swing=p.state==='attack';
- if(!p.ch||p.ch.length!==N){p.ch=[];for(let i=0;i<N;i++)p.ch.push({x:sx+Math.cos(sa)*L*i,y:sy+Math.sin(sa)*L*i,px:sx+Math.cos(sa)*L*i,py:sy+Math.sin(sa)*L*i});}
- const ch=p.ch;ch[0].x=sx;ch[0].y=sy;const pull=swing?0.45:0,sag=swing?0:0.55;   // at rest nothing pulls it toward the aim: it hangs from the hands and sways
- for(let i=1;i<N;i++){const nd=ch[i],vx=(nd.x-nd.px)*0.86,vy=(nd.y-nd.py)*0.86;nd.px=nd.x;nd.py=nd.y;const tx=sx+Math.cos(sa)*L*i,ty=sy+Math.sin(sa)*L*i;nd.x+=vx+(tx-nd.x)*pull+(moving?Math.sin(p.walk*7+i*0.6)*0.25:Math.sin(time*1.8+i*0.5)*0.04);nd.y+=vy+(ty-nd.y)*pull+sag;}
- for(let k=0;k<3;k++){ch[0].x=sx;ch[0].y=sy;for(let i=1;i<N;i++){const a0=ch[i-1],b0=ch[i],dx=b0.x-a0.x,dy=b0.y-a0.y,d=Math.hypot(dx,dy)||1,df=(d-L)/d;if(i===1){b0.x-=dx*df;b0.y-=dy*df;}else{a0.x+=dx*df*0.5;a0.y+=dy*df*0.5;b0.x-=dx*df*0.5;b0.y-=dy*df*0.5;}}}
- ctx.strokeStyle='#4a4a5c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ch[0].x,ch[0].y);for(let i=1;i<N;i++)ctx.lineTo(ch[i].x,ch[i].y);ctx.stroke();
- for(let i=1;i<N-1;i++){ctx.fillStyle=i%2?'#9a8f7c':'#6d6578';ctx.beginPath();ctx.arc(ch[i].x,ch[i].y,1.2,0,Math.PI*2);ctx.fill();}
- const t=ch[N-1];ctx.fillStyle=K;ctx.beginPath();ctx.arc(t.x,t.y,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cfc4b0';ctx.beginPath();ctx.arc(t.x,t.y,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle=K;ctx.fillRect(Math.round(t.x)-1,Math.round(t.y)-1,1,1);return[t.x,t.y];}
+function drawChain(p,sx,sy,sa,moving,a,len){const N=7,swing=p.state==='attack',dart=p.weapon==='ropedart',L=Math.max(2,len/(N-1))*(swing?1:1.35),f=p.facing>=0?1:-1,base=sy-Math.sin(sa)*3;   /* carried, the links hang with slack the swing takes up */
+ // At rest it is carried, not aimed: one hand up at the shoulder, the chain slung down in a slack loop into the other hand at the hip, the weight hanging under that. In the swing it whips out along the aim.
+ const hx=swing?sx:p.x+f*7,hy=swing?sy:base-7,lx=p.x-f*3,ly=base+3,G=5;   // G: the link the low hand grips
+ if(!p.ch||p.ch.length!==N){p.ch=[];for(let i=0;i<N;i++)p.ch.push({x:hx+Math.cos(sa)*L*i,y:hy+Math.sin(sa)*L*i,px:hx+Math.cos(sa)*L*i,py:hy+Math.sin(sa)*L*i});}
+ const ch=p.ch;ch[0].x=hx;ch[0].y=hy;const pull=swing?0.45:0,sag=swing?0:0.55;
+ for(let i=1;i<N;i++){const nd=ch[i];if(!swing&&i===G){nd.px=nd.x=lx;nd.py=nd.y=ly;continue;}const vx=(nd.x-nd.px)*0.86,vy=(nd.y-nd.py)*0.86;nd.px=nd.x;nd.py=nd.y;const tx=hx+Math.cos(sa)*L*i,ty=hy+Math.sin(sa)*L*i;nd.x+=vx+(tx-nd.x)*pull+(moving?Math.sin(p.walk*7+i*0.6)*0.25:Math.sin(time*1.8+i*0.5)*0.04);nd.y+=vy+(ty-nd.y)*pull+sag;}
+ for(let k=0;k<3;k++){ch[0].x=hx;ch[0].y=hy;if(!swing){ch[G].x=lx;ch[G].y=ly;}for(let i=1;i<N;i++){const a0=ch[i-1],b0=ch[i],dx=b0.x-a0.x,dy=b0.y-a0.y,d=Math.hypot(dx,dy)||1,df=(d-L)/d,pa=i===1||(!swing&&i-1===G),pb=!swing&&i===G;if(pa&&pb)continue;if(pa){b0.x-=dx*df;b0.y-=dy*df;}else if(pb){a0.x+=dx*df;a0.y+=dy*df;}else{a0.x+=dx*df*0.5;a0.y+=dy*df*0.5;b0.x-=dx*df*0.5;b0.y-=dy*df*0.5;}}}
+ p.chHigh=swing?null:{x:hx,y:hy};p.chLow=swing?null:{x:lx,y:ly};   /* where the hands go while it is carried */
+ ctx.strokeStyle=dart?'#b8a888':'#4a4a5c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ch[0].x,ch[0].y);for(let i=1;i<N;i++)ctx.lineTo(ch[i].x,ch[i].y);ctx.stroke();
+ if(!dart)for(let i=1;i<N-1;i++){ctx.fillStyle=i%2?'#9a8f7c':'#6d6578';ctx.beginPath();ctx.arc(ch[i].x,ch[i].y,1.2,0,Math.PI*2);ctx.fill();}
+ const t=ch[N-1];if(dart){const u=ch[N-2],da=Math.atan2(t.y-u.y,t.x-u.x),c=Math.cos(da),sn=Math.sin(da);ctx.fillStyle=K;ctx.beginPath();ctx.moveTo(t.x+c*5,t.y+sn*5);ctx.lineTo(t.x-sn*2.5-c*2,t.y+c*2.5-sn*2);ctx.lineTo(t.x+sn*2.5-c*2,t.y-c*2.5-sn*2);ctx.closePath();ctx.fill();ctx.fillStyle='#d9e8ff';ctx.beginPath();ctx.moveTo(t.x+c*4,t.y+sn*4);ctx.lineTo(t.x-sn*1.4-c*1.4,t.y+c*1.4-sn*1.4);ctx.lineTo(t.x+sn*1.4-c*1.4,t.y-c*1.4-sn*1.4);ctx.closePath();ctx.fill();return[t.x,t.y];}   /* the dart: a steel point on the cord's end */
+ ctx.fillStyle=K;ctx.beginPath();ctx.arc(t.x,t.y,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cfc4b0';ctx.beginPath();ctx.arc(t.x,t.y,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle=K;ctx.fillRect(Math.round(t.x)-1,Math.round(t.y)-1,1,1);return[t.x,t.y];}
 // Your projectiles: a fading trail behind a bright core; bone shards tumble, the lance is a tongue of flame.
 function drawPlayerProj(q){const col=q.col,h=q.hist||[],ang=Math.atan2(q.vy,q.vx);
  for(let i=h.length-1;i>=0;i--){const k=1-i/(h.length+1);ctx.globalAlpha=k*0.45;ctx.fillStyle=col;ctx.beginPath();ctx.arc(h[i].x,h[i].y,Math.max(0.6,q.r*k),0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
@@ -2376,9 +2382,9 @@ function drawPlayer(){
  if(p.state==='flask'){const g=1-p.t/0.85;ctx.fillStyle='#d07a2a';ctx.fillRect(Math.round(p.x)-2,Math.round(p.y)-18,4,5);ctx.fillStyle=K;ctx.fillRect(Math.round(p.x)-6,Math.round(p.y)-22,12,2);ctx.fillStyle='#e6a34c';ctx.fillRect(Math.round(p.x)-6,Math.round(p.y)-22,Math.round(12*g),2);}
  // the hands. The weapon hand sits on the grip and goes wherever the weapon goes; the off hand rests at the other side, takes the shield when you block, rises for a cast, lifts the flask.
  if(!p.blocking){const hc=SPR.hand||'#9a9a98',f=p.facing>=0?1:-1,hb=idle?Math.round(Math.sin(time*2.6)*0.6):moving?(wframe%2?1:0):0,two=TWO_HANDED.has(p.weapon);
-  drawHand(sx+Math.cos(sa)*1.5,sy+Math.sin(sa)*1.5,hc);
+  if(w.shape==='chain'&&p.chHigh)drawHand(p.chHigh.x,p.chHigh.y,hc);else drawHand(sx+Math.cos(sa)*1.5,sy+Math.sin(sa)*1.5,hc);
   let ox=p.x-f*7,oy=p.y+1-ib+hb;   // the off hand hangs at the hip
-  if(two&&!p.blocking&&p.state!=='cast'&&p.state!=='flask'){ox=sx+Math.cos(sa)*6;oy=sy+Math.sin(sa)*6;}   // a two-hander: the other hand a little way up the haft
+  if(two&&!p.blocking&&p.state!=='cast'&&p.state!=='flask'){ox=sx+Math.cos(sa)*6;oy=sy+Math.sin(sa)*6;if(w.shape==='chain'&&p.chLow){ox=p.chLow.x;oy=p.chLow.y;}}   // a two-hander: the other hand a little way up the haft; the chain's low hand holds the loop at the hip
   if(p.state==='cast'){ox=p.x-f*3;oy=p.y-12;}
   else if(p.state==='flask'){ox=p.x-1;oy=p.y-14;}
   else if(two){}
@@ -2415,6 +2421,9 @@ function drawBand(){
 function drawHUD(){
  const p=player;
  ctx.setTransform(1,0,0,1,0,0);
+ if(room&&(room.pw>W||room.ph>CH)){const m=6,rim=(wx,wy,col,r)=>{const sx=wx+OFFX,sy=wy+OFFY;if(sx>=0&&sx<=W&&sy>=0&&sy<=CH)return;const cx=Math.max(m,Math.min(W-m,sx)),cy=Math.max(m,Math.min(CH-m,sy)),an=Math.atan2(sy-cy,sx-cx);ctx.save();ctx.translate(cx,cy);ctx.rotate(an);ctx.fillStyle=K;ctx.beginPath();ctx.moveTo(r+1.5,0);ctx.lineTo(-r*0.6-1.2,r+1.2);ctx.lineTo(-r*0.6-1.2,-r-1.2);ctx.closePath();ctx.fill();ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(-r*0.6,r*0.8);ctx.lineTo(-r*0.6,-r*0.8);ctx.closePath();ctx.fill();ctx.restore();};   /* in a room bigger than the view: a chevron on the rim for each foe out of sight, and for every shot coming in from out of sight */
+  for(const e of room.enemies){if(e.dead)continue;rim(e.x,e.y-e.r,e.boss?'#e04a3a':'#c8302a',e.boss?5:3.5);}
+  for(const q of projs){if(q.owner!=='e')continue;if(q.vx*(p.x-q.x)+q.vy*(p.y-q.y)<=0)continue;rim(q.x,q.y,Math.sin(time*18)>0?'#fff0c0':'#f4c968',3);}}
  {
  bar(6,6,Math.min(140,p.maxHp*0.8),p.hp,p.maxHp,'#c8302a');bar(6,12,Math.min(140,p.maxStam*0.64),p.stam,p.maxStam,'#5aa04a');bar(6,18,Math.min(140,p.maxMana*0.8),p.mana,p.maxMana,'#4a6fd0');
  for(let i=0;i<p.maxFlasks;i++){ctx.fillStyle=i<p.flasks?'#d07a2a':'#2e2838';ctx.fillRect(6+i*6,25,4,5);ctx.fillStyle=i<p.flasks?'#e6a34c':'#3a3447';ctx.fillRect(7+i*6,24,2,1);}const kx=28+(p.maxFlasks-3)*6;

@@ -31,6 +31,8 @@ Foes hit harder on every floor down, and there are more of them in the deeper ro
 
 ## The fight
 
+In halls wider than the screen, chevrons on the edge of the view point to foes you cannot see, and gold ones to shots coming in from out of sight.
+
 **One strike per weapon.** Tap to strike. Keep the button held past the strike and the weapon draws back and charges; release when it flashes for the heavy, or let go early for a plain strike. Every weapon has its own heavy, and they are slow and open: you cannot roll out of a heavy until it is nearly done.
 
 **Block and parry.** The shield guards every direction. Time the block as the blow lands and you parry: the foe staggers, and your next strike is a riposte for heavy damage. Shieldbearers and bosses can be parried too.
@@ -45,7 +47,7 @@ Foes hit harder on every floor down, and there are more of them in the deeper ro
 
 ## Weapons
 
-Fifteen, found in chests, on arena pedestals and merchant counters. One or two per floor. Each has a plain strike and a named heavy.
+Sixteen, found in chests, on arena pedestals and merchant counters. One or two per floor. Each has a plain strike and a named heavy.
 
 | Weapon | Strike | Heavy | What the heavy does |
 |---|---|---|---|
@@ -57,6 +59,7 @@ Fifteen, found in chests, on arena pedestals and merchant counters. One or two p
 | **Ember Blade** | hits burn, 15 damage | Firewake (0.6s charge, x1.6) | leaves a crescent of fire burning |
 | **Frost Axe** | hits slow, 34 damage | Shatter (0.9s charge, x1.6) | freezes; a chilled foe takes half again |
 | **Hollow's Chain** | wide reach, weak, 14 damage | Haul (0.7s charge, x1.6) | drags every foe hit to your feet |
+| **Rope Dart** | long throw, weak, 12 damage | Reel In (0.65s charge, x1.3) | drags the foe to your feet and stuns it: time for a strike, or a roll |
 | **Soul Scythe** | drinks blood, 36 damage | Reap (1s charge, x1.6) | mends you for every foe hit |
 | **Storm Rapier** | every strike lunges, 22 damage | Blink (0.5s charge, x1.6) | step through the foe, strike from behind |
 | **Cursed Cleaver** | +50% dmg, bleeds you, 30 damage | Butcher (0.7s charge, x1.75) | triple damage to the nearly dead |

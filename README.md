@@ -242,7 +242,7 @@ Twenty, one copy of each per run, chests only. Every one bends a rule. Some are 
 
 <p align="center"><img src="readme/bearings.png" alt="Eighteen bearings" width="960"></p>
 
-Eighteen looks for your knight, each unlocked by a deed. Cosmetic, kept across runs, and every one turns to face where you aim.
+Twenty looks for your knight, each unlocked by a deed. Cosmetic, kept across runs, and every one turns to face where you aim.
 
 | Bearing | Deed |
 |---|---|
@@ -264,6 +264,8 @@ Eighteen looks for your knight, each unlocked by a deed. Cosmetic, kept across r
 | **Reaper** | 300 kills in total |
 | **Dawnbringer** | Clear floor 2 of a daily run |
 | **Unhollowed** | Slay the Ashen Wyrm |
+| **Bellwarden** | Slay Hells Bell |
+| **Toller** | Fell 20 tollers |
 
 ## Loops, dailies, seeds
 

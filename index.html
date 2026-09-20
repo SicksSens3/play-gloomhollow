@@ -420,19 +420,19 @@ function deriveViewsImg(spr,eyeCols,faceCols){const w=spr.w,h=spr.h,src=spr.img.
 // Every walking foe and boss loses its arm pixels (the blocks below, in sprite space) and gets two hands drawn in code: a lead hand on the facing side that holds the weapon and
 // does the work, and an off hand behind. The animator moves them by state: drawn back through a wind-up, thrust (or slammed, or raised to cast) through the attack.
 const HANDS={
- grunt:{blank:[[0,2,6,7],[7,9,6,7]],col:'#cfc4b0',rest:[6,-4],reach:7},
- archer:{blank:[[0,1,7,8],[8,9,7,8]],col:'#5a3a7a',rest:[5,-4],reach:4,weapon:'bow'},
+ grunt:{blank:[[0,2,6,7],[7,9,6,7]],col:'#cfc4b0',rest:[6,1],reach:7},
+ archer:{blank:[[0,1,7,8],[8,9,7,8]],col:'#5a3a7a',rest:[5,0],reach:4,weapon:'bow'},
  brawler:{blank:[[0,2,5,8],[8,9,5,6]],col:'#d8c0a0',rest:[5,-6],reach:9,guard:true},
- shield:{blank:[[0,2,6,7],[7,9,6,7]],col:'#8a94a4',rest:[5,-4],reach:6,weapon:'shield'},
- bell:{blank:[[10,11,0,8]],col:'#8a8296',rest:[5,-5],reach:3,weapon:'bellpole'},
- drowned:{blank:[[0,1,4,7],[8,9,4,7]],col:'#3d7a72',rest:[6,-4],reach:7,slam:true},
- angler:{blank:[[0,2,5,7],[11,11,5,5]],col:'#3d7a72',rest:[6,-3],reach:6,weapon:'rod'},
- toller:{blank:[[0,4,8,8],[7,11,8,8],[0,2,9,9],[9,11,9,9]],col:'#8a8296',rest:[7,-6],reach:7,weapon:'club'},
+ shield:{blank:[[0,2,6,7],[7,9,6,7]],col:'#8a94a4',rest:[5,0],reach:6,weapon:'shield'},
+ bell:{blank:[[10,11,0,8]],col:'#8a8296',rest:[5,0],reach:3,weapon:'bellpole'},
+ drowned:{blank:[[0,1,4,7],[8,9,4,7]],col:'#3d7a72',rest:[6,1],reach:7,slam:true},
+ angler:{blank:[[0,2,5,7],[11,11,5,5]],col:'#3d7a72',rest:[6,1],reach:6,weapon:'rod'},
+ toller:{blank:[[0,4,8,8],[7,11,8,8],[0,2,9,9],[9,11,9,9]],col:'#8a8296',rest:[7,0],reach:7,weapon:'club'},
  brute:{blank:[],col:'#6a8a5a',rest:[14,-24],reach:12,size:2,warden:true},
- knight:{blank:[[0,3,7,11],[10,13,7,11]],col:'#b06a2a',rest:[8,-6],reach:9,weapon:'sword'},
- witch:{blank:[],col:'#d8c0a0',rest:[7,-6],reach:5,cast:true},
+ knight:{blank:[[0,3,7,11],[10,13,7,11]],col:'#b06a2a',rest:[8,0],reach:9,weapon:'sword'},
+ witch:{blank:[],col:'#d8c0a0',rest:[7,-1],reach:5,cast:true},
  hellsbell:{blank:[[1,5,18,24],[18,22,18,24]],col:'#a07868',rest:[12,-6],reach:8,size:2,onMace:true},
- king:{blank:[[0,3,8,12],[10,13,8,12]],col:'#f4c968',rest:[8,-8],reach:9,cast:true,slam:true}};
+ king:{blank:[[0,3,8,12],[10,13,8,12]],col:'#f4c968',rest:[8,-2],reach:9,cast:true,slam:true}};
 const HAND_COL2={knight2:'#c8d4e4',brute2:'#4a5a4a',hellsbell2:'#7a6a72',witch2:'#e8e0d0'};
 // Cut the arm blocks out of a sprite in place, then make sure every row still ends in an outline pixel.
 function cutArms(spr,blocks){if(!blocks.length)return;const x=spr.img.getContext('2d'),w=spr.w,rowsTouched=new Set();for(const[x0,x1,y0,y1]of blocks){x.clearRect(x0,y0,x1-x0+1,y1-y0+1);for(let y=y0;y<=y1;y++)rowsTouched.add(y);}
@@ -523,6 +523,7 @@ const WEAPONS={
  katar:{hv:{art:'frenzy',name:'Frenzy',text:'four cuts; each one returns stamina',chg:0.35,slow:0.7,mul:0.6,hits:4,arc:1.1,range:1.1,step:2.2},shape:'katar',name:'Gravedirt Katar',trait:'fastest, short',col:'#a89a8a',len:6,atk:{cost:9,dmg:13,range:13,arc:1.2,wind:0.04,active:0.06,rec:0.08,step:60}}
 };
 const HV_DEF={chg:0.7,slow:0.5,mul:1.6,arc:1.3,range:1.15,hits:1,step:1};
+const TWO_HANDED=new Set(['spear','mace','greatsword','frost','scythe','halberd','hammer','chain']);   // both hands on the haft
 const hv=()=>{const h=Object.assign({},HV_DEF,wpn().hv||{});if(hasRelic('brand'))h.chg*=0.6;return h;};
 const SPELLS={
  bolt:{name:'Soul Bolt',trait:'plain',cost:20,cast:0.3,col:'#7fa8ff'},
@@ -1013,7 +1014,7 @@ function tileSolid(tx,ty,forEnemy){const R=room;
  if(s===1){const dd=isDoorTile(tx,ty);if(!dd||!R.cleared)return true;if(!forEnemy&&doorLocked(dd))return true;return false;}
  return s===2||s===4||s===8||(s===5&&!!forEnemy);
 }
-function doorLocked(dir){const d=DIRS.find(x=>x.n===dir);const n=dungeon[key(room.x+d.x,room.y+d.y)];return !!(n&&n.type==='vault'&&!n.opened&&player.keys<=0);}
+function doorLocked(dir){const d=DIRS.find(x=>x.n===dir);const n=dungeon[key(room.x+d.x,room.y+d.y)];return !!(n&&n.type==='vault'&&!n.opened);}   // locked until the key is turned at the door
 // Nine probes (corners, edge midpoints, centre): with four corners alone a 16-px pillar could sit between the corners of a body wider than a tile, and the Warden walked onto pillars.
 function collides(x,y,r,forEnemy){for(const[dx,dy]of[[-r,-r],[r,-r],[-r,r],[r,r],[0,-r],[0,r],[-r,0],[r,0],[0,0]]){if(tileSolid(Math.floor((x+dx)/T),Math.floor((y+dy)/T),forEnemy))return true;}return false;}
 function moveEnt(e,dx,dy){const en=e!==player;const ox=e.x,oy=e.y;if(!collides(e.x+dx,e.y,e.r,en))e.x+=dx;if(!collides(e.x,e.y+dy,e.r,en))e.y+=dy;if(en&&(e.x!==ox||e.y!==oy)){e.moving=true;}}
@@ -1187,8 +1188,11 @@ function startAttack(heavy){const p=player,w=wpn(),a=w.atk,h=heavy?hv():null;p.s
 // Back onto the last safe tile, centred. Input still pushing toward the pit you fell in (px,py) is ignored until it lets go or turns away.
 function toSafe(px,py){const p=player,tx=Math.floor(p.safe.x/T),ty=Math.floor(p.safe.y/T),dx=px-p.safe.x,dy=py-p.safe.y,l=Math.hypot(dx,dy)||1;p.x=tx*T+T/2;p.y=ty*T+T/2;p.relock={x:dx/l,y:dy/l};}
 function startRoll(){const p=player;p.state='roll';p.t=0.34;p.rollDir={...p.lastMove};p.stam=Math.max(0,p.stam-(hasRelic('quicksilver')?0:20));p.stamCd=0.65;p.blocking=false;SFX.roll();}
-function nearItem(){let best=null,bd=18;for(const it of room.items){const d=Math.hypot(it.x-player.x,it.y-player.y);if(d<bd){bd=d;best=it;}}return best;}
-function takeItem(it){const wasChest=!!it.chest;
+function nearItem(){let best=null,bd=18;for(const it of room.items){const d=Math.hypot(it.x-player.x,it.y-player.y);if(d<bd){bd=d;best=it;}}
+ if(!best&&room.cleared)for(const d of DIRS){if(!room.doors[d.n]||!doorLocked(d.n))continue;const c=doorCenter(d.n);if(Math.hypot(c.x-player.x,c.y-player.y)<22)return{kind:'lock',dir:d.n,x:c.x,y:c.y,price:0};}   // a locked door close by is something to use
+ return best;}
+function takeItem(it){if(it.kind==='lock'){if(player.keys>0){const nb=beyond(it.dir);nb.opened=true;player.keys--;SFX.unlock();burst(it.x,it.y,16,'#f4c968');showMsg('The lock turns',1.6);shake=Math.max(shake,0.08);}else{SFX.block();showMsg('Locked. It wants a key',1.4);}return;}
+ const wasChest=!!it.chest;
  const p=player;
  if(it.price>0&&souls<priceOf(it)){showMsg('Not enough souls',1);return;}
  if(it.kind==='flask'&&p.flasks>=p.maxFlasks){showMsg('Your flasks are full',1.2);SFX.block();return;}
@@ -1227,7 +1231,10 @@ function takeItem(it){const wasChest=!!it.chest;
  if(room.type==='flooded'&&!room.sprung&&['weapon','souls','relic','hpup','manaup'].includes(it.kind)){room.sprung=true;room.cleared=false;room.spawned=true;const all=freeSpots(room,12),wet=all.filter(q=>room.solid[Math.floor(q.y/T)][Math.floor(q.x/T)]===6),sp=wet.length>=2?wet:all,n=3+(loop>0?1:0);
   for(let i=0;i<n&&i<sp.length;i++){const e=mkEnemy(i===0&&loop>0?'angler':'drowned',sp[i].x,sp[i].y,loop>0&&i===n-1);room.enemies.push(e);burst(sp[i].x,sp[i].y-2,12,'#4aa08a');}showMsg('The water stirs',2);SFX.boss();shake=Math.max(shake,0.15);}
 }
-function updatePlayer(dt){player.mHeldT=mHeld.l?(player.mHeldT||0)+dt:0;if(player.stunT>0)player.stunT-=dt;if(player.fling){const F=player.fling;F.t-=dt;moveEnt(player,F.vx*dt,F.vy*dt);F.vx*=0.94;F.vy*=0.94;if(F.t<=0)player.fling=null;}
+function updatePlayer(dt){player.mHeldT=mHeld.l?(player.mHeldT||0)+dt:0;
+ /* nearing a boss door the first time warns you who waits: a line and the boss horn */
+ if(room.cleared&&!room.bossWarned)for(const d of DIRS){if(!room.doors[d.n])continue;const nb=beyond(d.n);if(!nb||nb.type!=='boss'||nb.cleared)continue;const c=doorCenter(d.n);if(Math.hypot(player.x-c.x,player.y-c.y)<30){room.bossWarned=true;const nm=ETYPES[bossType()].name;showMsg((nm.charAt(0).toUpperCase()+nm.slice(1))+' waits beyond this door',3);SFX.boss();}}
+if(player.stunT>0)player.stunT-=dt;if(player.fling){const F=player.fling;F.t-=dt;moveEnt(player,F.vx*dt,F.vy*dt);F.vx*=0.94;F.vy*=0.94;if(F.t<=0)player.fling=null;}
  const p=player;p.inv=Math.max(0,p.inv-dt);p.flash=Math.max(0,p.flash-dt);p.stamCd=Math.max(0,p.stamCd-dt);p.appearT=Math.max(0,(p.appearT||0)-dt);
  if(p.state!=='free'&&p.charging){p.charging=false;p.charge=0;p.chargeReady=false;}   // a roll, a hit or a swing drops the charge
  if(p.stamCd<=0&&p.state!=='roll'&&p.state!=='attack')p.stam=Math.min(p.maxStam,p.stam+dt*(p.blocking?14:34));
@@ -1831,6 +1838,13 @@ function drawFloor(){
   ctx.fillStyle='#8a7530';if(!has(0,-1))ctx.fillRect(x,y+1,T,1);if(!has(0,1))ctx.fillRect(x,y+T-2,T,1);}
  for(const d of room.decals){ctx.fillStyle=d.ash?(d.s%2<1?'#1a1418':'#221a1c'):d.s%2<1?'#4a1418':'#3a1014';const n=2+Math.floor(d.s%3);for(let i=0;i<n;i++){const a=d.s*7+i*2.1,rr=d.r*(0.5+((d.s*13+i*5)%10)/10);ctx.fillRect(Math.round(d.x+Math.cos(a)*rr)-1,Math.round(d.y+Math.sin(a)*rr*0.6),2+Math.floor(d.r),1+Math.floor(d.r/2));}}
 }
+// The room beyond a door, if any.
+function beyond(dir){const d=DIRS.find(x=>x.n===dir);return dungeon?dungeon[key(room.x+d.x,room.y+d.y)]:null;}
+// A boss lies beyond: a skull nailed over the arch with chains either side, and the doorway lit red instead of amber.
+function drawBossMark(dir){const c=doorCenter(dir),ns=dir==='N'||dir==='S',x=Math.round(ns?c.x:(dir==='W'?9:room.pw-9)),y=Math.round(ns?(dir==='N'?7:room.ph-9):c.y-2),pulse=0.35+0.3*Math.abs(Math.sin(time*2.4));
+ ctx.fillStyle=K;ctx.fillRect(x-4,y-5,8,9);ctx.fillStyle='#cfc4b0';ctx.fillRect(x-3,y-4,6,6);ctx.fillRect(x-2,y+2,4,2);ctx.fillStyle=K;ctx.fillRect(x-2,y-2,2,2);ctx.fillRect(x+1,y-2,2,2);ctx.fillRect(x-1,y+2,1,1);ctx.fillRect(x+1,y+2,1,1);ctx.fillStyle=hexA('#e04a3a',pulse+0.3);ctx.fillRect(x-2,y-2,2,2);ctx.fillRect(x+1,y-2,2,2);
+ ctx.fillStyle='#5a5a7c';for(const sd of[-1,1]){for(let i=0;i<3;i++)ctx.fillRect(x+sd*(6+i*2)-1,y-4+i*3,2,2);}
+ light(x,y,22,'rgba(224,74,58,A)',pulse*0.6);}
 function drawWalls(){
  for(let ty=0;ty<room.rh;ty++)for(let tx=0;tx<room.rw;tx++){if(room.solid[ty][tx]!==1)continue;const x=tx*T,y=ty*T;const door=isDoorTile(tx,ty);
   if(door){ctx.fillStyle='#06060a';ctx.fillRect(x,y,T,T);
@@ -1841,7 +1855,7 @@ function drawWalls(){
     ctx.fillStyle=K;ctx.fillRect(x,y,1,T);ctx.fillRect(x+T-1,y,1,T);if(!ns){if(!second)ctx.fillRect(x,y,T,1);else ctx.fillRect(x,y+T-1,T,1);}
     if(ns||second){const hx=ns?(second?x+2:x+T-4):(tx===0?x+T-5:x+3),hy=ns?y+7:y+1;ctx.fillStyle=K;ctx.fillRect(hx-1,hy-1,4,4);ctx.fillStyle=locked?'#f4c968':'#8a94a4';ctx.fillRect(hx,hy,2,2);}
     if(locked&&second){const lx=ns?x-3:x+5,ly=ns?y+5:y-3;ctx.fillStyle=K;ctx.fillRect(lx,ly,6,6);ctx.fillStyle='#f4c968';ctx.fillRect(lx+1,ly+1,4,4);ctx.fillStyle=K;ctx.fillRect(lx+2,ly+2,2,2);}}
-   else{ctx.fillStyle='#e8a33c';ctx.globalAlpha=0.25+0.15*Math.sin(time*3);if(door==='N')ctx.fillRect(x,y+T-2,T,2);if(door==='S')ctx.fillRect(x,y,T,2);if(door==='W')ctx.fillRect(x+T-2,y,2,T);if(door==='E')ctx.fillRect(x,y,2,T);ctx.globalAlpha=1;}
+   else{const nb=beyond(door);ctx.fillStyle=nb&&nb.type==='boss'&&!nb.cleared?'#e04a3a':'#e8a33c';ctx.globalAlpha=0.25+0.15*Math.sin(time*3);if(door==='N')ctx.fillRect(x,y+T-2,T,2);if(door==='S')ctx.fillRect(x,y,T,2);if(door==='W')ctx.fillRect(x+T-2,y,2,T);if(door==='E')ctx.fillRect(x,y,2,T);ctx.globalAlpha=1;}
    continue;}
   ctx.fillStyle=FP().w;ctx.fillRect(x,y,T,T);
   ctx.fillStyle=FP().wd;for(let by=0;by<T;by+=8){ctx.fillRect(x,y+by+7,T,1);const off=(by/8+ty)%2?8:0;ctx.fillRect(x+((off+3)%T),y+by,1,7);ctx.fillRect(x+((off+11)%T),y+by,1,7);}
@@ -1849,6 +1863,7 @@ function drawWalls(){
   if(thash(tx,ty,room.seed+3)%5===0){ctx.fillStyle=FP().wd;ctx.fillRect(x+6,y+3,1,2);ctx.fillRect(x+7,y+5,1,2);}
   const below=ty+1<room.rh&&room.solid[ty+1][tx]!==1;if(below){ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(x,y+T,T,3);}
  }
+ for(const d of DIRS){if(!room.doors[d.n])continue;const nb=beyond(d.n);if(nb&&nb.type==='boss'&&!nb.cleared)drawBossMark(d.n);}
  if(room.secretDir&&!room.secretOpen){const d=room.secretDir;const R=room,tiles=d==='N'?[[R.dx,0],[R.dx+1,0]]:d==='S'?[[R.dx,R.rh-1],[R.dx+1,R.rh-1]]:d==='W'?[[0,R.dy],[0,R.dy+1]]:[[R.rw-1,R.dy],[R.rw-1,R.dy+1]];
   ctx.fillStyle='#1e1d2c';for(const[tx,ty]of tiles){const x=tx*T,y=ty*T;ctx.fillRect(x+7,y+2,1,4);ctx.fillRect(x+8,y+6,1,3);ctx.fillRect(x+6,y+9,2,1);ctx.fillRect(x+5,y+10,1,4);ctx.fillRect(x+9,y+9,1,3);ctx.fillRect(x+10,y+12,1,3);}}
  // vines
@@ -2220,8 +2235,8 @@ function drawFlail(p,sx,sy,sa,moving,a){const dtf=Math.max(0,Math.min(0.05,time-
 // The Hollow's Chain hangs from the hand as a run of links (a small rope simulation): at rest it droops and sways with each step, held back for a charge it dangles, and a swing whips it out behind the hand so the hook arrives last.
 function drawChain(p,sx,sy,sa,moving,a,len){const N=7,L=Math.max(2,len/(N-1)),swing=p.state==='attack';
  if(!p.ch||p.ch.length!==N){p.ch=[];for(let i=0;i<N;i++)p.ch.push({x:sx+Math.cos(sa)*L*i,y:sy+Math.sin(sa)*L*i,px:sx+Math.cos(sa)*L*i,py:sy+Math.sin(sa)*L*i});}
- const ch=p.ch;ch[0].x=sx;ch[0].y=sy;const pull=swing?0.4:p.charging?0.02:0.05,sag=swing?0:0.28;
- for(let i=1;i<N;i++){const nd=ch[i],vx=(nd.x-nd.px)*0.84,vy=(nd.y-nd.py)*0.84;nd.px=nd.x;nd.py=nd.y;const tx=sx+Math.cos(sa)*L*i,ty=sy+Math.sin(sa)*L*i;nd.x+=vx+(tx-nd.x)*pull;nd.y+=vy+(ty-nd.y)*pull+sag*(i/N)+(moving?Math.sin(p.walk*7+i)*0.12:0);}
+ const ch=p.ch;ch[0].x=sx;ch[0].y=sy;const pull=swing?0.45:0,sag=swing?0:0.55;   // at rest nothing pulls it toward the aim: it hangs from the hands and sways
+ for(let i=1;i<N;i++){const nd=ch[i],vx=(nd.x-nd.px)*0.86,vy=(nd.y-nd.py)*0.86;nd.px=nd.x;nd.py=nd.y;const tx=sx+Math.cos(sa)*L*i,ty=sy+Math.sin(sa)*L*i;nd.x+=vx+(tx-nd.x)*pull+(moving?Math.sin(p.walk*7+i*0.6)*0.25:Math.sin(time*1.8+i*0.5)*0.04);nd.y+=vy+(ty-nd.y)*pull+sag;}
  for(let k=0;k<3;k++){ch[0].x=sx;ch[0].y=sy;for(let i=1;i<N;i++){const a0=ch[i-1],b0=ch[i],dx=b0.x-a0.x,dy=b0.y-a0.y,d=Math.hypot(dx,dy)||1,df=(d-L)/d;if(i===1){b0.x-=dx*df;b0.y-=dy*df;}else{a0.x+=dx*df*0.5;a0.y+=dy*df*0.5;b0.x-=dx*df*0.5;b0.y-=dy*df*0.5;}}}
  ctx.strokeStyle='#4a4a5c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ch[0].x,ch[0].y);for(let i=1;i<N;i++)ctx.lineTo(ch[i].x,ch[i].y);ctx.stroke();
  for(let i=1;i<N-1;i++){ctx.fillStyle=i%2?'#9a8f7c':'#6d6578';ctx.beginPath();ctx.arc(ch[i].x,ch[i].y,1.2,0,Math.PI*2);ctx.fill();}
@@ -2295,18 +2310,20 @@ function drawPlayer(){
  if(p.state==='cast'){const spc=SPELLS[p.spell],g=1-p.t/spc.cast;ctx.fillStyle=hexA(spc.col,0.4+0.6*g);ctx.beginPath();ctx.arc(sx+Math.cos(sa)*len,sy+Math.sin(sa)*len,2+g*2,0,Math.PI*2);ctx.fill();}
  if(p.state==='flask'){const g=1-p.t/0.85;ctx.fillStyle='#d07a2a';ctx.fillRect(Math.round(p.x)-2,Math.round(p.y)-18,4,5);ctx.fillStyle=K;ctx.fillRect(Math.round(p.x)-6,Math.round(p.y)-22,12,2);ctx.fillStyle='#e6a34c';ctx.fillRect(Math.round(p.x)-6,Math.round(p.y)-22,Math.round(12*g),2);}
  // the hands. The weapon hand sits on the grip and goes wherever the weapon goes; the off hand rests at the other side, takes the shield when you block, rises for a cast, lifts the flask.
- {const hc=SPR.hand||'#9a9a98',f=p.facing>=0?1:-1,hb=idle?Math.round(Math.sin(time*2.6)*0.6):moving?(wframe%2?1:0):0;
+ {const hc=SPR.hand||'#9a9a98',f=p.facing>=0?1:-1,hb=idle?Math.round(Math.sin(time*2.6)*0.6):moving?(wframe%2?1:0):0,two=TWO_HANDED.has(p.weapon);
   drawHand(sx+Math.cos(sa)*1.5,sy+Math.sin(sa)*1.5,hc);
-  let ox=p.x-f*7,oy=p.y-3-ib+hb;
+  let ox=p.x-f*7,oy=p.y+1-ib+hb;   // the off hand hangs at the hip
+  if(two&&!p.blocking&&p.state!=='cast'&&p.state!=='flask'){ox=sx+Math.cos(sa)*6;oy=sy+Math.sin(sa)*6;}   // a two-hander: the other hand a little way up the haft
   if(p.blocking){const bash=p.parryT>0?Math.min(1,p.parryT/0.2):0,pa=p.parryAng||0;ox=p.x+Math.cos(pa)*3*bash;oy=p.y+Math.sin(pa)*2*bash-4-ib+3;}
   else if(p.state==='cast'){ox=p.x-f*3;oy=p.y-12;}
   else if(p.state==='flask'){ox=p.x-1;oy=p.y-14;}
-  else if(p.state==='attack'&&a){ox=p.x-Math.cos(sa)*7;oy=p.y-3-Math.sin(sa)*3;}   // the off hand swings back against the strike
-  else if(p.state==='free'&&p.charging){ox=p.x+f*5;oy=p.y-2;}   // out front, braced
+  else if(two){}
+  else if(p.state==='attack'&&a){ox=p.x-Math.cos(sa)*7;oy=p.y-Math.sin(sa)*3;}   // the off hand swings back against the strike
+  else if(p.state==='free'&&p.charging){ox=p.x+f*5;oy=p.y+1;}   // out front, braced
   drawHand(ox,oy,hc);}
 }
 function bar(x,y,w,val,max,col){ctx.fillStyle=K;ctx.fillRect(x-1,y-1,w+2,5);ctx.fillStyle='#2e2838';ctx.fillRect(x,y,w,3);ctx.fillStyle=col;ctx.fillRect(x,y,Math.round(w*Math.max(0,val)/max),3);}
-function itemLabel(it){switch(it.kind){case'weapon':{const w=WEAPONS[it.id];return w.name+(w.hv&&w.hv.name?' \u00b7 '+w.hv.name:'');}case'spell':return SPELLS[it.id].name+' ('+spellCost(SPELLS[it.id])+' mana)';case'flask':return 'Flask refill';case'hpup':return ITEMS.hpup.name+' (+35 max HP)';case'manaup':return ITEMS.manaup.name+' (+35 max mana)';case'gourd':return ITEMS.gourd.name+' (+1 flask)';case'blessing':return 'Drink from the well (+1 flask)';case'buff':case'relic':return ITEMS[it.id]&&ITEMS[it.id].relic?ITEMS[it.id].name+' ('+ITEMS[it.id].desc+')':BUFFS[it.id].name+' ('+BUFFS[it.id].desc+')';case'corpse':return 'Search the fallen';case'souls':return 'Gather souls';case'stairs':return floor+1>=FINAL?'Descend to the maw':floor+1===FINAL-1?'Descend to the throne':'Descend to floor '+(floor+1);case'key':return 'Take the key';case'upgrade':return UPG[it.id].name+' ('+UPG[it.id].desc+')';case'camp':return 'Rest at the fire';case'heart':return 'Pierce the heart';}}
+function itemLabel(it){switch(it.kind){case'weapon':{const w=WEAPONS[it.id];return w.name+(w.hv&&w.hv.name?' \u00b7 '+w.hv.name:'');}case'spell':return SPELLS[it.id].name+' ('+spellCost(SPELLS[it.id])+' mana)';case'flask':return 'Flask refill';case'hpup':return ITEMS.hpup.name+' (+35 max HP)';case'manaup':return ITEMS.manaup.name+' (+35 max mana)';case'gourd':return ITEMS.gourd.name+' (+1 flask)';case'blessing':return 'Drink from the well (+1 flask)';case'buff':case'relic':return ITEMS[it.id]&&ITEMS[it.id].relic?ITEMS[it.id].name+' ('+ITEMS[it.id].desc+')':BUFFS[it.id].name+' ('+BUFFS[it.id].desc+')';case'corpse':return 'Search the fallen';case'souls':return 'Gather souls';case'stairs':return floor+1>=FINAL?'Descend to the maw':floor+1===FINAL-1?'Descend to the throne':'Descend to floor '+(floor+1);case'key':return 'Take the key';case'lock':return player.keys>0?'Unlock the door':'Locked';case'upgrade':return UPG[it.id].name+' ('+UPG[it.id].desc+')';case'camp':return 'Rest at the fire';case'heart':return 'Pierce the heart';}}
 function bigBar(x,y,w,h,val,max,col,dark){ctx.fillStyle=K;ctx.fillRect(x-1,y-1,w+2,h+2);ctx.fillStyle=dark;ctx.fillRect(x,y,w,h);const f=Math.round(w*Math.max(0,val)/max);ctx.fillStyle=col;ctx.fillRect(x,y,f,h);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(x,y,f,1);}
 function drawBand(){
  const p=player,y0=H,b=BAND;ctx.fillStyle=FP().bg;ctx.fillRect(0,y0,W,b);ctx.fillStyle=FP().wl;ctx.fillRect(0,y0,W,1);ctx.fillStyle=FP().wd;ctx.fillRect(0,y0+1,W,1);

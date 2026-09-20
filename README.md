@@ -168,7 +168,8 @@ It fills the top of the arena. Its claws slam down and stay planted where they l
 | **Combat rooms** | Most of the floor. Standard rooms, tall rooms, corridors and closets, each dressed in the biome's litter, plus grand rooms wider than the screen: the long hall, the stair hall, the dining hall, the library, and one set piece per biome. |
 | **Arena** | Three waves, no doors until they are done. A weapon waits at the end. |
 | **Treasure** | A chest. One or two weapons are hidden on each floor, in chests or on the merchant's counter; relics come from chests only. |
-| **Vault** | Locked. The key is somewhere on the floor. |
+| **Vault** | Locked. The key is somewhere on the floor; carry it to the door and turn it there. |
+| **Boss door** | A skull nailed over the arch, chains either side, the doorway lit red. Come near it and the game names who waits. Go in ready. |
 | **Secret** | A hidden wall. Strike where the stone sounds wrong and a forgotten hoard opens. |
 | **Shop** | A merchant behind a counter: flasks, gear, a tome or a weapon. Prices climb with every floor. |
 | **Smith** | A whetstone (+20% weapon damage) and three infusions: Ember (hits burn), Frost (hits chill), Blood (hits drink). |

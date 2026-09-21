@@ -53,7 +53,7 @@ Sixteen, found in chests, on arena pedestals and merchant counters. One or two p
 |---|---|---|---|
 | **Rusted Shortsword** | plain, 18 damage | Wheel (0.6s charge, x1.6) | a full circle swing |
 | **Thief Daggers** | very fast, chains, 11 damage | Flurry (0.4s charge, x0.65) | three cuts, each leaves the foe bleeding |
-| **Bone Spear** | long thrust, 26 damage | Impale (0.7s charge, x1.75) | runs through every foe in a line |
+| **Bone Spear** | long thrust, slow to recover, 22 damage | Impale (0.7s charge, x1.75) | runs through every foe in a line |
 | **Gravedigger Mace** | pounds the ground, staggers, 34 damage | Wrecker (0.9s charge, x1.6) | the whirl breaks into a full circle, then the pound |
 | **Warden Greatsword** | huge, slow, 52 damage | Cleave (1.1s charge, x1.75) | hurls foes back and lays them out |
 | **Ember Blade** | hits burn, 15 damage | Firewake (0.6s charge, x1.6) | leaves a crescent of fire burning |
@@ -192,7 +192,7 @@ It fills the top of the arena. Its claws slam down and stay planted where they l
 
 <p align="center"><img src="readme/gear.png" alt="Stat gear, school gear and the cursed" width="600"></p>
 
-One pool, one copy of each per run, nothing stacks. Chests and shrines hand them out; the merchant sells only drinks. Every item carries a card when you take it.
+One pool, one copy of each per run, nothing stacks. Chests and shrines hand them out; the merchant sells only drinks. On the floor a thing shows only its name; what it does you read on its card when you take it, and after that in the satchel.
 
 | Piece | Does |
 |---|---|

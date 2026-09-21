@@ -2327,7 +2327,7 @@ function drawEnemy(e){
  if(e.state==='windup'){ctx.fillStyle='#e04a3a';ctx.fillRect(Math.round(e.x)-1,Math.round(top-7),2,4);ctx.fillRect(Math.round(e.x)-1,Math.round(top-2),2,1);}
  if(e.hp<e.maxHp||e.champion){const w=e.boss?28:e.champion?24:e.elite?16:10,x=Math.round(e.x-w/2),y=Math.round(top-(e.state==='windup'?10:4));ctx.fillStyle=K;ctx.fillRect(x-1,y-1,w+2,3);ctx.fillStyle=e.champion?'#e8a33c':e.elite?'#f4c968':'#e04a3a';ctx.fillRect(x,y,Math.ceil(w*e.hp/e.maxHp),1);if(e.champion&&e.lives){ctx.fillStyle='#f4c968';ctx.fillRect(x+w+2,y-1,2,3);}}
 }
-function drawWeapon(id,sx,sy,a,len){const w=WEAPONS[id];const ex=sx+Math.cos(a)*len,ey=sy+Math.sin(a)*len,px=-Math.sin(a),py=Math.cos(a);
+function drawWeapon(id,sx,sy,a,len){const w=WEAPONS[id];const fl=Math.cos(a)>=0?1:-1,ex=sx+Math.cos(a)*len,ey=sy+Math.sin(a)*len,px=-Math.sin(a)*fl,py=Math.cos(a)*fl;   /* the perpendicular flips with the facing, so an axe head or a hook sits the same way up on either side */
  const g=t=>[sx+Math.cos(a)*t,sy+Math.sin(a)*t];
  const line=(x1,y1,x2,y2,c,lw)=>{ctx.strokeStyle=c;ctx.lineWidth=lw;ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();};
  const dot=(x,y,r,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();};
@@ -2434,7 +2434,7 @@ function drawPlayer(){
  if(p.state==='free'&&p.charging){const pr=Math.min(1,p.charge/hv().chg);sa=p.aim-(p.facing>=0?1:-1)*(1.2+0.9*pr)+(p.chargeReady?Math.sin(time*45)*0.06:0);}   // the weapon drawn back over the shoulder, trembling once ready
  if(p.state==='attack'){half=a.arc/2;let prog;if(a.phase==='wind')prog=-1;else if(a.phase==='active')prog=-1+2*(1-a.t/a.dur.active);else prog=1;
   if(a.arc<1){sa=a.ang;thrust=a.phase==='wind'?-4:a.phase==='active'?(prog+1)*0.5*a.range*0.6:a.range*0.5;}
-  else sa=a.ang+prog*half*1.1;
+  else sa=a.ang+prog*half*1.1*(Math.cos(a.ang)>=0?1:-1);   /* mirrored when you face left, so the swing goes over the top and down on either side */
   if(w.heavy||a.heavy)len+=3;slash=a.phase==='active';}
  const sx=p.x+Math.cos(sa)*(3+thrust),sy=p.y+Math.sin(sa)*(3+thrust)-2-ib;
  let tipX=sx+Math.cos(sa)*len,tipY=sy+Math.sin(sa)*len;

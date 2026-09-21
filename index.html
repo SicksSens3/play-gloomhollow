@@ -2457,7 +2457,15 @@ function drawPlayer(){
   else if(p.state==='attack'&&a){ox=p.x-Math.cos(sa)*7;oy=p.y-Math.sin(sa)*3;}   // the off hand swings back against the strike
   else if(p.state==='free'&&p.charging){ox=p.x+f*5;oy=p.y+1;}   // out front, braced
   drawHand(ox,oy,hc);}
+ if(p.items.some(i=>ITEMS[i.id]&&ITEMS[i.id].cursed))drawCurseCloud(p.x,p.y-31-ib);   /* the hag's gifts hang over you */
 }
+// A small dark cloud with a skull in it, bobbing and drifting a pixel or two, wisps of purple rising off it.
+function drawCurseCloud(x,y){const bx=Math.round(x+Math.sin(time*1.3)*1.5),by=Math.round(y+Math.sin(time*2.1)*1);
+ const puffs=[[-5,1,3],[0,-1,4],[5,1,3],[-2,2,3],[3,2,3]];for(const[dx,dy,r]of puffs){ctx.fillStyle='#1a1024';ctx.beginPath();ctx.arc(bx+dx,by+dy+1,r+1,0,Math.PI*2);ctx.fill();}for(const[dx,dy,r]of puffs){ctx.fillStyle='#4a2c5a';ctx.beginPath();ctx.arc(bx+dx,by+dy,r,0,Math.PI*2);ctx.fill();}
+ ctx.fillStyle='#6a3c7a';ctx.beginPath();ctx.arc(bx-3,by,2,0,Math.PI*2);ctx.arc(bx+3,by,2,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#d8c8e8';ctx.fillRect(bx-2,by-3,5,4);ctx.fillRect(bx-1,by+1,3,1);ctx.fillStyle='#1a1024';ctx.fillRect(bx-1,by-2,1,1);ctx.fillRect(bx+1,by-2,1,1);ctx.fillRect(bx,by,1,1);
+ if(Math.random()<0.12)parts.push({x:bx+(Math.random()-.5)*8,y:by-3,vx:(Math.random()-.5)*6,vy:-10,life:0.5,col:'#b06ac8',noG:true});
+ light(bx,by,12,'rgba(176,106,200,A)',0.2);}
 function bar(x,y,w,val,max,col){ctx.fillStyle=K;ctx.fillRect(x-1,y-1,w+2,5);ctx.fillStyle='#2e2838';ctx.fillRect(x,y,w,3);ctx.fillStyle=col;ctx.fillRect(x,y,Math.round(w*Math.max(0,val)/max),3);}
 function itemLabel(it){switch(it.kind){case'weapon':return WEAPONS[it.id].name;case'spell':return SPELLS[it.id].name;case'flask':return 'Flask refill';case'hpup':return ITEMS.hpup.name+' (+35 max HP)';case'manaup':return ITEMS.manaup.name+' (+35 max mana)';case'gourd':return ITEMS.gourd.name+' (+1 flask)';case'blessing':return 'Drink from the well (+1 flask)';case'buff':case'relic':return ITEMS[it.id].name;case'corpse':return 'Search the fallen';case'souls':return 'Gather souls';case'stairs':return floor+1>=FINAL?'Descend to the maw':floor+1===FINAL-1?'Descend to the throne':'Descend to floor '+(floor+1);case'key':return 'Take the key';case'lock':return player.keys>0?'Unlock the door':'Locked';case'talk':return 'Talk';case'cursed':return 'CURSED  '+CURSED[it.id].name;case'upgrade':return it.id==='sharp'?UPG.sharp.name+' (+20% weapon damage, '+Math.min(player.sharp,whetCap())+' of '+whetCap()+' this floor)':UPG[it.id].name+' ('+UPG[it.id].desc+')';case'camp':return 'Rest at the fire';case'heart':return 'Pierce the heart';}}
 function bigBar(x,y,w,h,val,max,col,dark){ctx.fillStyle=K;ctx.fillRect(x-1,y-1,w+2,h+2);ctx.fillStyle=dark;ctx.fillRect(x,y,w,h);const f=Math.round(w*Math.max(0,val)/max);ctx.fillStyle=col;ctx.fillRect(x,y,f,h);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(x,y,f,1);}
@@ -2508,7 +2516,7 @@ function drawHUD(){
  if(it){const full=itemLabel(it),price=it.price>0?String(priceOf(it)):'';let L=[full];if(full.length>22){const pk=full.indexOf(' ('),k=pk>4?pk:full.lastIndexOf(' ',24);if(k>4)L=[full.slice(0,k),full.slice(k+1)];}   /* name on one line, the rest on the next */
   if(price){if(L[L.length-1].length+price.length+2<=26)L[L.length-1]+='  '+price;else L.push(price+' souls');}
   const wdt=Math.max(...L.map(t=>t.length))*8+8+12,hgt=L.length*9+4;let x=Math.round(it.x-wdt/2);x=Math.max(2-OFFX,Math.min(W-wdt-2-OFFX,x));const y=Math.round(it.y+(it.dy||0)-18-hgt);
-  ctx.fillStyle='rgba(12,11,18,.85)';ctx.fillRect(x,y,wdt,hgt);const col=priceOf(it)>souls?'#c8302a':'#f4c968';L.forEach((t,i)=>txt(t,x+4,y+2+i*9,col));ctx.fillStyle='#2e2d42';ctx.fillRect(x+wdt-11,y+2,9,9);txt('Q',x+wdt-10,y+3,'#8a8296');
+  ctx.fillStyle='rgba(12,11,18,.85)';ctx.fillRect(x,y,wdt,hgt);const col=priceOf(it)>souls?'#c8302a':it.kind==='cursed'?'#b06ac8':'#f4c968';L.forEach((t,i)=>txt(t,x+4,y+2+i*9,col));ctx.fillStyle='#2e2d42';ctx.fillRect(x+wdt-11,y+2,9,9);txt('Q',x+wdt-10,y+3,'#8a8296');
   ctx.fillStyle='rgba(12,11,18,.85)';ctx.fillRect(Math.round(it.x)-1,y+hgt,2,2);}   // a two-line card centred on the item with the key in its corner; a tick points down at the item
  if(msg.t>0){ctx.globalAlpha=Math.min(1,msg.t*2);ctx.setTransform(1,0,0,1,0,0);const L=msgLines(msg.txt),mw=Math.max(...L.map(s=>s.length))*8+12,y0=CH-30-(L.length-1)*10;   // room messages sit at the foot of the screen, clear of item labels
   ctx.fillStyle='rgba(12,11,18,.8)';ctx.fillRect(Math.round(W/2-mw/2),y0-3,mw,L.length*10+5);L.forEach((s,i)=>txt(s,W/2,y0+i*10,'#f4c968','center'));msg.y=y0;ctx.setTransform(1,0,0,1,OFFX,OFFY);ctx.globalAlpha=1;}

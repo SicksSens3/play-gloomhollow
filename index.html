@@ -2102,7 +2102,7 @@ function drawDecor(d){
   else if(cyc<4.4){const t=Math.floor(time*4)%3;ctx.fillStyle='#f4c968';for(let i=0;i<3;i++)if(i<=t)ctx.fillRect(x+3+i*3,cy-1-i,2,1);drawHand(x-5,cy-1,hc);drawHand(x+4+t*3,cy-3,hc);}   /* counting souls out along the counter */
   else{drawHand(x-5,cy-1,hc);drawHand(x+5,cy-1+(Math.floor(time*7)%2?0:1),hc);}   /* drumming his fingers */
   return;}
- else if(d.kind==='fire'){const x=Math.round(d.x),y=Math.round(d.y)+3;ctx.fillStyle='#3a3a52';for(let i=0;i<6;i++)ctx.fillRect(x-7+Math.round(Math.cos(i)*6),y+Math.round(Math.sin(i)*3),3,2);
+ else if(d.kind==='fire'){const x=Math.round(d.x),y=Math.round(d.y)+3;for(let i=0;i<8;i++){const a=i*Math.PI/4+0.4;ctx.fillStyle=i%2?'#4a4a62':'#3a3a52';ctx.fillRect(x-1+Math.round(Math.cos(a)*8),y-1+Math.round(Math.sin(a)*4),3,2);}   /* the ring of stones sits round the fire, evenly, centred on the logs */
   ctx.fillStyle='#5a3a2a';ctx.fillRect(x-4,y-1,8,2);ctx.fillRect(x-1,y-3,2,5);const f=Math.floor(time*10)%3;
   ctx.fillStyle='#e04a3a';ctx.fillRect(x-3,y-6-f,6,5);ctx.fillStyle='#e8a33c';ctx.fillRect(x-2,y-7-f,4,4);ctx.fillStyle='#f4c968';ctx.fillRect(x-1,y-8-((f+1)%3),2,3);}
 }

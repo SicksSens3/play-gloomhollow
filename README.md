@@ -14,7 +14,7 @@
 
 ## The descent
 
-Every run is a new dungeon of six floors. Each floor is fifteen rooms or so around a start fire, with a boss at the far end and stairs behind it. Death sends you back to the first floor with fresh gear and nothing carried over but what you learned. There are no checkpoints.
+Every run is a new dungeon of six floors. Each floor is twenty rooms or so around a start fire, with a boss at the far end and stairs behind it. Death sends you back to the first floor with fresh gear and nothing carried over but what you learned. There are no checkpoints.
 
 | Floor | Name | Boss | What lives there |
 |---|---|---|---|
@@ -175,8 +175,8 @@ It fills the top of the arena. Its claws slam down and stay planted where they l
 | **Boss door** | A skull nailed over the arch, chains either side, the doorway lit red. Come near it and the game names who waits. Go in ready. |
 | **Secret** | A hidden wall. Strike where the stone sounds wrong and a forgotten hoard opens. |
 | **Shop** | A merchant behind a counter: flasks, gear, a tome or a weapon. Prices climb with every floor. He polishes, counts souls and drums his fingers; stand at the counter and press Q and he will talk. |
-| **The hag's carpet** | Rare, and never on the last two floors. A crowned crone hunched on a purple carpet with three wares laid out on it, each cheaper than the merchant's and each with a tooth in it: Hollow Fang (+35% damage; -30 max health), Ash Tongue (+50% fire damage; blows hurt you +25%), Witch's Thread (+80% spells; -40 stamina), Hare's Foot (+25% speed; arrows, spells and traps hurt you +40%), Black Whetstone (the weapon in hand +2; fire burns you twice as hard), Marrow Tithe (+50% souls; flasks heal a quarter less), Leaden Gourd (+1 flask; -20% speed). They stack. She talks too. |
-| **Smith** | The whetstone is always on his counter: +20% weapon damage per pass, priced by the weapon in your hand and dearer each time. The three pedestals hold infusions: Ember (hits burn), Frost (hits chill), Blood (hits drink). He works the anvil while you browse; stand beside him and press Q to talk. |
+| **The hag's carpet** | Rare, and never on the last two floors. A crowned crone hunched on a purple carpet with three wares laid out on it, each cheaper than the merchant's and each with a tooth in it: Hollow Fang (+35% damage; -30 max health), Ash Tongue (+50% fire damage; blows hurt you +25%), Witch's Thread (+80% spells; -40 stamina), Hare's Foot (+25% speed; arrows, spells and traps hurt you +40%), Black Whetstone (the weapon in hand +2; fire burns you twice as hard), Marrow Tithe (+50% souls; flasks heal a quarter less), Leaden Gourd (+1 flask; -20% speed). She talks too. And she buys curses back: open the satchel beside her, pick the piece, and she takes it for half again what she sells it at, undoing what it did. |
+| **Smith** | The whetstone is always on his counter: +20% weapon damage per pass, the same price for any weapon, doubling with each pass you buy on a floor and back to the start on the next. The three pedestals hold infusions: Ember (hits burn), Frost (hits chill), Blood (hits drink). He works the anvil while you browse; stand beside him and press Q to talk. |
 | **Shrine** | Three offerings, take one: a stat or a piece of school gear. |
 | **Puzzle** | Braziers that keep an order (the notches tell it), pressure plates, idols turned to face the stone, or a walk across stones in one unbroken path. A wrong move raises a hollow. The prize matches the riddle. |
 | **Trap** | The pit ring: treasure on an island of floor between two rings of pits. Roll across. Fall and you climb out on the side you came from. |

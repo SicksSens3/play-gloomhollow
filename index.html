@@ -552,14 +552,18 @@ const UPG={
  life:{name:'Blood Infusion',desc:'drinks blood',price:240,fx:'lifesteal'}};
 // The hag's bargains: each gives with one hand and takes with the other. player.frail scales what blows, shots and fire do to you.
 const CURSED={
- fang:{name:'Hollow Fang',desc:'+35% damage; -30 max health',price:120,apply:p=>{p.dmgMul*=1.35;p.maxHp=Math.max(40,p.maxHp-30);p.hp=Math.min(p.hp,p.maxHp);}},
- ashtongue:{name:'Ash Tongue',desc:'+50% fire damage; blows hurt you +25%',price:110,apply:p=>{p.frail.blow+=0.25;}},
- thread:{name:"Witch's Thread",desc:'+80% spells; -40 stamina',price:120,apply:p=>{p.spellPow+=0.8;p.maxStam=Math.max(40,p.maxStam-40);p.stam=Math.min(p.stam,p.maxStam);}},
- hare:{name:"Hare's Foot",desc:'+25% speed; arrows, spells and traps hurt you +40%',price:100,apply:p=>{p.speed*=1.25;p.frail.shot+=0.4;}},
- blackstone:{name:'Black Whetstone',desc:'the weapon in hand +2; fire burns you twice as hard',price:130,apply:p=>{p.sharp+=2;p.frail.fire+=1;}},
+ fang:{name:'Hollow Fang',desc:'+35% damage; -30 max health',price:120,apply:p=>{p.dmgMul*=1.35;p.maxHp=Math.max(40,p.maxHp-30);p.hp=Math.min(p.hp,p.maxHp);},undo:p=>{p.dmgMul/=1.35;p.maxHp+=30;p.hp+=30;}},
+ ashtongue:{name:'Ash Tongue',desc:'+50% fire damage; blows hurt you +25%',price:110,apply:p=>{p.frail.blow+=0.25;},undo:p=>{p.frail.blow-=0.25;}},
+ thread:{name:"Witch's Thread",desc:'+80% spells; -40 stamina',price:120,apply:p=>{p.spellPow+=0.8;p.maxStam=Math.max(40,p.maxStam-40);p.stam=Math.min(p.stam,p.maxStam);},undo:p=>{p.spellPow-=0.8;p.maxStam+=40;}},
+ hare:{name:"Hare's Foot",desc:'+25% speed; arrows, spells and traps hurt you +40%',price:100,apply:p=>{p.speed*=1.25;p.frail.shot+=0.4;},undo:p=>{p.speed/=1.25;p.frail.shot-=0.4;}},
+ blackstone:{name:'Black Whetstone',desc:'the weapon in hand +2; fire burns you twice as hard',price:130,apply:p=>{p.sharp+=2;p.frail.fire+=1;},undo:p=>{p.sharp=Math.max(0,p.sharp-2);p.frail.fire-=1;}},
  marrow:{name:'Marrow Tithe',desc:'+50% souls; flasks heal a quarter less',price:90,apply:p=>{}},
- leaden:{name:'Leaden Gourd',desc:'+1 flask; -20% speed',price:140,apply:p=>{p.maxFlasks++;p.flasks=Math.min(p.maxFlasks,p.flasks+1);p.speed*=0.8;}},
- tithe:{name:'Crimson Tithe',desc:'+40% damage; flasks heal half',price:130,apply:p=>{p.dmgMul*=1.4;}}};   // the flask half is read where flasks heal (hasRelic('tithe'))
+ leaden:{name:'Leaden Gourd',desc:'+1 flask; -20% speed',price:140,apply:p=>{p.maxFlasks++;p.flasks=Math.min(p.maxFlasks,p.flasks+1);p.speed*=0.8;},undo:p=>{p.maxFlasks=Math.max(1,p.maxFlasks-1);p.flasks=Math.min(p.flasks,p.maxFlasks);p.speed/=0.8;}},
+ tithe:{name:'Crimson Tithe',desc:'+40% damage; flasks heal half',price:130,apply:p=>{p.dmgMul*=1.4;},undo:p=>{p.dmgMul/=1.4;}}};
+// On her carpet the hag takes a cursed piece back, undoing what it did, for half again what she sells it at. Pick it in the satchel beside her.
+const uncursePrice=id=>Math.round(priced(CURSED[id].price)*1.5/10)*10;
+function hagOffer(){let R=null;try{R=room;}catch(e){}if(!R||R.type!=='hag'||!player.items.length)return null;const it=player.items[Math.min(itemSel,player.items.length-1)];return it&&ITEMS[it.id]&&ITEMS[it.id].cursed?it:null;}
+function uncurse(id){const c=CURSED[id];if(!c||!hasRelic(id))return false;const cost=uncursePrice(id);if(souls<cost){showMsg('Not enough souls',1);SFX.block();return false;}souls-=cost;if(c.undo)c.undo(player);player.items=player.items.filter(i=>i.id!==id);itemSel=Math.max(0,Math.min(itemSel,player.items.length-1));SFX.buy();burst(player.x,player.y-4,16,'#b06ac8');showMsg('She takes back the '+c.name,2.2);const hg=room.decor.find(d=>d.kind==='hag');if(hg)hg.talkUntil=time+2;return true;}   // the flask half is read where flasks heal (hasRelic('tithe'))
 // Run upgrades are gear you carry. ITEMS names them for the satchel; BUFFS/UPG/the shop still apply the effects.
 const ITEMS={
  vigor:{name:'Amulet of Deep Root',desc:'+50 max health'},
@@ -610,8 +614,8 @@ const UNIQUE=()=>Object.keys(ITEMS).filter(k=>(ITEMS[k].relic||BUFFS[k])&&!ITEMS
 function rollItem(cursedChance){cursedChance=cursedChance===undefined?0.1:cursedChance;const cu=Object.keys(CURSED).filter(k=>!hasRelic(k));if(cu.length&&Math.random()<cursedChance)return{id:pick(cu),cursed:true};
  const c=UNIQUE().filter(k=>!hasRelic(k));if(!c.length)return cu.length?{id:pick(cu),cursed:true}:null;const w=c.map(k=>({common:3,uncommon:2,rare:1})[ITEMS[k].rar||'uncommon']);let t=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<c.length;i++){t-=w[i];if(t<0)return{id:c[i]};}return{id:c[c.length-1]};}
 function uniqueDrop(x,y,bare){const ri=rollItem();return ri?{kind:ri.cursed?'cursed':'relic',id:ri.id,x,y,price:0,chest:!bare}:{kind:'hpup',x,y,price:0,chest:!bare};}   /* bare: lying on the floor, no chest */
-// The whetstone's price follows the weapon in hand (heavier steel costs more to hone) and climbs with each pass already on it.
-const whetPrice=()=>Math.round((60+wpn().atk.dmg*3)*(1+0.4*(player.sharp||0))*priceMul()/10)*10;
+// The whetstone costs the same for any weapon; every pass bought on a floor doubles the next, and the price resets on the next floor.
+const whetPrice=()=>priced(UPG.sharp.price)*Math.pow(2,(run&&run.whetBought)||0);
 const priceOf=it=>Math.round((it.kind==='upgrade'&&it.id==='sharp'?whetPrice():(it.price||0))*(hasRelic('seal')?0.75:1));   // the Merchant's Seal knocks a quarter off
 const soulMul=()=>(hasRelic('miser')?1.5:1)*Math.pow(1.5,cnt('marrow'));   // the Miser's Ring and the hag's Marrow Tithe both swell what the dead leave
 function relicKill(e){const p=player;if(p.hp<=0)return;if(hasRelic('lantern'))p.hp=Math.min(p.maxHp,p.hp+4);if(hasRelic('candle'))p.mana=Math.min(p.maxMana,p.mana+12);if(cnt('sanguine'))p.hp=Math.min(p.maxHp,p.hp+5*cnt('sanguine'));
@@ -809,7 +813,7 @@ document.querySelectorAll('.b').forEach(b=>{const k=b.dataset.k;
  const end=e=>{e.preventDefault();b.classList.remove('on');if(k==='block')vHeld.block=false;};b.addEventListener('touchend',end);b.addEventListener('touchcancel',end);});
 cv.addEventListener('touchstart',e=>{e.preventDefault();audioInit();touchMode=true;if(state!=='play'){const t=e.changedTouches[0],r=cv.getBoundingClientRect();tryStart((t.clientX-r.left)/r.width*W,(t.clientY-r.top)/r.height*cv.height);}else if(overlayOpen){const t=e.changedTouches[0],r=cv.getBoundingClientRect();overlayTap((t.clientX-r.left)/r.width*W,(t.clientY-r.top)/r.height*cv.height);}else{overlayOpen='pause';confirmRestart=0;}},{passive:false});
 // On touch, tapping a satchel cell, a bearing or a settings row picks it; tapping anywhere else closes the overlay.
-function overlayTap(x,y){if(overlayOpen==='items'){const i=ITEM_CELL(x,y);if(i>=0&&i<player.items.length){itemSel=i;SFX.block();return;}}
+function overlayTap(x,y){if(overlayOpen==='items'){const i=ITEM_CELL(x,y);if(i>=0&&i<player.items.length){itemSel=i;SFX.block();return;}const off=y>=104&&y<138?hagOffer():null;if(off){uncurse(off.id);return;}}
  else if(overlayOpen==='skins'){const i=SKIN_CELL(x,y);if(i>=0){if(i===skinCursor){const id=SKIN_IDS[i];if(save.unlocked.includes(id)){equipSkin(id);SFX.pickup();overlayOpen=null;}else SFX.guardbreak();}else{skinCursor=i;SFX.block();}return;}}
  else if(overlayOpen==='pause'){const i=PAUSE_ROW(x,y);if(i>=0){pauseRow=i;SFX.block();return;}}
  overlayOpen=null;}
@@ -849,7 +853,7 @@ function genDungeonInner(){
  if(floor>=FINAL-1){const rooms={};rooms[key(0,0)]={x:0,y:0,type:'start',depth:0};rooms[key(0,-1)]={x:0,y:-1,type:'boss',depth:1};return rooms;}
  const rooms={};const start={x:0,y:0,type:'start',depth:0};rooms[key(0,0)]=start;const order=[start];
  let n=1,tries=0;
- while(n<15&&tries<600){tries++;const base=order[Math.floor(Math.random()*order.length)];const d=DIRS[Math.floor(Math.random()*4)];
+ while(n<20&&tries<800){tries++;const base=order[Math.floor(Math.random()*order.length)];const d=DIRS[Math.floor(Math.random()*4)];
   const nx=base.x+d.x,ny=base.y+d.y;if(rooms[key(nx,ny)])continue;
   const r={x:nx,y:ny,type:'combat',depth:base.depth+1};rooms[key(nx,ny)]=r;order.push(r);n++;}
  let far=order[1]||start;order.forEach(r=>{if(r.depth>far.depth)far=r;});far.type='boss';
@@ -1170,11 +1174,11 @@ function newGame(seed,daily){
  dungeon=genDungeon();room=dungeon[key(0,0)];buildRoom(room);player.x=room.pw/2;player.y=room.ph/2+14;player.safe={x:player.x,y:player.y};fit();
  projs=[];vfx=[];parts=[];dmgNums=[];hitstop=0;souls=0;roomsCleared=0;shake=0;winning=false;wonT=0;overlayOpen=null;confirmRestart=0;state='play';showMsg('Floor 1  '+FP().name,3);
 }
-function descend(){floor++;run.floor=floor;run.flasksFloor=0;run.spared=false;if(floor>save.stats.bestFloor){save.stats.bestFloor=floor;}persist();lastTpl=-1;lastGrand=null;
+function descend(){floor++;run.floor=floor;run.flasksFloor=0;run.whetBought=0;run.spared=false;if(floor>save.stats.bestFloor){save.stats.bestFloor=floor;}persist();lastTpl=-1;lastGrand=null;
  dungeon=genDungeon();room=dungeon[key(0,0)];buildRoom(room);const p=player;p.x=room.pw/2;p.y=room.ph/2+14;p.safe={x:p.x,y:p.y};fit();p.hp=p.maxHp;p.mana=p.maxMana;p.stam=p.maxStam;p.flasks=p.maxFlasks;p.state='free';p.blocking=false;
  projs=[];vfx=[];parts=[];dmgNums=[];shake=0;SFX.door();SFX.clear();showMsg('Floor '+floor+'  '+FP().name,3.2);}
 // New Game+: same run, same gear, new dungeon, stronger hollow.
-function loopGame(){loop++;if(run)run.loop=loop;floor=1;run.floor=1;run.flasksFloor=0;run.spared=false;lastTpl=-1;lastGrand=null;
+function loopGame(){loop++;if(run)run.loop=loop;floor=1;run.floor=1;run.flasksFloor=0;run.whetBought=0;run.spared=false;lastTpl=-1;lastGrand=null;
  dungeon=genDungeon();room=dungeon[key(0,0)];buildRoom(room);const p=player;p.x=room.pw/2;p.y=room.ph/2+14;p.safe={x:p.x,y:p.y};fit();
  p.hp=p.maxHp;p.mana=p.maxMana;p.stam=p.maxStam;p.flasks=p.maxFlasks;p.keys=0;p.burn=0;p.ward=0;p.state='free';p.blocking=false;p.atk=null;
  projs=[];vfx=[];parts=[];dmgNums=[];shake=0;hitstop=0;winning=false;wonT=0;banner=null;overlayOpen=null;state='play';SFX.door();SFX.clear();showMsg('Loop '+loop+'   Floor 1  '+FP().name,3.2);}
@@ -1231,7 +1235,7 @@ function startRoll(){const p=player;p.state='roll';p.t=0.34;p.rollDir={...p.last
 const KEEPERS={
  smith:['"I came down for the ore. It came up for me."','"The Warden wore a helm I made him. He does not need it now."','"My brother went below the bells. Some nights the hammer comes back up on its own."','"Quench it in blood and it never rusts. Ask the King how he knows."','"I do not sleep. The forge would go out."','"Bring me nothing. I have all the dead I can use."'],
  merchant:['"Everything here was someone\'s. That is what makes it cheap."','"I do not go past the fourth door. Nobody I sold to came back to say why."','"There is a hag below who sells for less. Ask her what it costs later."','"A knight bought that very vial. He is still down there, I expect."','"The King counts his hoard. Every night. Aloud."','"Souls, wanderer. I have no use for coin where I am going."'],
- hag:['"Cheaper than the man upstairs. Dearer, later."','"I was queen of something, once. The bells took the name."','"Every gift has a tooth, pretty. Mine bite where you cannot see."','"The Wyrm and I are old friends. It owes me an eye."','"Sit. No? They never sit."','"When you die I will sell what you carried. I always do."']};
+ hag:['"Cheaper than the man upstairs. Dearer, later."','"Regret a gift? Open your satchel here beside me. I buy them back. Dearer than I sold them."','"I was queen of something, once. The bells took the name."','"Every gift has a tooth, pretty. Mine bite where you cannot see."','"The Wyrm and I are old friends. It owes me an eye."','"Sit. No? They never sit."','"When you die I will sell what you carried. I always do."']};
 function talkTo(d){const L=KEEPERS[d.kind];if(!L)return;run.said=run.said||{};const i=run.said[d.kind]||0;run.said[d.kind]=i+1;showMsg(L[i%L.length],3.2);d.talkUntil=time+3;SFX.talk();}
 function nearItem(){let best=null,bd=18;for(const it of room.items){const d=Math.hypot(it.x-player.x,it.y-player.y);if(d<bd){bd=d;best=it;}}
  if(!best)for(const d of room.decor){if(!KEEPERS[d.kind])continue;if(Math.hypot(d.x-player.x,d.y-player.y)<(d.kind==='merchant'?40:30))return{kind:'talk',d,x:d.x,y:d.y,price:0};}   /* a keeper close by will talk */
@@ -1256,7 +1260,7 @@ function takeItem(it){if(it.kind==='talk'){talkTo(it.d);return;}if(it.kind==='lo
   case'stairs':descend();return;
   case'key':p.keys++;showMsg('A rusted key',1.5);break;
   case'cursed':{const c=CURSED[it.id];c.apply(p);addItem(it.id);banner={t:2.8,title:c.name.toUpperCase(),sub:'CURSED   '+c.desc,col:'#b06ac8'};msg.t=0;burst(it.x,it.y-4,16,'#b06ac8');SFX.relic();const hg=room.decor.find(d=>d.kind==='hag');if(hg)hg.talkUntil=time+2;if(it.altar){room.items=room.items.filter(x=>!x.altar);keep=true;}break;}
-  case'upgrade':{const u=UPG[it.id];if(it.id==='sharp'){p.sharp++;showMsg(wpn().name+' +'+p.sharp,1.8);keep=true;}else{p.inf=it.id;showMsg(wpn().name+': '+u.desc,2);}burst(it.x,it.y-4,14,'#e8a33c');SFX.hitH();break;}
+  case'upgrade':{const u=UPG[it.id];if(it.id==='sharp'){p.sharp++;run.whetBought=(run.whetBought||0)+1;showMsg(wpn().name+' +'+p.sharp,1.8);keep=true;}else{p.inf=it.id;showMsg(wpn().name+': '+u.desc,2);}burst(it.x,it.y-4,14,'#e8a33c');SFX.hitH();break;}
   case'souls':{const n=Math.round(it.n*soulMul());souls+=n;dmgNum(it.x,it.y-10,'+'+n,'#f4c968');showMsg('+'+n+' souls',1.2);break;}
   case'camp':overlayOpen='skins';skinCursor=Math.max(0,SKIN_IDS.indexOf(save.skin));SFX.door();return;
   case'heart':{room.items.splice(room.items.indexOf(it),1);room.cleared=false;room.spawned=true;room.wave=1;room.waveT=0;room.decals.push({x:it.x,y:it.y+4,r:5,s:Math.random()*99},{x:it.x-6,y:it.y+2,r:3,s:Math.random()*99},{x:it.x+7,y:it.y+5,r:3,s:Math.random()*99});
@@ -2582,7 +2586,8 @@ function drawItems(){
  // the chosen piece, large, with what it does
  if(!p.items.length){txt('nothing yet',W/2,108,'#464666','center');txt('chests and shrines hand them out, one of each',W/2,120,'#2e2d42','center');}
  else{const it=p.items[Math.min(itemSel,p.items.length-1)],d=ITEMS[it.id];ctx.fillStyle='#14131c';ctx.fillRect(8,104,W-16,34);ctx.fillStyle=K;ctx.fillRect(14,108,26,26);ctx.fillStyle='#1c1b28';ctx.fillRect(15,109,24,24);drawIcon(it.id,15,109,2);
-  txt(d.name,46,110,d.cursed?'#b06ac8':'#d9d0bd');txt(d.desc,46,121,'#8a8296');if(d.cursed)txt('CURSED',W-12,110,'#b06ac8','right');}
+  txt(d.name,46,110,d.cursed?'#b06ac8':'#d9d0bd');txt(d.desc,46,121,'#8a8296');if(d.cursed)txt('CURSED',W-12,110,'#b06ac8','right');
+  const off=hagOffer();if(off&&off.id===it.id)txt((touchMode?'tap here: ':'Q: ')+'she takes it back for '+uncursePrice(it.id),46,130,'#b06ac8');}   /* on her carpet a curse can be sold back */
  txt(touchMode?'stick or tap: browse   MAP close':'arrows or mouse browse   I / Esc close',W/2,CH-14,'#464666','center');
 }
 function drawWin(){
@@ -2718,7 +2723,7 @@ function frame(now){const dt=Math.min(0.033,(now-last)/1000);last=now;
  if(state==='play'&&overlayOpen==='skins'){skinMenuInput();time+=dt;}
  else if(state==='play'&&overlayOpen==='stats'){if(press.KeyS||press.ArrowDown||press.KeyW||press.ArrowUp||(virt.my>0.6&&!virt.sd)){overlayOpen='skins';SFX.block();}virt.sd=virt.my>0.6;if(press.KeyH||press.KeyM||press.Escape)overlayOpen=null;time+=dt;}
  else if(state==='play'&&overlayOpen==='pause'){pauseInput(dt);time+=dt;}
- else if(state==='play'&&overlayOpen==='items'){itemsInput();if(press.KeyI||press.Escape||press.KeyP||press.KeyM||press.KeyH||press.KeyQ){overlayOpen=itemsBack;itemsBack=null;SFX.block();}time+=dt;}
+ else if(state==='play'&&overlayOpen==='items'){itemsInput();const off=press.KeyQ?hagOffer():null;if(off)uncurse(off.id);else if(press.KeyI||press.Escape||press.KeyP||press.KeyM||press.KeyH||press.KeyQ){overlayOpen=itemsBack;itemsBack=null;SFX.block();}time+=dt;}
  else if(state==='play'&&press.KeyP&&!overlayOpen){overlayOpen='pause';confirmRestart=0;}
  else if(state==='play'){if(press.KeyM)overlayOpen=overlayOpen==='map'?null:'map';if(press.KeyH)overlayOpen=overlayOpen==='help'?null:'help';if(press.KeyI&&!overlayOpen){overlayOpen='items';itemsBack=null;SFX.block();}if(press.Escape&&(overlayOpen==='map'||overlayOpen==='help'))overlayOpen=null;if(overlayOpen)time+=dt;else if(banner&&banner.boss&&banner.t>0.5)cardTick(dt);else if(hitstop>0)hitstop-=dt;else if(slowT>0){slowT-=dt;update(dt*0.4);}else update(dt);}else if(state==='dead'){deadT+=dt;updateFx(dt*0.6);time+=dt*0.4;msg.t-=dt*2;}else if(state==='won'){wonT+=dt;updateFx(dt*0.6);time+=dt*0.4;msg.t-=dt*2;}
  if(parryFx){parryFx.t-=dt;if(parryFx.t<=0)parryFx=null;}flashT=Math.max(0,flashT-dt);

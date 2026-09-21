@@ -176,7 +176,7 @@ It fills the top of the arena. Its claws slam down and stay planted where they l
 | **Secret** | A hidden wall. Strike where the stone sounds wrong and a forgotten hoard opens. |
 | **Shop** | A merchant behind a counter: flasks, gear, a tome or a weapon. Prices climb with every floor. He polishes, counts souls and drums his fingers; stand at the counter and press Q and he will talk. |
 | **The hag's carpet** | Rare, and never on the last two floors. A crowned crone hunched on a purple carpet with three wares laid out on it, each cheaper than the merchant's and each with a tooth in it: Hollow Fang (+35% damage; -30 max health), Ash Tongue (+50% fire damage; blows hurt you +25%), Witch's Thread (+80% spells; -40 stamina), Hare's Foot (+25% speed; arrows, spells and traps hurt you +40%), Black Whetstone (the weapon in hand +2; fire burns you twice as hard), Marrow Tithe (+50% souls; flasks heal a quarter less), Leaden Gourd (+1 flask; -20% speed). They stack. She talks too. |
-| **Smith** | A whetstone (+20% weapon damage) and three infusions: Ember (hits burn), Frost (hits chill), Blood (hits drink). He works the anvil while you browse; stand beside him and press Q to talk. |
+| **Smith** | The whetstone is always on his counter: +20% weapon damage per pass, priced by the weapon in your hand and dearer each time. The three pedestals hold infusions: Ember (hits burn), Frost (hits chill), Blood (hits drink). He works the anvil while you browse; stand beside him and press Q to talk. |
 | **Shrine** | Three offerings, take one: a stat or a piece of school gear. |
 | **Puzzle** | Braziers that keep an order (the notches tell it), pressure plates, idols turned to face the stone, or a walk across stones in one unbroken path. A wrong move raises a hollow. The prize matches the riddle. |
 | **Trap** | The pit ring: treasure on an island of floor between two rings of pits. Roll across. Fall and you climb out on the side you came from. |
@@ -214,9 +214,9 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 | **Blood** | **Leech Fang**, melee drinks 8% as health; **Ruin Nail**, +40% vs the bleeding; **Sanguine Cup**, kills mend 5 |
 | **Arcane** | **Focus Lens**, +40% spells; **Echo Stone**, spells cost a third less; **Conduit Ring**, melee hits return 3 mana |
 
-**Rule-benders.** Twenty pieces that each bend a rule of the hollow. Some are rarer than others; it will not tell you which.
+**Rule-benders.** Nineteen pieces that each bend a rule of the hollow. Some are rarer than others; it will not tell you which.
 
-<p align="center"><img src="readme/relics.png" alt="Twenty rule-benders" width="600"></p>
+<p align="center"><img src="readme/relics.png" alt="The rule-benders" width="600"></p>
 
 | Piece | Rule it bends |
 |---|---|
@@ -238,7 +238,6 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 | **Witch's Candle** | kills return mana |
 | **Mirror Shard** | one blow in five turns back |
 | **Gargoyle Heart** | no blow interrupts your swing |
-| **Crimson Tithe** | +40% damage, flasks heal half |
 | **Feather Charm** | pits do not hurt |
 
 **Cursed.** Anything with a bite in it is marked CURSED, on the floor and in the satchel. They turn up rarely in chests and at shrines; the hag keeps three on her carpet and sells them cheap.
@@ -252,6 +251,7 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 | **Black Whetstone** | weapon +2; fire hurts twice as hard |
 | **Marrow Tithe** | +50% souls; flasks heal less |
 | **Leaden Gourd** | +1 flask; -20% speed |
+| **Crimson Tithe** | +40% damage; flasks heal half |
 
 ## Bearings
 

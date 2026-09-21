@@ -329,6 +329,8 @@ function stat(k,n=1){save.stats[k]=(save.stats[k]||0)+n;checkUnlocks();persist()
 function checkUnlocks(){for(const id of SKIN_IDS){const sk=SKINS[id];if(sk.cond&&!save.unlocked.includes(id)&&sk.cond(save.stats)){save.unlocked.push(id);showMsg('Bearing unlocked: '+sk.name,3.5);SFX.unlock();}}}
 function equipSkin(id){save.skin=id;persist();SPR.player=skinSprites[id];SPR.roll=rollSprites[id];SPR.walk=walkSprites[id];SPR.views=skinViews[id]||null;SPR.hand=skinHand[id];}
 // A hand: a small gloved fist, outlined. Drawn wherever it is needed at whatever scale.
+// The mutt's other bearings: side, three-quarter front, three-quarter back, and from behind. bossView picks among them by the way it faces.
+const EXTRA_VIEWS={mutt:{wide:true,side:mkSpr([".............kk.","..kkkkkkkkk.kffk",".kffsfffffkkfefk","kfrfsrffsffffgfk","kffrfrffffffkkkk",".kfffffffffkttk.","..kfkkkkkfkk....","..kfk...kfk.....","..kfk...kfk.....","..kkk...kkk....."],{k:K,f:'#6d6578',s:'#a07a6a',r:'#cfc4b0',g:'#5aa04a',e:'#d9e8ff',c:'#8a8296',t:'#e8e0d0'}),fd:mkSpr(["............kkk.","..kkkkkkkk.kfffk",".kffsffffkkkefek","kfrfsrffsffkffgk","kffrfrfffffkkttk",".kfffffffffkkkk.","..kfkkkkkfkk....","..kfk...kfk.....","..kfk...kfk.....","..kkk...kkk....."],{k:K,f:'#6d6578',s:'#a07a6a',r:'#cfc4b0',g:'#5aa04a',e:'#d9e8ff',c:'#8a8296',t:'#e8e0d0'}),bd:mkSpr(["k...........kkk.","kkkkkkkkkk..kffk",".kffsffffkkkffgk",".kfrfsrffsfffffk",".kffrfrfffffkkk.","..kfffffffffk...","...kfkkkkkfkk...","...kfk...kfk....","...kfk...kfk....","...kkk...kkk...."],{k:K,f:'#6d6578',s:'#a07a6a',r:'#cfc4b0',g:'#5aa04a',e:'#d9e8ff',c:'#8a8296',t:'#e8e0d0'}),back:mkSpr(["......k.....",".....kfk....","....kfk.....","...kkffkk...","..kffsfffk..","..kfffffsfk.","..kfgffffk..",".kfkffffkfk.",".kfk.kk.kfk.",".kfk....kfk.",".kkk....kkk."],{k:K,f:'#6d6578',s:'#a07a6a',r:'#cfc4b0',g:'#5aa04a',e:'#d9e8ff',c:'#8a8296',t:'#e8e0d0'})}};
 function drawHand(x,y,col,k){k=k||1;x=Math.round(x);y=Math.round(y);ctx.fillStyle=K;ctx.fillRect(x-2*k,y-2*k,4*k,4*k);ctx.fillStyle=col;ctx.fillRect(x-1*k,y-1*k,2*k,2*k);ctx.fillRect(x-1*k,y-2*k,1*k,1*k);}
 let skinCursor=0;
 // Boss rows are kept separately so the ascended (tier 2) forms can reuse them with their own palettes.
@@ -354,9 +356,9 @@ const SPR={
  pilgrim:mkSpr([
   "....kkkk....","...kooook...","..kooooook..","..kokkkkok..","..kokbbkok..",".kooooooook.","kOOOOOOOOOOk","kOOOOOOOOOOk",".kkkkkkkkkk."],
   {k:K,o:'#6a4a2a',O:'#4a3220',b:'#cfc4b0'}),
- brawler:mkSpr([
-  "...kkkk...","..kffffk..",".kfrffrfk.",".kffffffk.","..kkkkkk..",".kdkddddkk","kdkkddddkk","kdk.kddk..","kfk.kddk..","kkk..kkk..","....kdk...","...kdkdk..","...kk.kk.."],
-  {k:K,f:'#d8c0a0',r:'#e04a3a',d:'#3a2a30'}),
+ mutt:mkSpr( // the festered mutt, seen head-on: a low dog with the fur gone in patches, one eye clouded, a sore on its flank
+  ["....kkkk....","...kffffk...","..kfeffcfk..","..kffffffk..","..kfkttkfk..","...kfssfk...","..kkffffkk..",".kfkffgfkfk.",".kfk.kk.kfk.",".kfk....kfk.",".kkk....kkk."],
+  {k:K,f:'#6d6578',s:'#a07a6a',r:'#cfc4b0',g:'#5aa04a',e:'#d9e8ff',c:'#8a8296',t:'#e8e0d0'}),
  shield:mkSpr([
   "...kkkk...","..kaaaak..",".kakkkkak.",".kakyykak.",".kaaaaaak.","..kkAAkk..",".kAkAAkAk.",".kAkAAkAk.","..kkAAkk..","..kAkkAk..","..kAk.kAk.","..kkk.kkk."],
   {k:K,a:'#8a94a4',A:'#4a5262',y:'#f4c968'}),
@@ -428,7 +430,6 @@ function deriveViewsImg(spr,eyeCols,faceCols){const w=spr.w,h=spr.h,src=spr.img.
 const HANDS={
  grunt:{blank:[[0,2,6,7],[7,9,6,7]],col:'#cfc4b0',rest:[6,1],reach:7},
  archer:{blank:[[0,1,7,8],[8,9,7,8]],col:'#5a3a7a',rest:[5,0],reach:4,weapon:'bow'},
- brawler:{blank:[[0,2,5,8],[8,9,5,6]],col:'#d8c0a0',rest:[5,-6],reach:9,guard:true},
  shield:{blank:[[0,2,6,7],[7,9,6,7]],col:'#8a94a4',rest:[5,0],reach:6,weapon:'shield'},
  bell:{blank:[[10,11,0,8]],col:'#8a8296',rest:[5,0],reach:3,weapon:'bellpole'},
  drowned:{blank:[[0,1,4,7],[8,9,4,7]],col:'#3d7a72',rest:[6,1],reach:7,slam:true},
@@ -497,7 +498,9 @@ function bossFrame(e){const wt=e.windT||0.7,q=1-Math.max(0,e.t)/wt;
  if(e.type==='brute'){if(e.state==='windup'&&(e.kind==='slam'||e.kind==='leap')&&q>0.25)return'raise';if(e.state==='attack'&&(e.kind==='slam'||e.kind==='leap'&&e.t<0.08)||e.squashT>0)return'slam';return null;}
  if(e.type==='hellsbell'){if(e.state==='windup'&&(e.kind==='slam'&&q>0.2||e.kind==='toll'))return'raise';if(e.state==='recover'&&e.kind==='slam'&&e.t>0.45)return'slam';return null;}
  return null;}
-function bossView(e,sp){const v=BOSS_VIEWS[sprKey(e)];if(!v)return{spr:sp,flip:e.facing};const a=e.viewAng===undefined?Math.atan2(player.y-e.y,player.x-e.x):e.viewAng,d=((Math.round(a/(Math.PI/4))%8)+8)%8;
+// A quadruped's side view owns a wider slice of the circle (about 74 degrees), so a run that wobbles a few degrees does not flicker into the three-quarter view.
+function wideSector(a){const c=Math.cos(a),sn=Math.sin(a);if(Math.abs(sn)<0.6)return c>=0?0:4;if(Math.abs(c)<0.38)return sn>0?2:6;return sn>0?(c>0?1:3):(c>0?7:5);}
+function bossView(e,sp){const v=BOSS_VIEWS[sprKey(e)]||EXTRA_VIEWS[sprKey(e)];if(!v)return{spr:sp,flip:e.facing};const a=e.viewAng===undefined?Math.atan2(player.y-e.y,player.x-e.x):e.viewAng,d=v.wide?wideSector(a):((Math.round(a/(Math.PI/4))%8)+8)%8;
  const pick=[['side',1],['fd',1],['front',1],['fd',-1],['side',-1],['bd',-1],['back',1],['bd',1]][d];return{spr:pick[0]==='front'?sp:v[pick[0]],flip:pick[1]};}
 // Rows r0..r1 of a sprite, feet at y: the torso can be drawn a hair wider (sx) and the upper body a pixel higher (dy) without the head growing or the feet leaving the floor.
 function drawSprRows(s,x,y,flip,white,r0,r1,dy,sx){ctx.save();ctx.translate(Math.round(x),Math.round(y));if(flip<0)ctx.scale(-1,1);if(sx&&sx!==1)ctx.scale(sx,1);const img=white?s.white:s.img;ctx.drawImage(img,0,r0,s.w,r1-r0,-Math.floor(s.w/2),-s.h+r0+(dy||0),s.w,r1-r0);ctx.restore();}
@@ -1092,7 +1095,7 @@ function spikeState(s){const t=(time+s.phase)%2.6;return t>2.0?'up':t>1.65?'warn
 const ETYPES={
  grunt:{name:'a hollow',hp:34,r:4,speed:24,dmg:14,souls:20},   // slow: it shuffles, and it trembles as it comes
  archer:{name:'a cultist',hp:26,r:4,speed:40,dmg:14,souls:30},
- brawler:{name:'a brawler',hp:48,r:4,speed:34,dmg:13,souls:45},
+ mutt:{name:'a festered mutt',hp:30,r:4,speed:70,dmg:9,souls:30},   // fast and low; comes in pairs; its bite rots, and it latches onto a swinging arm
  shield:{name:'a shieldbearer',hp:60,r:5,speed:20,dmg:20,souls:50},
  wretch:{name:'a wretch',hp:14,r:3,speed:64,dmg:6,souls:10},
  brute:{name:'the Warden',hp:375,r:11,speed:27,dmg:34,souls:400,boss:true},
@@ -1130,18 +1133,19 @@ function makeChampion(e){e.champion=true;e.hp=Math.round(e.hp*1.5);e.maxHp=e.hp;
 function tryRevive(e){if(!e.champion||!e.lives)return false;e.lives--;e.hp=Math.round(e.maxHp*0.35);e.state='stagger';e.t=1.1;e.flash=0.4;burst(e.x,e.y-4,24,'#f4c968');room.waves.push(mkWave(e.x,e.y,Math.round(e.dmg*0.6),"the champion's roar",'#f4c968'));dmgNum(e.x,e.y-e.r-12,'RISE','#f4c968');showMsg('It rises again',1.6);SFX.boss();shake=Math.max(shake,0.25);return true;}
 // Enemy roster widens with depth: each biome starts with its signature types, adds more deeper in the floor, and pulls in the rest on a loop.
 function biomePool(d){const L=loop>0,bm=BIOME();let pool;
- if(bm===0){pool=['grunt','grunt','archer'];if(d>=2||L)pool.push('bell');if(d>=3||L)pool.push('brawler');if(L)pool.push('shield','brawler','wretchpack','bell');}
- else if(bm===1){pool=['grunt','drowned','archer','drowned','angler'];if(d>=2||L)pool.push('shield','wretchpack','angler');if(L)pool.push('brawler','drowned','imp');}
- else if(bm===2){pool=['imp','grunt','archer','imp','salamander'];if(d>=2||L)pool.push('brawler','shield','salamander');if(L)pool.push('wretchpack','drowned','imp');}
- else{pool=['grunt','toller','archer','bell','toller','grunt'];if(d>=2||L)pool.push('shield','brawler','toller');if(L)pool.push('wretchpack','toller','imp');}   // the Tolling Deep: tollers in bell armour, ringers among them
+ if(bm===0){pool=['grunt','grunt','archer'];if(d>=2||L)pool.push('bell');if(d>=3||L)pool.push('mutt');if(L)pool.push('shield','mutt','wretchpack','bell');}
+ else if(bm===1){pool=['grunt','drowned','archer','drowned','angler'];if(d>=2||L)pool.push('shield','wretchpack','angler');if(L)pool.push('mutt','drowned','imp');}
+ else if(bm===2){pool=['imp','grunt','archer','imp','salamander'];if(d>=2||L)pool.push('mutt','shield','salamander');if(L)pool.push('wretchpack','drowned','imp');}
+ else{pool=['grunt','toller','archer','bell','toller','grunt'];if(d>=2||L)pool.push('shield','mutt','toller');if(L)pool.push('wretchpack','toller','imp');}   // the Tolling Deep: tollers in bell armour, ringers among them
  return pool;}
 function freeSpots(r,max){const spots=[];for(let i=0;i<160&&spots.length<max;i++){const x=T*2+Math.random()*(r.pw-T*4),y=T*2+Math.random()*(r.ph-T*4);const st=r.solid[Math.floor(y/T)][Math.floor(x/T)];
   if(Math.hypot(x-player.x,y-player.y)<70||collides(x,y,9,true)||st===3||st===5||st===7)continue;spots.push({x,y});}return spots;}
 function spawnGroup(r,n,forceElite){const spots=freeSpots(r,16),pool=biomePool(r.depth),f=floor,d=r.depth,blood=r.event==='blood';let si=0,eliteDone=false;
  for(let i=0;i<n&&si<spots.length;i++){let t=pick(pool);if(i===0&&t==='wretchpack')t='grunt';
-  const champ=loop>0&&!r.champDone&&(r.champRoom||Math.random()<0.06);if(champ&&t==='wretchpack')t='brawler';
+  const champ=loop>0&&!r.champDone&&(r.champRoom||Math.random()<0.06);if(champ&&(t==='wretchpack'||t==='mutt'))t='grunt';
   if(t==='bell'&&(champ||r.enemies.some(e=>e.type==='bell')))t='grunt'; // one bellringer per room, never a champion
   if(t==='wretchpack'){for(let k=0;k<3&&si<spots.length;k++){const sp=spots[si++];r.enemies.push(mkEnemy('wretch',sp.x,sp.y,blood));}continue;}
+  if(t==='mutt'){for(let k=0;k<2&&si<spots.length;k++){const sp=spots[si++];r.enemies.push(mkEnemy('mutt',sp.x,sp.y,blood));}continue;}   /* mutts hunt in pairs: one circles while the other leaps */
   const sp=spots[si++];const elite=champ||blood||(forceElite&&!eliteDone)||Math.random()<Math.min(0.5,0.05*(f-1)+(d>=3?0.07:0)+0.1*loop);if(elite)eliteDone=true;const e=mkEnemy(t,sp.x,sp.y,elite);if(champ){makeChampion(e);r.champDone=true;}r.enemies.push(e);}
  if(!r.enemies.some(e=>!e.dead)&&spots[0])r.enemies.push(mkEnemy('grunt',spots[0].x,spots[0].y,false));}
 function spawnEnemies(r){
@@ -1206,7 +1210,7 @@ const mkWave=(x,y,dmg,name,col)=>({x,y,r:8,spd:95,maxR:120,hit:false,dmg,name,co
 
 function newGame(seed,daily){
  lastTpl=-1;lastGrand=null;runSeed=seed||randomSeed();
- player={x:W/2,y:H/2,r:5,hp:100,maxHp:100,stam:100,maxStam:100,stamCd:0,mana:60,maxMana:60,spell:'bolt',spellPow:1,ward:0,wardT:0,dmgMul:1,inf:null,sharp:0,keys:0,lavaT:0,burn:0,burnT:0,flasks:3,maxFlasks:3,speed:64,state:'free',t:0,aim:0,facing:1,lastMove:{x:1,y:0},inv:0,flash:0,walk:0,atk:null,weapon:'rusted',blocking:false,blockT:0,riposteT:0,charging:false,charge:0,chargeReady:false,items:[],frail:{blow:1,shot:1,fire:1}};
+ player={x:W/2,y:H/2,r:5,hp:100,maxHp:100,stam:100,maxStam:100,stamCd:0,mana:60,maxMana:60,spell:'bolt',spellPow:1,ward:0,wardT:0,dmgMul:1,inf:null,sharp:0,keys:0,lavaT:0,burn:0,burnT:0,rot:0,rotT:0,flasks:3,maxFlasks:3,speed:64,state:'free',t:0,aim:0,facing:1,lastMove:{x:1,y:0},inv:0,flash:0,walk:0,atk:null,weapon:'rusted',blocking:false,blockT:0,riposteT:0,charging:false,charge:0,chargeReady:false,items:[],frail:{blow:1,shot:1,fire:1}};
  floor=1;loop=0;run={floor:1,loop:0,rooms:0,kills:0,parries:0,killedBy:'the dark',seed:runSeed,daily:!!daily,bossHits:0,flasksFloor:0};save.stats.runs++;persist();banner=null;transT=0;
  dungeon=genDungeon();room=dungeon[key(0,0)];buildRoom(room);player.x=room.pw/2;player.y=room.ph/2+14;player.safe={x:player.x,y:player.y};fit();
  projs=[];vfx=[];parts=[];orbs=[];dmgNums=[];hitstop=0;souls=0;roomsCleared=0;shake=0;winning=false;wonT=0;overlayOpen=null;confirmRestart=0;state='play';showMsg('Floor 1  '+FP().name,3);
@@ -1334,6 +1338,7 @@ if(player.stunT>0)player.stunT-=dt;if(player.fling){const F=player.fling;F.t-=dt
   if(virt.aiming||virt.aimHold>0)p.aim=virt.aimAng;else if(len>0)p.aim=Math.atan2(p.lastMove.y,p.lastMove.x);}
  else p.aim=Math.atan2(mouse.y-p.y,mouse.x-p.x);
  p.t-=dt;
+ if(p.rot>0){p.rot-=dt;p.rotT+=dt;if(Math.random()<0.25)parts.push({x:p.x+(Math.random()-.5)*8,y:p.y-4,vx:0,vy:-12,life:0.4,col:'#5aa04a',noG:true});if(p.rotT>=0.5){p.rotT-=0.5;p.hp-=1;dmgNum(p.x,p.y-14,1,'#5aa04a');if(run)run.killedBy='the rot';if(p.hp<=0&&!spare())die();}}   /* the mutt's rot: a slow green bleed */
  if(p.burn>0){p.burn-=dt;p.burnT+=dt;if(Math.random()<0.5)parts.push({x:p.x+(Math.random()-.5)*8,y:p.y-6,vx:0,vy:-30,life:0.3,col:Math.random()<0.5?'#e8a33c':'#e04a3a',noG:true});
   if(p.burnT>=0.6){p.burnT-=0.6;p.hp-=2;dmgNum(p.x,p.y-14,2,'#e8a33c');if(run)run.killedBy='the flames';if(p.hp<=0&&!spare())die();}
   if(p.state==='roll'){p.burn=0;burst(p.x,p.y-4,8,'#6d6578');SFX.spike();}
@@ -1496,7 +1501,7 @@ function damageEnemy(e,d,heavy,ang,fx,isHeavy,at){
   killEnemy(e);}
 }
 const sprKey=e=>(e.boss&&e.tier===2&&SPR[e.type+'2'])?e.type+'2':e.type;
-function killEnemy(e){run.kills++;deaths.push({type:sprKey(e),x:e.x,y:e.y+e.r,facing:e.facing,t:0,big:e.boss?1:e.elite?1.3:1});buzz(e.boss?[60,40,120]:20);
+function killEnemy(e){run.kills++;deaths.push({type:sprKey(e),x:e.x,y:e.y+e.r,facing:e.facing,t:0,big:e.boss?1:e.elite?1.3:1});if(e.type==='mutt')room.decor.push({kind:'moss',x:e.x,y:e.y+e.r,v:1});   /* a mutt leaves a green stain */buzz(e.boss?[60,40,120]:20);
  if(e.boss){room.dark=false;stat('bossKills');stat(e.type+'Slain');if(run.bossHits===0)stat('noHitBoss');if(run.flasksFloor===0)stat('noFlaskFloors');
   if(run.daily){const d=save.daily&&save.daily.date===todayStr()?save.daily:{date:todayStr(),floor:0,souls:0};if(floor>d.floor||(floor===d.floor&&souls>d.souls)){d.floor=floor;d.souls=souls;}save.daily=d;persist();if(floor>=2)stat('dailyClears');}SFX.clear();hitstop=Math.max(hitstop,0.15);
   if(e.type==='dragon'){showMsg('The Ashen Wyrm falls.',3.5);winning=true;winT=0;burst(e.x,e.y,40,'#f4c968');burst(e.x,e.y+24,40,'#e8a33c');if(loop>(save.stats.bestLoop||0))save.stats.bestLoop=loop;stat('wins');}
@@ -1588,15 +1593,19 @@ function updateEnemy(e,dt){
  // shieldbearer turns slowly
  if(e.type==='shield'){let da=toP-e.faceAng;da=Math.atan2(Math.sin(da),Math.cos(da));const rate=(e.state==='stagger'?0.6:1.9)*dt;e.faceAng+=Math.abs(da)<rate?da:Math.sign(da)*rate;}
  const lunge=(spd,reach)=>{moveEnt(e,e.dir.x*spd*dt,e.dir.y*spd*dt);if(!e.hit&&dist<e.r+p.r+reach){e.hit=true;hurtPlayer(e.dmg,e);}};
+ if(e.state==='latch'){e.t-=dt;e.x=p.x+e.lx;e.y=p.y+e.ly;e.faceAng=e.viewAng=Math.atan2(-e.ly,-e.lx);e.lt+=dt;if(e.lt>=0.5){e.lt-=0.5;if(p.hp>0&&state==='play'){p.hp-=3;dmgNum(p.x,p.y-14,3,'#5aa04a');burst(p.x,p.y-4,4,'#5aa04a');if(run)run.killedBy=e.name;if(p.hp<=0&&!spare())die();}}
+  if(p.state==='roll'||e.t<=0||p.hp<=0){e.state='recover';e.t=0.7;moveEnt(e,Math.sign(e.lx||1)*10,Math.sign(e.ly||1)*6);}return;}   /* latched on: it gnaws every half second until you roll it off */
  switch(e.state){
   case'idle':case'stagger':case'recover':if(e.t<=0){e.state='chase';e.phase=1;}break;
   case'ringing':ringTick(e,dt);break;
   case'dark':darkTick(e,dt);break;
   case'chase':
    if(e.type==='grunt'){if(dist<26){e.state='windup';e.t=0.6;e.dir={x:nx,y:ny};}else{const[ax,ay]=approachVec(e,nx,ny,dist,dt);steer(e,ax*e.speed,ay*e.speed,dt);}}
-   else if(e.type==='brawler'){if(dist<30){e.state='windup';e.t=0.55;e.dir={x:nx,y:ny};e.phase=1;}
-    else if(e.sideT>0){e.sideT-=dt;steer(e,-ny*e.sideDir*e.speed*0.9,nx*e.sideDir*e.speed*0.9,dt);}   // a quick sidestep at mid range
-    else{if(dist>36&&dist<90&&Math.random()<dt*0.7){e.sideT=0.3+Math.random()*0.25;e.sideDir=Math.random()<0.5?1:-1;}const[ax,ay]=approachVec(e,nx,ny,dist,dt);steer(e,ax*e.speed,ay*e.speed,dt);}}
+   else if(e.type==='mutt'){e.circT=(e.circT||0);
+    if(dist<52&&e.circT>0.7+e.avoid*0.15&&Math.random()<dt*4){e.state='windup';e.t=0.32;e.dir={x:nx,y:ny};e.faceAng=toP;e.circT=0;}   /* crouch, then the leap */
+    else if(dist<64){e.circT+=dt;const inward=(dist-40)*0.04,vx=-ny*e.avoid*e.speed*0.85+nx*e.speed*inward,vy=nx*e.avoid*e.speed*0.85+ny*e.speed*inward;steer(e,vx,vy,dt);e.faceAng=Math.atan2(vy,vx);if(Math.random()<dt*0.4)e.avoid=-e.avoid;}   /* circles you at arm's length, switching sides now and then */
+    else{const[ax,ay]=approachVec(e,nx,ny,dist,dt);steer(e,ax*e.speed,ay*e.speed,dt);e.faceAng=Math.atan2(ay,ax);}
+    e.viewAng=e.faceAng;}
    else if(e.type==='shield'){if(dist<24){e.state='windup';e.t=0.55;e.dir={x:nx,y:ny};}else steer(e,nx*e.speed,ny*e.speed,dt);}
    else if(e.type==='wretch'){if(dist<18){e.state='windup';e.t=0.28;e.dir={x:nx,y:ny};}else{const j=Math.sin(time*6+e.x)*0.4;steer(e,(nx-ny*j)*e.speed,(ny+nx*j)*e.speed,dt);}}
    else if(e.type==='archer'){e.cd-=dt;const los=hasLOS(e.x,e.y-2,p.x,p.y-2);if(e.coverT===undefined||(e.coverT-=dt)<=0){e.cover=findCover(e);e.coverT=2.5+Math.random()*2;}   // ducks behind cover to reload, peeks out to shoot
@@ -1700,7 +1709,7 @@ function updateEnemy(e,dt){
     else if(e.type==='king'&&e.kind!=='sweep'&&e.kind!=='stomp'){
      if(e.kind==='bolts'){for(let i=-1;i<=1;i++){const a=toP+i*0.3;projs.push({x:e.x,y:e.y-6,vx:Math.cos(a)*105,vy:Math.sin(a)*105,r:3,dmg:Math.round(e.dmg*0.7),owner:'e',life:3,col:'#8a6aaa',name:"the King's shadow",home:1.3});}SFX.bolt();e.cd=2.4;e.state='recover';e.t=0.7;}
      else if(e.kind==='rupture'){for(let k=1;k<=8;k++)room.hazards.push({kind:'rock',x:e.x+e.dir.x*(12+k*15),y:e.y+e.dir.y*(12+k*15),delay:k*0.07,t:1.3,dmg:14,name:"the King's rupture",col:'#8a8296'});SFX.slam();shake=Math.max(shake,0.2);e.cd2=5;e.state='recover';e.t=1.0;}
-     else{e.calls=(e.calls||0)+1;const sp=freeSpots(room,6),types=['grunt','grunt','archer'];if(e.hp<e.maxHp*0.5)types.push('brawler');for(let i=0;i<types.length&&i<sp.length;i++){room.enemies.push(mkEnemy(types[i],sp[i].x,sp[i].y,false));burst(sp[i].x,sp[i].y,10,'#3a2450');}SFX.guardbreak();e.state='recover';e.t=0.9;}}
+     else{e.calls=(e.calls||0)+1;const sp=freeSpots(room,6),types=['grunt','grunt','archer'];if(e.hp<e.maxHp*0.5)types.push('mutt');for(let i=0;i<types.length&&i<sp.length;i++){room.enemies.push(mkEnemy(types[i],sp[i].x,sp[i].y,false));burst(sp[i].x,sp[i].y,10,'#3a2450');}SFX.guardbreak();e.state='recover';e.t=0.9;}}
     else if(e.type==='witch'){const t2=e.tier===2,half=e.hp<e.maxHp*0.5;
      if(e.kind==='volley'){const nb=t2||half?3:2;for(let i=-nb;i<=nb;i++){const a=toP+i*0.22;projs.push({x:e.x,y:e.y-4,vx:Math.cos(a)*120,vy:Math.sin(a)*120,r:3,dmg:e.dmg,owner:'e',life:2.5,col:'#e8a33c',name:'the Witch\'s fire',burn:true});}SFX.bolt();}
      else if(e.kind==='ring'){const ht=half||t2?6:3.2,ch=half||t2;for(let i=0;i<8;i++){const a=i/8*Math.PI*2;room.hazards.push({x:e.slam.x+Math.cos(a)*22,y:e.slam.y+Math.sin(a)*14,t:ht,chase:ch});}room.hazards.push({x:e.slam.x,y:e.slam.y,t:ht,chase:ch});SFX.slam();shake=Math.max(shake,0.15);}
@@ -1708,13 +1717,15 @@ function updateEnemy(e,dt){
      else if(e.kind==='meteor'){for(let i=0;i<6;i++){const a=Math.random()*6.28,r=i?12+Math.random()*58:0;room.hazards.push({x:e.slam.x+Math.cos(a)*r,y:e.slam.y+Math.sin(a)*r*0.75,delay:0.9,t:2.2,dmg:10});}SFX.bolt();}
      else if(e.kind==='summon'){e.summoned=true;const sp=freeSpots(room,6),n=t2?2:3;for(let i=0;i<n&&i<sp.length;i++){room.enemies.push(mkEnemy(t2?'imp':'wretch',sp[i].x,sp[i].y,false));burst(sp[i].x,sp[i].y,8,'#5a2a4a');}SFX.guardbreak();}
      e.cd=(t2?1.0:1.3)+Math.random()*0.8;e.state='recover';e.t=0.7;}
-    else{e.state='attack';e.hit=false;if(e.type==='brawler'&&e.phase===2||e.type==='angler')e.dir={x:nx,y:ny};
-     e.t=e.type==='grunt'?0.15:e.type==='brawler'?0.14:e.type==='shield'?0.15:e.type==='wretch'?0.12:e.type==='drowned'?0.18:e.type==='bell'?0.14:e.type==='angler'?0.16:e.type==='salamander'?0.15:e.type==='knight'?(e.kind==='dash'?0.22:e.kind==='whirl'?1.1:0.12):e.type==='king'?(e.kind==='sweep'?0.2:0.3):(e.kind==='charge'?0.55:e.kind==='leap'?0.45:0.2);
+    else{e.state='attack';e.hit=false;if(e.type==='mutt'||e.type==='angler')e.dir={x:nx,y:ny};
+     e.t=e.type==='grunt'?0.15:e.type==='mutt'?0.26:e.type==='shield'?0.15:e.type==='wretch'?0.12:e.type==='drowned'?0.18:e.type==='bell'?0.14:e.type==='angler'?0.16:e.type==='salamander'?0.15:e.type==='knight'?(e.kind==='dash'?0.22:e.kind==='whirl'?1.1:0.12):e.type==='king'?(e.kind==='sweep'?0.2:0.3):(e.kind==='charge'?0.55:e.kind==='leap'?0.45:0.2);
      if(e.type==='knight'||e.type==='king'&&e.kind==='sweep')SFX.swingH();if(e.type==='brute'&&e.kind==='charge')SFX.roll();if(e.type==='brute'&&e.kind==='sweep')SFX.swingH();if(e.type==='brute'&&e.kind==='leap'){e.leapFrom={x:e.x,y:e.y};SFX.roll();}}
    }break;
   case'attack':
    if(e.type==='grunt'){lunge(115,8);if(e.t<=0){e.state='recover';e.t=0.65;}}
-   else if(e.type==='brawler'){lunge(140,8);if(e.t<=0){if(e.phase===1){e.phase=2;e.state='windup';e.t=0.3;}else{e.state='recover';e.t=0.9;}}}
+   else if(e.type==='mutt'){moveEnt(e,e.dir.x*230*dt,e.dir.y*230*dt);e.faceAng=e.viewAng=Math.atan2(e.dir.y,e.dir.x);
+    if(!e.hit&&dist<e.r+p.r+6){e.hit=true;const swinging=p.state==='attack'||p.charging;if(hurtPlayer(e.dmg,e)){p.rot=2;p.rotT=0;if(swinging){e.state='latch';e.t=1.0;e.lt=0;e.lx=e.x-p.x;e.ly=e.y-p.y;dmgNum(e.x,e.y-10,'LATCHED','#5aa04a');SFX.leech();}}}   /* the bite rots you; caught mid-swing, it hangs on */
+    if(e.t<=0&&e.state==='attack'){e.state='recover';e.t=0.6;}}
    else if(e.type==='shield'){lunge(92,7);if(e.t<=0){e.state='recover';e.t=0.8;}}
    else if(e.type==='wretch'){lunge(150,5);if(e.t<=0){e.state='recover';e.t=0.55;}}
    else if(e.type==='drowned'){lunge(95,9);if(e.t<=0){e.state='recover';e.t=0.9;}}
@@ -2021,7 +2032,7 @@ function reachLine(x,y,ang,L,col){const c=Math.cos(ang),sn=Math.sin(ang);ctx.fil
  const ex=x+c*L,ey=y+sn*L;ctx.fillStyle=hexA(col,0.9);for(let k=-2;k<=2;k++)ctx.fillRect(Math.round(ex-sn*k),Math.round(ey+c*k),1,1);}   // a small tick marks the end of the reach
 // A filled sector on the floor under a foe: the lunge it is winding up. Kept faint and only for melee, so the floor never fills up with shapes.
 function sector(x,y,r,ang,arc,col,al,outline){ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,ang-arc/2,ang+arc/2);ctx.closePath();ctx.fillStyle=hexA(col,al);ctx.fill();if(outline){ctx.strokeStyle=hexA(col,Math.min(1,al*2.2));ctx.lineWidth=1;ctx.stroke();}ctx.restore();}
-const TELE={brute:{len:40,arc:2.9,only:'sweep'},toller:{len:28,arc:1.5,only:'swing'},hellsbell:{len:34,arc:1.7,only:'swing'},grunt:{len:26,arc:1.3},brawler:{len:30,arc:1.3},shield:{len:22,arc:1.2},wretch:{len:24,arc:1.2},drowned:{len:28,arc:1.4,only:'slam'},bell:{len:20,arc:1.2},angler:{len:26,arc:1.2,skip:'hook'},salamander:{len:32,arc:2.8,only:'whip'}};
+const TELE={brute:{len:40,arc:2.9,only:'sweep'},toller:{len:28,arc:1.5,only:'swing'},hellsbell:{len:34,arc:1.7,only:'swing'},grunt:{len:26,arc:1.3},mutt:{len:24,arc:0.8},shield:{len:22,arc:1.2},wretch:{len:24,arc:1.2},drowned:{len:28,arc:1.4,only:'slam'},bell:{len:20,arc:1.2},angler:{len:26,arc:1.2,skip:'hook'},salamander:{len:32,arc:2.8,only:'whip'}};
 function drawTelegraphs(){const p=player;
  if(p.state==='free'&&(p.charging||virt.aiming)){const w=wpn(),L=p.chargeReady?w.atk.range*hv().range:w.atk.range;reachLine(p.x,p.y-2,p.aim,L,p.chargeReady?'#ffffff':w.col);}
  for(const e of room.enemies){if(e.dead||e.state!=='windup')continue;const tg=TELE[e.type];if(!tg||(tg.only&&e.kind!==tg.only)||(tg.skip&&e.kind===tg.skip))continue;
@@ -2281,7 +2292,7 @@ function drawEnemy(e){
  if(e.type==='angler'&&e.state==='windup'&&e.kind==='hook'){ctx.strokeStyle='rgba(207,196,176,.3)';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(e.x,e.y-4);ctx.lineTo(player.x,player.y);ctx.stroke();ctx.setLineDash([]);}
  if(e.type==='bell'&&e.state==='windup'&&e.kind==='ring'){ctx.strokeStyle=hexA('#f4c968',0.15+0.2*Math.abs(Math.sin(time*10)));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(e.x,e.y,100,75,0,0,Math.PI*2);ctx.stroke();light(e.x+6,e.y-14,18,'rgba(244,201,104,A)',0.5);}
  if(e.buffT>0){ctx.strokeStyle=hexA('#f4c968',0.35+0.25*Math.sin(time*8));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(e.x,e.y+e.r,e.r+5,3,0,0,Math.PI*2);ctx.stroke();}
- const wind=e.state==='windup'&&e.t<0.3&&Math.floor(e.t*16)%2===0;const sp0=SPR[sprKey(e)],t2=e.boss&&e.tier===2,bv=e.boss?bossView(e,sp0):{spr:sp0,flip:e.facing};
+ const wind=e.state==='windup'&&e.t<0.3&&Math.floor(e.t*16)%2===0;const sp0=SPR[sprKey(e)],t2=e.boss&&e.tier===2,bv=(e.boss||EXTRA_VIEWS[sprKey(e)])?bossView(e,sp0):{spr:sp0,flip:e.facing};   /* bosses and the mutt have bearings; the rest flip */
    let sp=bv.spr;if(ARM_BLOCKS[sprKey(e)]){const fr=bossFrame(e);if(fr)sp=frameOf(bv.spr,sprKey(e),fr);}
  const hov=e.type==='witch'&&t2?4+Math.sin(time*3)*2:0;   // the Ascended Witch floats
  if(e.type==='knight'&&t2){const f=e.facing,w1=Math.sin(time*5)*2,w2=Math.sin(time*5+1)*2.5;ctx.fillStyle=K;ctx.beginPath();ctx.moveTo(e.x-f*3,e.y-13);ctx.lineTo(e.x-f*11-w1,e.y-3);ctx.lineTo(e.x-f*9-w2,e.y+e.r);ctx.lineTo(e.x-f*1,e.y+e.r-2);ctx.closePath();ctx.fill();ctx.fillStyle='#7a1e1a';ctx.beginPath();ctx.moveTo(e.x-f*3,e.y-12);ctx.lineTo(e.x-f*10-w1,e.y-3);ctx.lineTo(e.x-f*8-w2,e.y+e.r-1);ctx.lineTo(e.x-f*2,e.y+e.r-2);ctx.closePath();ctx.fill();}
@@ -2302,6 +2313,7 @@ function drawEnemy(e){
   else if(e.state==='windup'&&e.kind==='slam'){const q=1-Math.max(0,e.t)/(e.windT||0.7);sy=1+0.07*q;sx=1-0.03*q;}
   else if(e.state==='windup'&&e.kind==='toll')rot=Math.sin(time*22)*0.03;
   else if(e.state==='ringing'){sy=0.9;sx=1.04;}
+  else if(e.type==='mutt'&&e.state==='windup'){sy=0.8;dy=1;}else if(e.type==='mutt'&&e.state==='attack'){sx=1.15;sy=0.9;}else if(e.type==='mutt'&&e.state==='latch'){rot=Math.sin(time*30)*0.08;}
   else if(e.state==='chase'||e.state==='recover'||e.state==='idle'){const brth=Math.sin(time*1.8);sy=1+0.03*brth;sx=1-0.012*brth;rot=0.015*Math.sin(time*0.9);}
   if(sx!==1||sy!==1||rot||dy||swx){ctx.translate(e.x+swx,e.y+e.r+dy);ctx.rotate(rot);ctx.scale(sx,sy);ctx.translate(-e.x,-(e.y+e.r));}}
  const wcyc=(e.moving&&e.state==='chase')?Math.floor((e.walk||0)*8)%4:0,wf=[1,0,-1,0][wcyc],eb=(e.moving&&e.state==='chase')?[1,0,1,0][wcyc]:0;

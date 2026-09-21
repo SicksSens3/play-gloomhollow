@@ -103,7 +103,7 @@ Cast with E, aimed where you look. Mana refills between rooms only.
 |---|---|---|---|
 | **A hollow** | Floor 1 on | 34 / 14 | The rank and file. Closes in, curving from a side, and lunges. Cheap souls, and there are always more. The Warden throws them. |
 | **A cultist** | Floor 1 on | 26 / 14 | Shoots arrows from range and ducks behind pillars and crates to reload, peeking out to fire. Take the cover away from it. |
-| **A brawler** | Floor 1, deeper rooms | 48 / 13 | Sidesteps at mid range, then comes in with a two-hit lunge combo. The second hit follows quickly. |
+| **A festered mutt** | Floor 1, deeper rooms | 30 / 9 | A festered dog, fast and low, in pairs. It runs you down, circles at arm's length, then leaps in a bite that leaves a rot on you. Bite it mid-swing and it latches on and gnaws until you roll. Counter it in the crouch and the leap never comes. |
 | **A shieldbearer** | Floor 1, deeper rooms | 60 / 20 | Slow, and turns slowly. Blocks strikes from the front; a charged heavy or a parry breaks the guard. Lunges when it gets close. |
 | **A wretch** | Packs of three | 14 / 6 | Small, fast and weaving. They bite for little but arrive together. |
 | **A bellringer** | Floor 1 on, one per room | 30 / 10 | Hangs back and rings to bless the pack: faster and harder-hitting for a few seconds. Only swings when cornered. Kill it first. |
@@ -127,7 +127,7 @@ Each gets a title card as you walk in, and roars. Nothing moves until the card i
 
 ### The Warden · Floor 1
 
-*Keeper of Gloomhollow.* 300 health, 34 a hit on the first descent.
+*Keeper of Gloomhollow.* 375 health, 34 a hit on the first descent.
 
 A masked, gaping troll with a timber in one fist and a dead hollow in the other. He brings the timber down where you stand and it breaks the floor along its length; at arm's length he sweeps it wide; from range he hurls the hollow at you, and it gets up where it lands. Once that hand is empty and you are close, he snatches you and flings you across the room. He charges if you keep away, and tears another corpse from the floor every ten seconds. At two thirds health he roars (a shockwave) and rages: leaps onto you, charges from closer, slams twice. At a third he roars again and goes berserk: faster, every slam cracks a shockwave, the sweep comes back the other way, the charge ends in a crater.
 
@@ -135,7 +135,7 @@ A masked, gaping troll with a timber in one fist and a dead hollow in the other.
 
 ### The Rusted Knight · Floor 2
 
-*Duelist of the Drowned Halls.* 240 health, 22 a hit on the first descent.
+*Duelist of the Drowned Halls.* 300 health, 22 a hit on the first descent.
 
 A duelist. Dashes in from range, and up close fights in three-hit combos. Below half health he throws his sword and dashes after it to take it back. Parry him and he staggers long enough for a riposte.
 
@@ -143,7 +143,7 @@ A duelist. Dashes in from range, and up close fights in three-hit combos. Below 
 
 ### The Cinder Witch · Floor 3
 
-*Mother of Embers.* 210 health, 16 a hit on the first descent.
+*Mother of Embers.* 265 health, 16 a hit on the first descent.
 
 Blinks away when you close. Volleys of fire bolts, rings of fire around herself, and a summons of imps below sixty percent. The floor she leaves burning is the fight.
 
@@ -151,7 +151,7 @@ Blinks away when you close. Volleys of fire bolts, rings of fire around herself,
 
 ### Hells Bell · Floor 4
 
-*Death comes ringing.* 340 health, 26 a hit on the first descent.
+*Death comes ringing.* 425 health, 26 a hit on the first descent.
 
 A giant with a bell for a head and a hand bell to ring. The toll is a shockwave that stuns you if it catches you standing: roll through it. The bell slam lays a line of broken floor toward you. At two thirds health he kneels and rings the dead up, untouchable until they fall. At a third the lights go out and he is gone; volleys of bell sparks cross the room in curtains, rings and rain until they are spent, then the lights return and so does he.
 
@@ -159,13 +159,13 @@ A giant with a bell for a head and a hand bell to ring. The toll is a shockwave 
 
 ### The Hollow King · Floor 5
 
-*Warden of the last stair.* 360 health, 26 a hit on the first descent.
+*Warden of the last stair.* 450 health, 26 a hit on the first descent.
 
 Warden of the last stair, always at full strength. Calls the hollow at three quarters, half and a quarter health. Up close a wide sweep; at mid range a rupture, a line of rock thrown at you; from far, shadow bolts that turn to follow you. Below half he stomps a shockwave and moves faster.
 
 ### The Ashen Wyrm · Floor 6
 
-*It was here before the hollow.* 500 health, 24 a hit on the first descent.
+*It was here before the hollow.* 625 health, 24 a hit on the first descent.
 
 It fills the top of the arena. Its claws slam down and stay planted where they land, and that is where you hit it. The tail sweeps across, snaking, and rears up to slam where you stand, a shockwave and rubble. The breath is a cone that flashes together after its warning: roll through it and the head hangs open for a moment. Ember globs are lobbed at you and around you. Strike the raised head, or stand under it, and it lunges out on its neck to bite, then stays down and open. At half health it roars and the outer floor turns to lava; imps crawl out. At a quarter it roars again and the stage shrinks further.
 

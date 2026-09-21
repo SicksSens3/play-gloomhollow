@@ -35,6 +35,10 @@ In halls wider than the screen, chevrons on the edge of the view point to foes y
 
 **One strike per weapon.** Tap to strike. Keep the button held past the strike and the weapon draws back and charges; release when it flashes for the heavy, or let go early for a plain strike. Every weapon has its own heavy, and they are slow and open: you cannot roll out of a heavy until it is nearly done.
 
+**The heavy commits.** Charging plants you where you stand, costs twice a light's stamina, and nothing regenerates while you hold it. Take a hit mid-charge and the charge is gone with its stamina. A foe that sees you winding up in its face hurries its own blow.
+
+**The counter-hit.** Strike a foe during its wind-up and the blow lands +30% and stops what it was doing. Bosses take +15% and keep swinging.
+
 **Block and parry.** The shield guards every direction. Time the block as the blow lands and you parry: the foe staggers, and your next strike is a riposte for heavy damage. Shieldbearers and bosses can be parried too.
 
 **Roll.** Invulnerable for most of it. Roll through shockwaves, through the Wyrm's breath as it flashes, across pits, out of an angler's line.
@@ -43,7 +47,7 @@ In halls wider than the screen, chevrons on the edge of the view point to foes y
 
 **Telegraphs.** A dotted line shows your reach. A red wedge on the floor is where a foe's blow is about to land; a ring is a shockwave coming; a dashed line is a charge or a rupture.
 
-**Souls** spill from everything you kill as small lights, and rush to you the moment the room is quiet; piles on the floor come to you the same way. They buy from merchants and smiths. Nothing stays with you when you die.
+**Souls** spill from everything you kill as small lights, and rush to you the moment the room is quiet. Piles on the floor wait to be gathered. They buy from merchants and smiths. Nothing stays with you when you die.
 
 ## Weapons
 
@@ -216,10 +220,10 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 |---|---|
 | **Fire** | **Kindling Charm**, +50% fire damage; **Wildfire Ash**, burning foes spread fire; **Cinder Heart**, longer fires; +35% vs burning |
 | **Frost** | **Rime Tooth**, +35% vs the chilled; **Hoarfrost Band**, chills last twice as long; **Brittle Bone**, a chilled kill chills its neighbours |
-| **Blood** | **Leech Fang**, melee drinks 8% as health; **Ruin Nail**, +40% vs the bleeding; **Sanguine Cup**, kills mend 5 |
+| **Blood** | **Leech Fang**, melee drinks 6% as health; **Ruin Nail**, +40% vs the bleeding; **Sanguine Cup**, kills mend 5 |
 | **Arcane** | **Focus Lens**, +40% spells; **Echo Stone**, spells cost a third less; **Conduit Ring**, melee hits return 3 mana |
 
-**Rule-benders.** Nineteen pieces that each bend a rule of the hollow. Some are rarer than others; it will not tell you which.
+**Rule-benders.** 27 pieces that each bend a rule of the hollow, and some fire off a way of fighting: a parry, a roll, a counter-hit, a landed heavy, a kill. Some are rarer than others; it will not tell you which.
 
 <p align="center"><img src="readme/relics.png" alt="The rule-benders" width="600"></p>
 
@@ -244,6 +248,14 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 | **Mirror Shard** | one blow in five turns back |
 | **Gargoyle Heart** | no blow interrupts your swing |
 | **Feather Charm** | pits do not hurt |
+| **Hoarfrost Guard** | a parry chills all near you |
+| **Echoing Guard** | a parry returns stamina and mana |
+| **Cinder Heels** | rolls leave fire behind you |
+| **Viper's Tooth** | counter-hits leave the foe bleeding |
+| **Quake Fist** | a landed heavy staggers all near it |
+| **Carrion Crown** | +30% vs the staggered |
+| **Stormheart** | a full charge fires a bolt |
+| **Grave Bell** | a kill staggers all near it |
 
 **Cursed.** Anything with a bite in it is marked CURSED, on the floor and in the satchel. They turn up rarely in chests and at shrines; the hag keeps three on her carpet and sells them cheap.
 

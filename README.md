@@ -257,7 +257,7 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 | **Stormheart** | a full charge fires a bolt |
 | **Grave Bell** | a kill staggers all near it |
 
-**Cursed.** Anything with a bite in it is marked CURSED, named in purple on the floor and in the satchel, and while you carry one a purple skull cloud hangs over your head. They turn up rarely in chests and at shrines; the hag keeps three on her carpet and sells them cheap.
+**Cursed.** Anything with a bite in it is marked CURSED, named in purple on the floor and in the satchel, and taking one puffs a purple skull over your head for a moment. They turn up rarely in chests and at shrines; the hag keeps three on her carpet and sells them cheap.
 
 | Cursed piece | Gives; takes |
 |---|---|

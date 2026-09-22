@@ -1302,7 +1302,7 @@ function takeItem(it){if(it.kind==='talk'){talkTo(it.d);return;}if(it.kind==='lo
   case'buff':case'relic':{const d=ITEMS[it.id];if(BUFFS[it.id])BUFFS[it.id].apply(p);addItem(it.id);banner={t:2.8,title:d.name.toUpperCase(),sub:d.desc,col:'#f4c968'};msg.t=0;SFX.relic();burst(it.x,it.y-4,18,'#f4c968');if(d.relic)stat('relics');if(it.altar){room.items=room.items.filter(x=>!x.altar);keep=true;}break;}   /* every item gets its card; a shrine gives one of its three */
   case'stairs':descend();return;
   case'key':p.keys++;showMsg('A rusted key',1.5);break;
-  case'cursed':{const c=CURSED[it.id];c.apply(p);addItem(it.id);banner={t:2.8,title:c.name.toUpperCase(),sub:'CURSED   '+c.desc,col:'#b06ac8'};msg.t=0;burst(it.x,it.y-4,16,'#b06ac8');SFX.relic();const hg=room.decor.find(d=>d.kind==='hag');if(hg)hg.talkUntil=time+2;if(it.altar){room.items=room.items.filter(x=>!x.altar);keep=true;}break;}
+  case'cursed':{const c=CURSED[it.id];c.apply(p);addItem(it.id);p.curseFx=1.5;banner={t:2.8,title:c.name.toUpperCase(),sub:'CURSED   '+c.desc,col:'#b06ac8'};msg.t=0;burst(it.x,it.y-4,16,'#b06ac8');SFX.relic();const hg=room.decor.find(d=>d.kind==='hag');if(hg)hg.talkUntil=time+2;if(it.altar){room.items=room.items.filter(x=>!x.altar);keep=true;}break;}
   case'upgrade':{const u=UPG[it.id];if(it.id==='sharp'){p.sharp++;if(run.whetWeapon!==p.weapon){run.whetWeapon=p.weapon;run.whetBought=0;}run.whetBought++;showMsg(wpn().name+' +'+p.sharp,1.8);keep=true;}else{p.inf=it.id;showMsg(wpn().name+': '+u.desc,2);}burst(it.x,it.y-4,14,'#e8a33c');SFX.hitH();break;}
   case'souls':{const n=Math.round(it.n*soulMul());souls+=n;dmgNum(it.x,it.y-10,'+'+n,'#f4c968');showMsg('+'+n+' souls',1.2);break;}
   case'camp':overlayOpen='skins';skinCursor=Math.max(0,SKIN_IDS.indexOf(save.skin));SFX.door();return;
@@ -1328,7 +1328,7 @@ function updatePlayer(dt){player.mHeldT=mHeld.l?(player.mHeldT||0)+dt:0;
  /* nearing a boss door the first time warns you who waits: a line and the boss horn */
  if(room.cleared&&!room.bossWarned)for(const d of DIRS){if(!room.doors[d.n])continue;const nb=beyond(d.n);if(!nb||nb.type!=='boss'||nb.cleared)continue;const c=doorCenter(d.n);if(Math.hypot(player.x-c.x,player.y-c.y)<30){room.bossWarned=true;const nm=ETYPES[bossType()].name;showMsg((nm.charAt(0).toUpperCase()+nm.slice(1))+' waits beyond this door',3);SFX.boss();}}
 if(player.stunT>0)player.stunT-=dt;if(player.fling){const F=player.fling;F.t-=dt;moveEnt(player,F.vx*dt,F.vy*dt);F.vx*=0.94;F.vy*=0.94;if(F.t<=0)player.fling=null;}
- const p=player;p.inv=Math.max(0,p.inv-dt);p.flash=Math.max(0,p.flash-dt);p.latchT=Math.max(0,(p.latchT||0)-dt);p.stamCd=Math.max(0,p.stamCd-dt);p.appearT=Math.max(0,(p.appearT||0)-dt);
+ const p=player;p.inv=Math.max(0,p.inv-dt);p.flash=Math.max(0,p.flash-dt);p.latchT=Math.max(0,(p.latchT||0)-dt);p.curseFx=Math.max(0,(p.curseFx||0)-dt);p.stamCd=Math.max(0,p.stamCd-dt);p.appearT=Math.max(0,(p.appearT||0)-dt);
  if(p.state!=='free'&&p.charging){p.charging=false;p.charge=0;p.chargeReady=false;}   // a roll, a hit or a swing drops the charge
  if(p.stamCd<=0&&p.state!=='roll'&&p.state!=='attack'&&!p.charging)p.stam=Math.min(p.maxStam,p.stam+dt*(p.blocking?14:34));
  let mx=(keys.KeyD?1:0)-(keys.KeyA?1:0)+virt.mx,my=(keys.KeyS?1:0)-(keys.KeyW?1:0)+virt.my;let len=Math.hypot(mx,my);
@@ -2469,7 +2469,7 @@ function drawPlayer(){
   else if(p.state==='attack'&&a){ox=p.x-Math.cos(sa)*7;oy=p.y-Math.sin(sa)*3;}   // the off hand swings back against the strike
   else if(p.state==='free'&&p.charging){ox=p.x+f*5;oy=p.y+1;}   // out front, braced
   drawHand(ox,oy,hc);}
- if(p.items.some(i=>ITEMS[i.id]&&ITEMS[i.id].cursed))drawCurseCloud(p.x,p.y-31-ib);   /* the hag's gifts hang over you */
+ if(p.curseFx>0){const k=1-p.curseFx/1.5,rise=Math.round(k*10),fade=p.curseFx<0.6?p.curseFx/0.6:1,pop=k<0.15?0.6+k/0.15*0.4:1;ctx.save();ctx.globalAlpha=fade;ctx.translate(p.x,p.y-30-ib-rise);ctx.scale(pop,pop);drawCurseCloud(0,0);ctx.restore();}   /* on taking a cursed piece a skull puffs up over your head, rises and fades: a word of warning, not a badge */
 }
 // A small dark cloud with a skull in it, bobbing and drifting a pixel or two, wisps of purple rising off it.
 function drawCurseCloud(x,y){const bx=Math.round(x+Math.sin(time*1.3)*1.5),by=Math.round(y+Math.sin(time*2.1)*1);

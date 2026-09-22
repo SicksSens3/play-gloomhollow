@@ -1093,9 +1093,9 @@ function moveEnt(e,dx,dy){const en=e!==player;const ox=e.x,oy=e.y;if(!collides(e
 function spikeState(s){const t=(time+s.phase)%2.6;return t>2.0?'up':t>1.65?'warn':'down';}
 
 const ETYPES={
- grunt:{name:'a hollow',hp:34,r:4,speed:24,dmg:14,souls:20},   // slow: it shuffles, and it trembles as it comes
+ grunt:{name:'a hollow',hp:34,r:4,speed:18,dmg:14,souls:20},   // slow: it shuffles, and it trembles as it comes
  archer:{name:'a cultist',hp:26,r:4,speed:40,dmg:14,souls:30},
- mutt:{name:'a festered mutt',hp:30,r:4,speed:70,dmg:9,souls:30},   // fast and low; comes in pairs; its bite rots, and it latches onto a swinging arm
+ mutt:{name:'a festered mutt',hp:30,r:4,speed:58,dmg:9,souls:30},   // fast and low; alone (two in a great hall); it latches onto a swinging arm and drags at you until you roll
  shield:{name:'a shieldbearer',hp:60,r:5,speed:20,dmg:20,souls:50},
  wretch:{name:'a wretch',hp:14,r:3,speed:64,dmg:6,souls:10},
  brute:{name:'the Warden',hp:375,r:11,speed:27,dmg:34,souls:400,boss:true},
@@ -1145,7 +1145,7 @@ function spawnGroup(r,n,forceElite){const spots=freeSpots(r,16),pool=biomePool(r
   const champ=loop>0&&!r.champDone&&(r.champRoom||Math.random()<0.06);if(champ&&(t==='wretchpack'||t==='mutt'))t='grunt';
   if(t==='bell'&&(champ||r.enemies.some(e=>e.type==='bell')))t='grunt'; // one bellringer per room, never a champion
   if(t==='wretchpack'){for(let k=0;k<3&&si<spots.length;k++){const sp=spots[si++];r.enemies.push(mkEnemy('wretch',sp.x,sp.y,blood));}continue;}
-  if(t==='mutt'){for(let k=0;k<2&&si<spots.length;k++){const sp=spots[si++];r.enemies.push(mkEnemy('mutt',sp.x,sp.y,blood));}continue;}   /* mutts hunt in pairs: one circles while the other leaps */
+  if(t==='mutt'){const cap=(r.rw>22||r.rh>14)?2:1;if(r.enemies.filter(e=>e.type==='mutt').length>=cap)t='grunt';}   /* one mutt to a room, two in a great hall (anything bigger than the standard 20x12) */
   const sp=spots[si++];const elite=champ||blood||(forceElite&&!eliteDone)||Math.random()<Math.min(0.5,0.05*(f-1)+(d>=3?0.07:0)+0.1*loop);if(elite)eliteDone=true;const e=mkEnemy(t,sp.x,sp.y,elite);if(champ){makeChampion(e);r.champDone=true;}r.enemies.push(e);}
  if(!r.enemies.some(e=>!e.dead)&&spots[0])r.enemies.push(mkEnemy('grunt',spots[0].x,spots[0].y,false));}
 function spawnEnemies(r){
@@ -1328,7 +1328,7 @@ function updatePlayer(dt){player.mHeldT=mHeld.l?(player.mHeldT||0)+dt:0;
  /* nearing a boss door the first time warns you who waits: a line and the boss horn */
  if(room.cleared&&!room.bossWarned)for(const d of DIRS){if(!room.doors[d.n])continue;const nb=beyond(d.n);if(!nb||nb.type!=='boss'||nb.cleared)continue;const c=doorCenter(d.n);if(Math.hypot(player.x-c.x,player.y-c.y)<30){room.bossWarned=true;const nm=ETYPES[bossType()].name;showMsg((nm.charAt(0).toUpperCase()+nm.slice(1))+' waits beyond this door',3);SFX.boss();}}
 if(player.stunT>0)player.stunT-=dt;if(player.fling){const F=player.fling;F.t-=dt;moveEnt(player,F.vx*dt,F.vy*dt);F.vx*=0.94;F.vy*=0.94;if(F.t<=0)player.fling=null;}
- const p=player;p.inv=Math.max(0,p.inv-dt);p.flash=Math.max(0,p.flash-dt);p.stamCd=Math.max(0,p.stamCd-dt);p.appearT=Math.max(0,(p.appearT||0)-dt);
+ const p=player;p.inv=Math.max(0,p.inv-dt);p.flash=Math.max(0,p.flash-dt);p.latchT=Math.max(0,(p.latchT||0)-dt);p.stamCd=Math.max(0,p.stamCd-dt);p.appearT=Math.max(0,(p.appearT||0)-dt);
  if(p.state!=='free'&&p.charging){p.charging=false;p.charge=0;p.chargeReady=false;}   // a roll, a hit or a swing drops the charge
  if(p.stamCd<=0&&p.state!=='roll'&&p.state!=='attack'&&!p.charging)p.stam=Math.min(p.maxStam,p.stam+dt*(p.blocking?14:34));
  let mx=(keys.KeyD?1:0)-(keys.KeyA?1:0)+virt.mx,my=(keys.KeyS?1:0)-(keys.KeyW?1:0)+virt.my;let len=Math.hypot(mx,my);
@@ -1350,7 +1350,7 @@ if(player.stunT>0)player.stunT-=dt;if(player.fling){const F=player.fling;F.t-=dt
  if(wantBlock){if(!p.blocking){p.blocking=true;p.blockT=0;}p.blockT+=dt;}else p.blocking=false;
  if(p.relock&&(len===0||(mx*p.relock.x+my*p.relock.y)/len<0.3))p.relock=null;   // let go, or steer anywhere but back into the pit, and you are free
  if(p.state==='free'){
-  if(len>0&&!p.relock){const ptx=Math.floor(p.x/T),pty=Math.floor(p.y/T),pt=room.solid[pty]&&room.solid[pty][ptx];const sp=p.speed*(p.blocking?0.55:1)*(pt===6?0.55:1)*(p.charging?0:1);moveEnt(p,mx*sp*dt,my*sp*dt);   /* a heavy is charged standing still: you pick the moment, you do not drift about holding it */p.walk+=dt;if(pt===6&&Math.random()<0.3)parts.push({x:p.x+(Math.random()-.5)*8,y:p.y+p.r,vx:(Math.random()-.5)*20,vy:-10,life:0.3,col:'#4aa08a'});
+  if(len>0&&!p.relock){const ptx=Math.floor(p.x/T),pty=Math.floor(p.y/T),pt=room.solid[pty]&&room.solid[pty][ptx];const sp=p.speed*(p.blocking?0.55:1)*(pt===6?0.55:1)*(p.charging?0:1)*(p.latchT>0?0.55:1);moveEnt(p,mx*sp*dt,my*sp*dt);   /* a heavy is charged standing still: you pick the moment, you do not drift about holding it */p.walk+=dt;if(pt===6&&Math.random()<0.3)parts.push({x:p.x+(Math.random()-.5)*8,y:p.y+p.r,vx:(Math.random()-.5)*20,vy:-10,life:0.3,col:'#4aa08a'});
    // footsteps: a puff of dust and a soft footfall each time a foot lands (every other frame of the walk cycle)
    const fr=Math.floor(p.walk*10);if(fr!==p.lastFr){p.lastFr=fr;if(fr%2===0&&pt!==6){for(let i=0;i<2;i++)parts.push({x:p.x-mx*3+(Math.random()-.5)*5,y:p.y+p.r-1,vx:-mx*14+(Math.random()-.5)*10,vy:-6-Math.random()*6,life:0.22,col:'#6d6578'});SFX.step();}}}
   p.facing=Math.cos(p.aim)>=0?1:-1;
@@ -1593,14 +1593,14 @@ function updateEnemy(e,dt){
  // shieldbearer turns slowly
  if(e.type==='shield'){let da=toP-e.faceAng;da=Math.atan2(Math.sin(da),Math.cos(da));const rate=(e.state==='stagger'?0.6:1.9)*dt;e.faceAng+=Math.abs(da)<rate?da:Math.sign(da)*rate;}
  const lunge=(spd,reach)=>{moveEnt(e,e.dir.x*spd*dt,e.dir.y*spd*dt);if(!e.hit&&dist<e.r+p.r+reach){e.hit=true;hurtPlayer(e.dmg,e);}};
- if(e.state==='latch'){e.t-=dt;e.x=p.x+e.lx;e.y=p.y+e.ly;e.faceAng=e.viewAng=Math.atan2(-e.ly,-e.lx);e.lt+=dt;if(e.lt>=0.5){e.lt-=0.5;if(p.hp>0&&state==='play'){p.hp-=3;dmgNum(p.x,p.y-14,3,'#5aa04a');burst(p.x,p.y-4,4,'#5aa04a');if(run)run.killedBy=e.name;if(p.hp<=0&&!spare())die();}}
-  if(p.state==='roll'||e.t<=0||p.hp<=0){e.state='recover';e.t=0.7;moveEnt(e,Math.sign(e.lx||1)*10,Math.sign(e.ly||1)*6);}return;}   /* latched on: it gnaws every half second until you roll it off */
+ if(e.state==='latch'){e.x=p.x+e.lx;e.y=p.y+e.ly;e.faceAng=e.viewAng=Math.atan2(-e.ly,-e.lx);p.latchT=0.12;if(Math.random()<0.2)burst(p.x+e.lx*0.5,p.y+e.ly*0.5-2,2,'#5aa04a');
+  if(p.state==='roll'||e.t<=0||p.hp<=0){e.state='recover';e.t=0.7;moveEnt(e,Math.sign(e.lx||1)*10,Math.sign(e.ly||1)*6);}return;}   /* latched on: it hangs from you and drags at your legs until you roll it off; no bite while it hangs */
  switch(e.state){
   case'idle':case'stagger':case'recover':if(e.t<=0){e.state='chase';e.phase=1;}break;
   case'ringing':ringTick(e,dt);break;
   case'dark':darkTick(e,dt);break;
   case'chase':
-   if(e.type==='grunt'){if(dist<26){e.state='windup';e.t=0.6;e.dir={x:nx,y:ny};}else{const[ax,ay]=approachVec(e,nx,ny,dist,dt);steer(e,ax*e.speed,ay*e.speed,dt);}}
+   if(e.type==='grunt'){if(dist<26){e.state='windup';e.t=0.6;e.dir={x:nx,y:ny};}else{const[ax,ay]=approachVec(e,nx,ny,dist,dt),sw=Math.sin(time*1.5+e.x*0.07+e.y*0.05)*0.75;steer(e,(ax-ay*sw)*e.speed,(ay+ax*sw)*e.speed,dt);}}   /* the dead walk badly: a slow shuffle that weaves left and right of you, so a pack arrives one at a time */
    else if(e.type==='mutt'){e.circT=(e.circT||0);
     if(dist<52&&e.circT>0.7+e.avoid*0.15&&Math.random()<dt*4){e.state='windup';e.t=0.32;e.dir={x:nx,y:ny};e.faceAng=toP;e.circT=0;}   /* crouch, then the leap */
     else if(dist<64){e.circT+=dt;const inward=(dist-40)*0.04,vx=-ny*e.avoid*e.speed*0.85+nx*e.speed*inward,vy=nx*e.avoid*e.speed*0.85+ny*e.speed*inward;steer(e,vx,vy,dt);e.faceAng=Math.atan2(vy,vx);if(Math.random()<dt*0.4)e.avoid=-e.avoid;}   /* circles you at arm's length, switching sides now and then */
@@ -1709,7 +1709,7 @@ function updateEnemy(e,dt){
     else if(e.type==='king'&&e.kind!=='sweep'&&e.kind!=='stomp'){
      if(e.kind==='bolts'){for(let i=-1;i<=1;i++){const a=toP+i*0.3;projs.push({x:e.x,y:e.y-6,vx:Math.cos(a)*105,vy:Math.sin(a)*105,r:3,dmg:Math.round(e.dmg*0.7),owner:'e',life:3,col:'#8a6aaa',name:"the King's shadow",home:1.3});}SFX.bolt();e.cd=2.4;e.state='recover';e.t=0.7;}
      else if(e.kind==='rupture'){for(let k=1;k<=8;k++)room.hazards.push({kind:'rock',x:e.x+e.dir.x*(12+k*15),y:e.y+e.dir.y*(12+k*15),delay:k*0.07,t:1.3,dmg:14,name:"the King's rupture",col:'#8a8296'});SFX.slam();shake=Math.max(shake,0.2);e.cd2=5;e.state='recover';e.t=1.0;}
-     else{e.calls=(e.calls||0)+1;const sp=freeSpots(room,6),types=['grunt','grunt','archer'];if(e.hp<e.maxHp*0.5)types.push('mutt');for(let i=0;i<types.length&&i<sp.length;i++){room.enemies.push(mkEnemy(types[i],sp[i].x,sp[i].y,false));burst(sp[i].x,sp[i].y,10,'#3a2450');}SFX.guardbreak();e.state='recover';e.t=0.9;}}
+     else{e.calls=(e.calls||0)+1;const sp=freeSpots(room,6),types=['grunt','grunt','archer'];if(e.hp<e.maxHp*0.5)types.push('grunt');for(let i=0;i<types.length&&i<sp.length;i++){room.enemies.push(mkEnemy(types[i],sp[i].x,sp[i].y,false));burst(sp[i].x,sp[i].y,10,'#3a2450');}SFX.guardbreak();e.state='recover';e.t=0.9;}}
     else if(e.type==='witch'){const t2=e.tier===2,half=e.hp<e.maxHp*0.5;
      if(e.kind==='volley'){const nb=t2||half?3:2;for(let i=-nb;i<=nb;i++){const a=toP+i*0.22;projs.push({x:e.x,y:e.y-4,vx:Math.cos(a)*120,vy:Math.sin(a)*120,r:3,dmg:e.dmg,owner:'e',life:2.5,col:'#e8a33c',name:'the Witch\'s fire',burn:true});}SFX.bolt();}
      else if(e.kind==='ring'){const ht=half||t2?6:3.2,ch=half||t2;for(let i=0;i<8;i++){const a=i/8*Math.PI*2;room.hazards.push({x:e.slam.x+Math.cos(a)*22,y:e.slam.y+Math.sin(a)*14,t:ht,chase:ch});}room.hazards.push({x:e.slam.x,y:e.slam.y,t:ht,chase:ch});SFX.slam();shake=Math.max(shake,0.15);}
@@ -1724,7 +1724,7 @@ function updateEnemy(e,dt){
   case'attack':
    if(e.type==='grunt'){lunge(115,8);if(e.t<=0){e.state='recover';e.t=0.65;}}
    else if(e.type==='mutt'){moveEnt(e,e.dir.x*230*dt,e.dir.y*230*dt);e.faceAng=e.viewAng=Math.atan2(e.dir.y,e.dir.x);
-    if(!e.hit&&dist<e.r+p.r+6){e.hit=true;const swinging=p.state==='attack'||p.charging;if(hurtPlayer(e.dmg,e)){p.rot=2;p.rotT=0;if(swinging){e.state='latch';e.t=1.0;e.lt=0;e.lx=e.x-p.x;e.ly=e.y-p.y;dmgNum(e.x,e.y-10,'LATCHED','#5aa04a');SFX.leech();}}}   /* the bite rots you; caught mid-swing, it hangs on */
+    if(!e.hit&&dist<e.r+p.r+6){e.hit=true;const swinging=p.state==='attack'||p.charging;if(hurtPlayer(e.dmg,e)){if(swinging){e.state='latch';e.t=1.0;e.lt=0;e.lx=e.x-p.x;e.ly=e.y-p.y;dmgNum(e.x,e.y-10,'LATCHED','#5aa04a');SFX.leech();}}}   /* the bite rots you; caught mid-swing, it hangs on */
     if(e.t<=0&&e.state==='attack'){e.state='recover';e.t=0.6;}}
    else if(e.type==='shield'){lunge(92,7);if(e.t<=0){e.state='recover';e.t=0.8;}}
    else if(e.type==='wretch'){lunge(150,5);if(e.t<=0){e.state='recover';e.t=0.55;}}

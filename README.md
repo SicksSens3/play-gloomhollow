@@ -101,9 +101,9 @@ Cast with E, aimed where you look. Mana refills between rooms only.
 
 | Foe | Where | Health / hit | How it fights |
 |---|---|---|---|
-| **A hollow** | Floor 1 on | 34 / 14 | The rank and file. Closes in, curving from a side, and lunges. Cheap souls, and there are always more. The Warden throws them. |
+| **A hollow** | Floor 1 on | 34 / 14 | The rank and file, and the dead walk badly: a slow trembling shuffle that weaves left and right of you, so a pack arrives one at a time. Up close it lunges. Cheap souls, and there are always more. The Warden throws them. |
 | **A cultist** | Floor 1 on | 26 / 14 | Shoots arrows from range and ducks behind pillars and crates to reload, peeking out to fire. Take the cover away from it. |
-| **A festered mutt** | Floor 1, deeper rooms | 30 / 9 | A festered dog, fast and low, in pairs. It runs you down, circles at arm's length, then leaps in a bite that leaves a rot on you. Bite it mid-swing and it latches on and gnaws until you roll. Counter it in the crouch and the leap never comes. |
+| **A festered mutt** | Floor 1, deeper rooms | 30 / 9 | A festered dog, fast and low, one to a room and two in a great hall. It runs you down, circles at arm's length, then crouches and leaps in a bite. Leap into a swing of yours and it latches on, dragging at your legs until you roll it off. Counter it in the crouch and the leap never comes. |
 | **A shieldbearer** | Floor 1, deeper rooms | 60 / 20 | Slow, and turns slowly. Blocks strikes from the front; a charged heavy or a parry breaks the guard. Lunges when it gets close. |
 | **A wretch** | Packs of three | 14 / 6 | Small, fast and weaving. They bite for little but arrive together. |
 | **A bellringer** | Floor 1 on, one per room | 30 / 10 | Hangs back and rings to bless the pack: faster and harder-hitting for a few seconds. Only swings when cornered. Kill it first. |

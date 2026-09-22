@@ -94,6 +94,8 @@ Cast with E, aimed where you look. Mana refills between rooms only.
 | **Soul Drain** | 26 | wounds the nearest foe, mends you a little |
 | **Grave Quake** | 20 | staggers everything near you |
 | **Bone Flock** | 30 | five shards that seek |
+| **Hollow Fury** | 30 | six seconds faster and harder; you feel blows more |
+| **Storm Rod** | 28 | a rod falls on a foe; lightning leaps from it |
 
 ## Enemies
 

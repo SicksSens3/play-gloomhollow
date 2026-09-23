@@ -37,6 +37,8 @@ In halls wider than the screen, chevrons on the edge of the view point to foes y
 
 **The heavy commits.** Charging plants you where you stand, costs twice a light's stamina, and nothing regenerates while you hold it. Take a hit mid-charge and the charge is gone with its stamina. A foe that sees you winding up in its face hurries its own blow.
 
+**Footing.** Every foe has a footing you cannot see. Lights chip at it, heavies and counter-hits tear at it, and when it gives the foe staggers; a few quiet seconds and it is back. The small ones still go down to a heavy outright. A boss has far more of it, and parries, counter-hits and heavies are what wear it. When it breaks the boss drops to a knee and your next strike is a riposte. It comes up steadier every time, and nothing wears it while it is down, so there is no rhythm to game: learn each one by feel.
+
 **The counter-hit.** Strike a foe during its wind-up and the blow lands +30% and stops what it was doing. Bosses take +15% and keep swinging.
 
 **Block and parry.** The shield guards every direction. Time the block as the blow lands and you parry: the foe staggers, and your next strike is a riposte for heavy damage. Shieldbearers and bosses can be parried too.

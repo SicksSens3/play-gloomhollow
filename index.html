@@ -645,6 +645,14 @@ const soulMul=()=>(hasRelic('miser')?1.5:1)*Math.pow(1.5,cnt('marrow'));   // th
 // The parry triggers: frost around you, or stamina and mana back.
 function relicParry(tgt){const p=player;if(hasRelic('frostguard')){for(const o of room.enemies){if(o.dead)continue;if(Math.hypot(o.x-p.x,o.y-p.y)<44){o.slow=Math.max(o.slow||0,slowFor(3));burst(o.x,o.y-4,6,'#7fa8ff');}}vfx.push({kind:'ring',x:p.x,y:p.y,r0:6,r1:44,t:0.35,max:0.35,col:'#7fa8ff',w:2,inner:true});}
  if(hasRelic('echoguard')){p.stam=Math.min(p.maxStam,p.stam+25);p.mana=Math.min(p.maxMana,p.mana+10);burst(p.x,p.y-6,8,'#f4c968');}}
+// Footing, never shown. Every blow wears a foe's hidden pool of it; a few quiet seconds bring it back; when it breaks the foe staggers.
+// Lights chip, heavies and ripostes tear, a counter-hit tears double. Heavies still knock the small ones flat outright; a boss only goes down when the pool breaks.
+// A boss breaks to a knee for a riposte, and comes up steadier each time; nothing wears it while it is down or just up, so it cannot be chained.
+function poiseHit(e,amount,heavy){const pm=e.poiseMax||0;if(pm<=0||e.dead||e.hp<=0||(e.poiseCd||0)>0)return;e.poise=(e.poise===undefined?pm:e.poise)-amount;e.poiseT=2.5;if(e.poise>0)return;
+ if(e.boss){e.poiseMax=Math.round(pm*1.25);e.poise=e.poiseMax;e.poiseCd=6;breakBoss(e);}
+ else if(e.state!=='attack'){e.poise=pm;e.state='stagger';e.t=Math.max(e.t||0,heavy?0.7:0.55);}else e.poise=1;}   /* mid-swing it keeps its feet; the next touch takes them */
+function breakBoss(e){if(e.type==='dragon'){e.exposed=true;e.exposeT=3.4;e.state='recover';e.t=3.0;}else{e.state='stagger';e.t=2.4;e.broken=true;if(e.type==='hellsbell'){room.dark=false;e.shielded=false;}}
+ e.riposte=true;player.riposteT=2.6;dmgNum(e.x,e.y-e.r-18,'BROKEN','#f4c968');burst(e.x,e.y-6,24,'#f4c968');vfx.push({kind:'ring',x:e.x,y:e.y,r0:e.r+2,r1:e.r+30,t:0.4,max:0.4,col:'#f4c968',w:2});SFX.guardbreak();SFX.boss();shake=Math.max(shake,0.3);hitstop=Math.max(hitstop,0.15);}
 function relicKill(e){const p=player;if(p.hp<=0)return;if(hasRelic('gravebell')&&e){for(const o of room.enemies){if(o===e||o.dead||o.boss||o.anchored)continue;if(Math.hypot(o.x-e.x,o.y-e.y)<40&&o.state!=='attack'){o.state='stagger';o.t=Math.max(o.t||0,0.8);burst(o.x,o.y-4,4,'#c9a227');}}vfx.push({kind:'ring',x:e.x,y:e.y,r0:4,r1:40,t:0.3,max:0.3,col:'#c9a227',w:1});SFX.toll();}   /* the Grave Bell: a death rings out and the rest lose their footing */
 if(hasRelic('lantern'))p.hp=Math.min(p.maxHp,p.hp+4);if(hasRelic('candle'))p.mana=Math.min(p.maxMana,p.mana+12);if(cnt('sanguine'))p.hp=Math.min(p.maxHp,p.hp+5*cnt('sanguine'));
  if(e&&e.slow>0&&cnt('brittle'))for(const o of room.enemies){if(o===e||o.dead)continue;if(Math.hypot(o.x-e.x,o.y-e.y)<40){o.slow=Math.max(o.slow||0,2*cnt('brittle'));burst(o.x,o.y-4,6,'#7fa8ff');}}}   // a chilled kill shatters cold onto its neighbours
@@ -1098,26 +1106,26 @@ function moveEnt(e,dx,dy){const en=e!==player;const ox=e.x,oy=e.y;if(!collides(e
 function spikeState(s){const t=(time+s.phase)%2.6;return t>2.0?'up':t>1.65?'warn':'down';}
 
 const ETYPES={
- grunt:{name:'a hollow',hp:34,r:4,speed:18,dmg:14,souls:20},   // slow: it shuffles, and it trembles as it comes
- archer:{name:'a cultist',hp:26,r:4,speed:40,dmg:14,souls:30},
- mutt:{name:'a festered mutt',hp:20,r:4,speed:46,dmg:8,souls:30},   // fast and low; alone (two in a great hall); it latches onto a swinging arm and drags at you until you roll
- shield:{name:'a shieldbearer',hp:60,r:5,speed:20,dmg:20,souls:50},
- wretch:{name:'a wretch',hp:14,r:3,speed:64,dmg:6,souls:10},
- brute:{name:'the Warden',hp:375,r:11,speed:27,dmg:34,souls:400,boss:true},
- knight:{name:'the Rusted Knight',hp:300,r:7,speed:50,dmg:22,souls:450,boss:true},
- drowned:{name:'a drowned one',hp:70,r:5,speed:24,dmg:22,souls:40},
- imp:{name:'an imp',hp:30,r:3,speed:46,dmg:14,souls:40},
- witch:{name:'the Cinder Witch',hp:265,r:6,speed:34,dmg:16,souls:500,boss:true},
- bell:{name:'a bellringer',hp:30,r:4,speed:30,dmg:10,souls:45},
- angler:{name:'an angler',hp:60,r:5,speed:22,dmg:20,souls:50},
- salamander:{name:'a salamander',hp:45,r:4,speed:58,dmg:14,souls:40},
- toller:{name:'a toller',hp:70,r:5,speed:26,dmg:18,souls:55},
- hellsbell:{name:'Hells Bell',hp:425,r:10,speed:24,dmg:26,souls:700,boss:true},
- king:{name:'the Hollow King',hp:450,r:8,speed:30,dmg:26,souls:1200,boss:true},
- dragon:{name:'the Ashen Wyrm',hp:625,r:13,speed:0,dmg:24,souls:2000,boss:true,anchored:true}};
+ grunt:{name:'a hollow',hp:34,r:4,speed:18,dmg:14,souls:20,poise:22},   // slow: it shuffles, and it trembles as it comes
+ archer:{name:'a cultist',hp:26,r:4,speed:40,dmg:14,souls:30,poise:14},
+ mutt:{name:'a festered mutt',hp:20,r:4,speed:46,dmg:8,souls:30,poise:10},   // fast and low; alone (two in a great hall); it latches onto a swinging arm and drags at you until you roll
+ shield:{name:'a shieldbearer',hp:60,r:5,speed:20,dmg:20,souls:50,poise:50},
+ wretch:{name:'a wretch',hp:14,r:3,speed:64,dmg:6,souls:10,poise:6},
+ brute:{name:'the Warden',hp:375,r:11,speed:27,dmg:34,souls:400,boss:true,poise:160},
+ knight:{name:'the Rusted Knight',hp:300,r:7,speed:50,dmg:22,souls:450,boss:true,poise:130},
+ drowned:{name:'a drowned one',hp:70,r:5,speed:24,dmg:22,souls:40,poise:28},
+ imp:{name:'an imp',hp:30,r:3,speed:46,dmg:14,souls:40,poise:8},
+ witch:{name:'the Cinder Witch',hp:265,r:6,speed:34,dmg:16,souls:500,boss:true,poise:110},
+ bell:{name:'a bellringer',hp:30,r:4,speed:30,dmg:10,souls:45,poise:36},
+ angler:{name:'an angler',hp:60,r:5,speed:22,dmg:20,souls:50,poise:26},
+ salamander:{name:'a salamander',hp:45,r:4,speed:58,dmg:14,souls:40,poise:30},
+ toller:{name:'a toller',hp:70,r:5,speed:26,dmg:18,souls:55,poise:60},
+ hellsbell:{name:'Hells Bell',hp:425,r:10,speed:24,dmg:26,souls:700,boss:true,poise:180},
+ king:{name:'the Hollow King',hp:450,r:8,speed:30,dmg:26,souls:1200,boss:true,poise:170},
+ dragon:{name:'the Ashen Wyrm',hp:625,r:13,speed:0,dmg:24,souls:2000,boss:true,anchored:true,poise:220}};
 // Floor scaling: hp +20% and damage +16% per floor, then x1.4 hp / x1.25 dmg per loop. Biome bosses are tier 2 from the first loop on.
 function mkEnemy(type,x,y,elite){const t=ETYPES[type],fs=(1+0.2*(floor-1))*(1+0.7*loop),fd=(1+0.16*(floor-1))*(1+0.45*loop);
- const e={type,name:t.name,x,y,r:t.r,hp:Math.round(t.hp*fs*(elite?2.2:1)),speed:t.speed,dmg:Math.round(t.dmg*fd*(elite?1.4:1)),souls:Math.round(t.souls*(elite?3:1)*(1+0.5*loop)),boss:!!t.boss,anchored:!!t.anchored,elite:!!elite,state:'idle',t:0.5+Math.random()*0.5,flash:0,hit:false,facing:1,dead:false,cd:1+Math.random(),cd2:4,cd3:3,spikeCd:0,faceAng:0,phase:1,flank:[-1,0,1][Math.floor(Math.random()*3)],avoid:Math.random()<0.5?1:-1,tier:t.boss&&(type==='king'||type==='dragon'||loop>0)?2:1};
+ const e={type,name:t.name,x,y,r:t.r,hp:Math.round(t.hp*fs*(elite?2.2:1)),speed:t.speed,dmg:Math.round(t.dmg*fd*(elite?1.4:1)),souls:Math.round(t.souls*(elite?3:1)*(1+0.5*loop)),boss:!!t.boss,anchored:!!t.anchored,elite:!!elite,state:'idle',t:0.5+Math.random()*0.5,flash:0,hit:false,facing:1,dead:false,cd:1+Math.random(),cd2:4,cd3:3,spikeCd:0,faceAng:0,phase:1,flank:[-1,0,1][Math.floor(Math.random()*3)],avoid:Math.random()<0.5?1:-1,tier:t.boss&&(type==='king'||type==='dragon'||loop>0)?2:1,poise:Math.round((t.poise||0)*(elite?1.5:1)),poiseMax:Math.round((t.poise||0)*(elite?1.5:1)),poiseT:0,poiseCd:0};
  if(type==='brute'){e.globs=[];e.corpse=true;e.corpseT=0;e.cdT=3;e.cdG=0;}
  if(type==='dragon'){e.claws=[{side:'L',x:0,y:0,planted:false,t:0},{side:'R',x:0,y:0,planted:false,t:0}];e.exposed=false;e.exposeT=0;e.cd=2.5;e.slam={x,y:y+80};e.globs=[];e.tailDown=0;}
  e.maxHp=e.hp;if(elite&&!t.boss)giveAffix(e);else if(elite)e.name='an elite '+t.name.replace(/^a /,'');return e;}
@@ -1134,7 +1142,7 @@ function enemyTick(e,dt){if(e.dead)return;if(e.thornCd>0)e.thornCd-=dt;if(e.stat
  if(e.affix==='burning'){if(Math.random()<0.35)parts.push({x:e.x+(Math.random()-.5)*8,y:e.y-2-Math.random()*6,vx:0,vy:-22,life:0.3,col:Math.random()<0.5?'#e8a33c':'#e04a3a',noG:true});if(e.moving){e.fireT=(e.fireT||0)+dt;if(e.fireT>0.3){e.fireT=0;room.hazards.push({x:e.x,y:e.y+2,t:0.9,dmg:5,name:e.name+"'s fire"});}}}
  else if(e.affix==='swift'){if(e.moving&&Math.random()<0.6)parts.push({x:e.x+(Math.random()-.5)*4,y:e.y-4+(Math.random()-.5)*8,vx:0,vy:0,life:0.18,col:'#9fb8ff',noG:true});}
  else if(e.affix==='vampiric'){if(Math.random()<0.08)parts.push({x:e.x+(Math.random()-.5)*8,y:e.y-6,vx:0,vy:12,life:0.4,col:'#c8302a'});}}
-function makeChampion(e){e.champion=true;e.hp=Math.round(e.hp*1.5);e.maxHp=e.hp;e.dmg=Math.round(e.dmg*1.15);e.speed*=1.1;e.souls*=2;e.lives=1;e.name='the champion '+ETYPES[e.type].name.replace(/^an? /,'');}
+function makeChampion(e){e.champion=true;e.hp=Math.round(e.hp*1.5);e.maxHp=e.hp;e.poiseMax=e.poise=Math.round((e.poiseMax||0)*1.6);e.dmg=Math.round(e.dmg*1.15);e.speed*=1.1;e.souls*=2;e.lives=1;e.name='the champion '+ETYPES[e.type].name.replace(/^an? /,'');}
 function tryRevive(e){if(!e.champion||!e.lives)return false;e.lives--;e.hp=Math.round(e.maxHp*0.35);e.state='stagger';e.t=1.1;e.flash=0.4;burst(e.x,e.y-4,24,'#f4c968');room.waves.push(mkWave(e.x,e.y,Math.round(e.dmg*0.6),"the champion's roar",'#f4c968'));dmgNum(e.x,e.y-e.r-12,'RISE','#f4c968');showMsg('It rises again',1.6);SFX.boss();shake=Math.max(shake,0.25);return true;}
 // Enemy roster widens with depth: each biome starts with its signature types, adds more deeper in the floor, and pulls in the rest on a loop.
 function biomePool(d){const L=loop>0,bm=BIOME();let pool;
@@ -1218,7 +1226,7 @@ function updateOrbs(dt){updateRods(dt);let R=null;try{R=room;}catch(e){}if(!R||!
 function wrapText(str,maxW){ctx.font=FONT;const words=String(str).split(' '),lines=[];let cur='';for(const w2 of words){const t=(cur+' '+w2).trim();if(cur&&ctx.measureText(t).width>maxW){lines.push(cur);cur=w2;}else cur=t;}if(cur)lines.push(cur);return lines;}
 function dmgNum(x,y,txt,col){dmgNums.push({x:x+(Math.random()-.5)*6,y,vy:-26,life:0.75,txt:String(txt),col});}
 const MINI={'0':["111","101","101","101","111"],'1':["010","110","010","010","111"],'2':["111","001","111","100","111"],'3':["111","001","111","001","111"],'4':["101","101","111","001","001"],'5':["111","100","111","001","111"],'6':["111","100","111","101","111"],'7':["111","001","001","001","001"],'8':["111","101","111","101","111"],'9':["111","101","111","001","111"],
- 'A':["010","101","111","101","101"],'B':["110","101","110","101","110"],'E':["111","100","110","100","111"],'K':["101","101","110","101","101"],'P':["110","101","110","100","100"],'R':["110","101","110","101","101"],'W':["101","101","101","111","101"],'D':["110","101","101","101","110"],'L':["100","100","100","100","111"],'O':["111","101","101","101","111"],'C':["111","100","100","100","111"],'Y':["101","101","010","010","010"],'+':["000","010","111","010","000"],'!':["010","010","010","000","010"]};
+ 'A':["010","101","111","101","101"],'B':["110","101","110","101","110"],'E':["111","100","110","100","111"],'K':["101","101","110","101","101"],'P':["110","101","110","100","100"],'R':["110","101","110","101","101"],'W':["101","101","101","111","101"],'D':["110","101","101","101","110"],'L':["100","100","100","100","111"],'O':["111","101","101","101","111"],'C':["111","100","100","100","111"],'Y':["101","101","010","010","010"],'+':["000","010","111","010","000"],'!':["010","010","010","000","010"],'F':["111","100","110","100","100"],'G':["111","100","101","101","111"],'H':["101","101","111","101","101"],'I':["111","010","010","010","111"],'J':["001","001","001","101","111"],'M':["101","111","111","101","101"],'N':["110","101","101","101","101"],'Q':["111","101","101","111","001"],'S':["111","100","111","001","111"],'T':["111","010","010","010","010"],'U':["101","101","101","101","111"],'V':["101","101","101","101","010"],'X':["101","101","010","101","101"],'Z':["111","001","010","100","111"]};
 function drawMini(t,x,y,col){x=Math.round(x-t.length*2);y=Math.round(y);for(const ch of t){const g=MINI[ch];if(g){ctx.fillStyle=K;for(let j=0;j<5;j++)for(let i=0;i<3;i++)if(g[j][i]==='1')ctx.fillRect(x+i-1,y+j-1,3,3);ctx.fillStyle=col;for(let j=0;j<5;j++)for(let i=0;i<3;i++)if(g[j][i]==='1')ctx.fillRect(x+i,y+j,1,1);}x+=4;}}
 function burst(x,y,n,col){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=20+Math.random()*50;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-20,life:0.3+Math.random()*0.4,col});}}
 const mkWave=(x,y,dmg,name,col)=>({x,y,r:8,spd:95,maxR:120,hit:false,dmg,name,col});
@@ -1453,7 +1461,7 @@ function attackHits(range,arc,dmg,stagger,ang){
    if(d>range+hp.r)continue;let a=Math.atan2(dy,dx)-ang;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)>arc/2)continue;at=hp;break;}
   if(!at)continue;
   player.atk.hitSet.add(e);const wasRip=e.riposte&&player.riposteT>0;let mul=1;const wasStag=e.state==='stagger';
-  if(e.state==='windup'&&!e.dead){mul*=e.boss?1.15:1.3;dmgNum(at.x,at.y-e.r-14,'COUNTER','#fff0c0');if(!e.boss&&!e.anchored){e.state='stagger';e.t=Math.max(e.t||0,0.6);}if(hasRelic('vipertooth')){e.bleed=3;e.bleedT=e.bleedT||0;}}   /* the counter-hit: step in during the telegraph and the blow never comes */
+  if(e.state==='windup'&&!e.dead){mul*=e.boss?1.15:1.3;e.poiseHit=2;dmgNum(at.x,at.y-e.r-14,'COUNTER','#fff0c0');if(!e.boss&&!e.anchored){e.state='stagger';e.t=Math.max(e.t||0,0.6);}if(hasRelic('vipertooth')){e.bleed=3;e.bleedT=e.bleedT||0;}}   /* the counter-hit: step in during the telegraph and the blow never comes */
   if(wasStag&&hasRelic('carrioncrown'))mul*=1.3;   /* the Carrion Crown: the staggered take more */
   if(A==='shatter'&&e.slow>0){mul=1.5;dmgNum(at.x,at.y-e.r-14,'SHATTER','#7fa8ff');}else if(A==='butcher'&&e.hp<e.maxHp*0.35){mul=3;dmgNum(at.x,at.y-e.r-14,'BUTCHER','#c8302a');}
   if(e.burn>0)mul*=1+0.35*cnt('cinderheart');if(e.slow>0)mul*=1+0.35*cnt('rime');if(e.bleed>0)mul*=1+0.4*cnt('ruin');   // the schools: hit the burning, the chilled, the bleeding harder
@@ -1512,7 +1520,8 @@ function damageEnemy(e,d,heavy,ang,fx,isHeavy,at){const hasFx=k=>Array.isArray(f
   for(const o of near){vfx.push({kind:'bolt',x1:e.x,y1:e.y-6,x2:o.x,y2:o.y-4,t:0.2,max:0.2});damageEnemy(o,Math.round(d*0.45),false,Math.atan2(o.y-e.y,o.x-e.x),undefined,false);}if(near.length){burst(e.x,e.y-4,6,'#d9e8ff');SFX.bolt();}}   /* the Storm Infusion: the hit leaps to the nearest foe for half its worth, to two if the mark stands in water; the leap itself does not leap again */if(e.riposte&&player.riposteT>0){d*=1.8;rip=true;e.riposte=false;}
  if(e.boss){if(rip)d*=0.78;d=Math.min(d,e.maxHp*0.25);}   /* a boss is a fight, not a parry: a riposte is x1.4 on it, and nothing takes more than a quarter of its health in one blow */
  d=Math.round(d);e.hp-=d;e.flash=rip?0.25:0.12;if(rip)buzz(40);
- if((e.type!=='brute'&&e.type!=='king'&&!e.anchored)||rip){moveEnt(e,Math.cos(ang)*(heavy?10:4),Math.sin(ang)*(heavy?10:4));if((heavy||rip)&&e.state!=='attack'){e.state='stagger';e.t=0.7;}if(heavy&&hasRelic('quakefist')){for(const o of room.enemies){if(o===e||o.dead||o.boss||o.anchored||o.state==='attack')continue;if(Math.hypot(o.x-e.x,o.y-e.y)<36){o.state='stagger';o.t=Math.max(o.t||0,0.7);burst(o.x,o.y+o.r,4,'#8a8296');}}vfx.push({kind:'ring',x:e.x,y:e.y,r0:4,r1:36,t:0.3,max:0.3,col:'#8a8296',w:2});}else if(e.type==='archer'&&e.state!=='attack'){e.state='stagger';e.t=Math.max(e.state==='stagger'?e.t:0,0.45);}}
+ poiseHit(e,d*(heavy?1.6:1)*(rip?1.5:1)*(e.poiseHit||1),heavy);e.poiseHit=0;
+ if((e.type!=='brute'&&e.type!=='king'&&!e.anchored)||rip){moveEnt(e,Math.cos(ang)*(heavy?10:4),Math.sin(ang)*(heavy?10:4));if((heavy||rip)&&e.state!=='attack'&&!e.boss){e.state='stagger';e.t=0.7;}if(heavy&&hasRelic('quakefist')){for(const o of room.enemies){if(o===e||o.dead||o.boss||o.anchored||o.state==='attack')continue;if(Math.hypot(o.x-e.x,o.y-e.y)<36){o.state='stagger';o.t=Math.max(o.t||0,0.7);burst(o.x,o.y+o.r,4,'#8a8296');}}vfx.push({kind:'ring',x:e.x,y:e.y,r0:4,r1:36,t:0.3,max:0.3,col:'#8a8296',w:2});}else if(e.type==='archer'&&e.state!=='attack'){e.state='stagger';e.t=Math.max(e.state==='stagger'?e.t:0,0.45);}}
  burst(hx,hy-2,heavy?8:4,'#e8e0d0');shake=Math.max(shake,rip?0.25:heavy?0.12:0.05);hitstop=Math.max(hitstop,rip?0.13:heavy?0.06:0.025);
  dmgNum(hx,hy-(at?12:e.r+6),d,rip?'#f4c968':heavy?'#e8a33c':'#d9d0bd');(rip?SFX.riposte:heavy?SFX.hitH:SFX.hit)();
  room.decals.push({x:hx+(Math.random()-.5)*6,y:hy+(at?6:e.r-1)+(Math.random()-.5)*3,r:heavy?3:2,s:Math.random()*99});
@@ -1544,7 +1553,7 @@ function hurtPlayer(d,src){
  if(hasRelic('mirror')&&src.type&&!src.dead&&Math.random()<0.2){damageEnemy(src,d,false,Math.atan2(src.y-p.y,src.x-p.x),undefined,false);p.inv=0.4;burst(p.x,p.y-4,14,'#d9e8ff');dmgNum(p.x,p.y-16,'MIRROR','#d9e8ff');SFX.parry();shake=Math.max(shake,0.1);return true;}   // the Mirror Shard turns one blow in five back on its owner
  // The shield is raised toward the camera and guards every direction; the spark shows on the side the hit came from.
  if(p.blocking&&p.state==='free'){const ang=Math.atan2(-dy,-dx),sx=p.x+Math.cos(ang)*8,sy=p.y-2+Math.sin(ang)*8;
-   if(p.blockT<PARRY_WIN&&(src.type||src.from)){const tgt=src.from||src;tgt.state='stagger';tgt.t=1.8;if(hasRelic('sigil'))tgt.slow=slowFor(3);if(!tgt.boss&&!tgt.anchored)moveEnt(tgt,Math.cos(ang)*6,Math.sin(ang)*6);
+   if(p.blockT<PARRY_WIN&&(src.type||src.from)){const tgt=src.from||src;if(tgt.boss){if(tgt.state!=='stagger'){tgt.state='stagger';tgt.t=0.6;}poiseHit(tgt,Math.round((tgt.poiseMax||0)*0.35),true);}else{tgt.state='stagger';tgt.t=1.8;}if(hasRelic('sigil'))tgt.slow=slowFor(3);if(!tgt.boss&&!tgt.anchored)moveEnt(tgt,Math.cos(ang)*6,Math.sin(ang)*6);
     if(hasRelic('band')&&tgt.hp>0&&!tgt.dead){tgt.riposte=false;damageEnemy(tgt,Math.round(d*1.5),false,Math.atan2(tgt.y-p.y,tgt.x-p.x));dmgNum(tgt.x,tgt.y-tgt.r-14,'THORN','#c8302a');}   // the Thorn Band bites back
     tgt.riposte=true;tgt.flash=0.25;p.riposteT=2.6;p.inv=0.3;p.blockT=1;p.parryT=0.4;p.parryAng=ang;parryFx={x:sx,y:sy,ang,t:0.5,max:0.5};slowT=0.32;flashT=0.14;
     SFX.parry();buzz([20,40,20]);shake=Math.max(shake,0.2);hitstop=Math.max(hitstop,0.13);burst(sx,sy,14,'#f4c968');sparkSpray(sx,sy,ang);dmgNum(p.x,p.y-16,'PARRY','#f4c968');stat('parries');run.parries++;relicParry(tgt);return true;}
@@ -1903,7 +1912,7 @@ function ambient(dt){const bm=BIOME();
 function update(dt){
  time+=dt;updatePlayer(dt);
  room.ambT=(room.ambT||0)-dt;if(room.ambT<=0){room.ambT=1.1+Math.random()*1.6;const f=room.decor.find(d=>d.kind==='forge'||d.kind==='cauldron'||d.kind==='fire'||d.kind==='fountain');if(f&&Math.hypot(f.x-player.x,f.y-player.y)<200)(f.kind==='cauldron'||f.kind==='fountain'?SFX.bubble:SFX.crackle)();}
- for(const e of room.enemies)if(!e.dead){e.moving=false;if(e.state==='windup'&&e.pstate!=='windup'){if(hasRelic('hourglass'))e.t*=1.25;if(e.windMul)e.t*=e.windMul;if(player.charging&&!e.boss&&Math.hypot(player.x-e.x,player.y-e.y)<48)e.t*=0.6;e.windT=e.t;}   /* a foe that sees you winding a heavy in its face hurries its own blow */e.pstate=e.state;if(!e.anchored&&collides(e.x,e.y,e.r,true)){const fp=freePoint(e);if(fp){e.x=fp.x;e.y=fp.y;}}   // never leave a foe overlapping a pillar, whatever put it there
+ for(const e of room.enemies)if(!e.dead){e.moving=false;if(e.poiseT>0){e.poiseT-=dt;if(e.poiseT<=0)e.poise=e.poiseMax;}if(e.poiseCd>0)e.poiseCd-=dt;if(e.broken&&e.state!=='stagger')e.broken=false;if(e.state==='windup'&&e.pstate!=='windup'){if(hasRelic('hourglass'))e.t*=1.25;if(e.windMul)e.t*=e.windMul;if(player.charging&&!e.boss&&Math.hypot(player.x-e.x,player.y-e.y)<48)e.t*=0.6;e.windT=e.t;}   /* a foe that sees you winding a heavy in its face hurries its own blow */e.pstate=e.state;if(!e.anchored&&collides(e.x,e.y,e.r,true)){const fp=freePoint(e);if(fp){e.x=fp.x;e.y=fp.y;}}   // never leave a foe overlapping a pillar, whatever put it there
   updateEnemy(e,dt);enemyTick(e,dt);if(e.moving){e.walk=(e.walk||0)+dt;if((e.boss||e.elite)&&!e.anchored&&Math.random()<0.2)parts.push({x:e.x+(Math.random()-.5)*e.r*2,y:e.y+e.r-1,vx:(Math.random()-.5)*12,vy:-5-Math.random()*5,life:0.25,col:'#6d6578'});}}
  // Ground hazards: fire (Witch) or rock (King). `delay` is a telegraph window before the hazard turns live.
  for(let i=room.hazards.length-1;i>=0;i--){const h=room.hazards[i];if(h.delay>0){h.delay-=dt;continue;}h.t-=dt;if(h.t<=0){room.hazards.splice(i,1);continue;}if(h.chase){const hx=player.x-h.x,hy=player.y-h.y,hd=Math.hypot(hx,hy)||1;h.x+=hx/hd*13*dt;h.y+=hy/hd*13*dt;}
@@ -2333,6 +2342,7 @@ function drawEnemy(e){
   else if(e.state==='windup'&&e.kind==='slam'){const q=1-Math.max(0,e.t)/(e.windT||0.7);sy=1+0.07*q;sx=1-0.03*q;}
   else if(e.state==='windup'&&e.kind==='toll')rot=Math.sin(time*22)*0.03;
   else if(e.state==='ringing'){sy=0.9;sx=1.04;}
+  else if(e.broken){sy=0.76;dy=4;rot=Math.sin(time*9)*0.03;}   /* down on a knee */
   else if(e.type==='mutt'&&e.state==='windup'){sy=0.8;dy=1;}else if(e.type==='mutt'&&e.state==='attack'){sx=1.15;sy=0.9;}else if(e.type==='mutt'&&e.state==='latch'){rot=Math.sin(time*30)*0.08;}
   else if(e.state==='chase'||e.state==='recover'||e.state==='idle'){const brth=Math.sin(time*1.8);sy=1+0.03*brth;sx=1-0.012*brth;rot=0.015*Math.sin(time*0.9);}
   if(sx!==1||sy!==1||rot||dy||swx){ctx.translate(e.x+swx,e.y+e.r+dy);ctx.rotate(rot);ctx.scale(sx,sy);ctx.translate(-e.x,-(e.y+e.r));}}

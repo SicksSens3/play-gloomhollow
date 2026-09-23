@@ -71,7 +71,7 @@ body.touch #pad{display:block}body.touch #help{display:none}
 </div>
 <script>
 (()=>{
-const W=272,H=152,T=16;let CH=152,PIX=1;   // the view is 17 x 9.5 tiles; every room is bigger than it, so the camera follows you. PIX: device pixels per game pixel, the canvas is rendered at that resolution so text and lines stay sharp
+const UW=272,UH=152,T=16;let W=248,H=128,CH=128,PIX=1,UIS=1,UIX=0,UIY=0;   // UW x UH: the space menus and sheets are laid out in, drawn scaled to fit the view (UIS game px per UI px, UIX/UIY the offset)   // the view is 17 x 9.5 tiles; every room is bigger than it, so the camera follows you. PIX: device pixels per game pixel, the canvas is rendered at that resolution so text and lines stay sharp
 // The build number shown on the title screen is read from sw.js, so the cache version is the one source of truth.
 let BUILD='';fetch('sw.js').then(r=>r.text()).then(t=>{const m=t.match(/gloomhollow-v(\d+)/);if(m)BUILD='build '+m[1];}).catch(()=>{});
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
@@ -83,7 +83,7 @@ let BAND=0,OFFY=0,OFFX=0,baseOX=0,baseOY=0,camX=0,camY=0;const VIEW_MAX_H=320;
 function fit(){const touch=document.body.classList.contains('touch');let s;let R=null;try{R=room;}catch(e){}let ph=R?Math.min(R.ph,VIEW_MAX_H):H;const pw=R?Math.min(R.pw,W):W;
  if(touch){s=innerWidth/W;const half=innerHeight*0.5;let total=Math.round(half/s);total=Math.max(ph,Math.min(H+200,total));if(total*s>half){s=half/total;}CH=total;}
  else{CH=H;ph=Math.min(ph,CH);const dpr=devicePixelRatio||1;s=Math.max(1,Math.floor(Math.min(innerWidth/W,(innerHeight-32)/CH)*dpr)/dpr);}   /* a whole number of device pixels per game pixel: on a scaled display that is a finer step than whole CSS pixels, so the view fills more of the window */
- PIX=Math.max(1,Math.round(s*(devicePixelRatio||1)));cv.width=W*PIX;cv.height=CH*PIX;ctx.imageSmoothingEnabled=false;baseOY=Math.floor((CH-ph)/2);baseOX=Math.floor((W-pw)/2);OFFX=baseOX;OFFY=baseOY;
+ PIX=Math.max(1,Math.round(s*(devicePixelRatio||1)));cv.width=W*PIX;cv.height=CH*PIX;ctx.imageSmoothingEnabled=false;UIS=Math.min(W/UW,CH/UH);UIX=(W-UW*UIS)/2;UIY=(CH-UH*UIS)/2;baseOY=Math.floor((CH-ph)/2);baseOX=Math.floor((W-pw)/2);OFFX=baseOX;OFFY=baseOY;
  cv.style.width=W*s+'px';cv.style.height=CH*s+'px';try{updateCamera(0,true);}catch(e){}}
 // The camera follows you with a dead zone of a few pixels. camX/camY are the offset from the room's centre: a room bigger than the view scrolls to its edges and no further;
 // a room that fits still gives a little (up to `give`, never past its own edge) so you stay near the middle of the screen.
@@ -827,6 +827,9 @@ const TPL={
 const keys={},press={},mouse={x:W/2,y:H/2,moved:false},mDown={l:false,r:false},mHeld={l:false,r:false},mUp={l:false,r:false};let vStrike=false;
 // Overlays are drawn in screen space; the mouse in screen space is the world mouse plus the camera offset.
 const sm=()=>({x:mouse.x+OFFX,y:mouse.y+OFFY});
+// Menus and sheets are laid out in UW x UH and drawn scaled to fit. withUI swaps W/CH for that space and sets the transform; um() is the mouse in that space.
+const um=()=>({x:(mouse.x+OFFX-UIX)/UIS,y:(mouse.y+OFFY-UIY)/UIS});
+function withUI(fn){const w0=W,c0=CH;W=UW;CH=UH;ctx.save();ctx.setTransform(PIX*UIS,0,0,PIX*UIS,PIX*UIX,PIX*UIY);try{return fn();}finally{W=w0;CH=c0;ctx.restore();}}
 addEventListener('keydown',e=>{audioInit();if(['Space','KeyE','KeyF','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyM','KeyP','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();if(e.repeat)return;keys[e.code]=true;press[e.code]=true;if(state!=='play')tryStart();});
 addEventListener('keyup',e=>{keys[e.code]=false;});
 cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();mouse.x=(e.clientX-r.left)/r.width*W-OFFX;mouse.y=(e.clientY-r.top)/r.height*CH-OFFY;mouse.moved=true;});
@@ -857,7 +860,8 @@ document.querySelectorAll('.b').forEach(b=>{const k=b.dataset.k;
  const end=e=>{e.preventDefault();b.classList.remove('on');if(k==='block')vHeld.block=false;};b.addEventListener('touchend',end);b.addEventListener('touchcancel',end);});
 cv.addEventListener('touchstart',e=>{e.preventDefault();audioInit();touchMode=true;if(state!=='play'){const t=e.changedTouches[0],r=cv.getBoundingClientRect();tryStart((t.clientX-r.left)/r.width*W,(t.clientY-r.top)/r.height*CH);}else if(overlayOpen){const t=e.changedTouches[0],r=cv.getBoundingClientRect();overlayTap((t.clientX-r.left)/r.width*W,(t.clientY-r.top)/r.height*CH);}else{overlayOpen='pause';confirmRestart=0;}},{passive:false});
 // On touch, tapping a satchel cell, a bearing or a settings row picks it; tapping anywhere else closes the overlay.
-function overlayTap(x,y){if(overlayOpen==='items'){const i=ITEM_CELL(x,y);if(i>=0&&i<player.items.length){itemSel=i;SFX.block();return;}const off=y>=78&&y<128?hagOffer():null;if(off){uncurse(off.id);return;}}
+function overlayTap(x,y){return withUI(()=>overlayTapUI((x-UIX)/UIS,(y-UIY)/UIS));}
+function overlayTapUI(x,y){if(overlayOpen==='items'){const i=ITEM_CELL(x,y);if(i>=0&&i<player.items.length){itemSel=i;SFX.block();return;}const off=y>=78&&y<128?hagOffer():null;if(off){uncurse(off.id);return;}}
  else if(overlayOpen==='skins'){const i=SKIN_CELL(x,y);if(i>=0){if(i===skinCursor){const id=SKIN_IDS[i];if(save.unlocked.includes(id)){equipSkin(id);SFX.pickup();overlayOpen=null;}else SFX.guardbreak();}else{skinCursor=i;SFX.block();}return;}}
  else if(overlayOpen==='pause'){const i=PAUSE_ROW(x,y);if(i>=0){pauseRow=i;SFX.block();return;}}
  overlayOpen=null;}
@@ -1247,10 +1251,11 @@ function loopGame(){loop++;if(run)run.loop=loop;floor=1;run.floor=1;run.flasksFl
  p.hp=p.maxHp;p.mana=p.maxMana;p.stam=p.maxStam;p.flasks=p.maxFlasks;p.keys=0;p.burn=0;p.ward=0;p.state='free';p.blocking=false;p.atk=null;
  projs=[];vfx=[];parts=[];orbs=[];rods=[];dmgNums=[];shake=0;hitstop=0;winning=false;wonT=0;banner=null;overlayOpen=null;state='play';SFX.door();SFX.clear();showMsg('Loop '+loop+'   Floor 1  '+FP().name,3.2);}
 function toTitle(){state='title';room=null;dungeon=null;fit();}
-function deathButtons(){const y=CH-40;return[{id:'rise',x:W/2-118,y,w:112,h:18,label:'RISE AGAIN'},{id:'seed',x:W/2+6,y,w:112,h:18,label:'SAME SEED'}];}
-function winButtons(){const y=CH-44;return[{id:'loop',x:W/2-118,y,w:112,h:20,label:'DESCEND AGAIN'},{id:'fire',x:W/2+6,y,w:112,h:20,label:'TO THE FIRE'}];}
-function titleButtons(){const y=CH-40;return[{id:'run',x:W/2-126,y,w:80,h:20,label:'DESCEND'},{id:'daily',x:W/2-40,y,w:80,h:20,label:'DAILY RUN'},{id:'seed',x:W/2+46,y,w:80,h:20,label:'SEED...'}];}
-function tryStart(px,py){
+function deathButtons(){const y=CH-36;return[{id:'rise',x:W/2-118,y,w:112,h:18,label:'RISE AGAIN'},{id:'seed',x:W/2+6,y,w:112,h:18,label:'SAME SEED'}];}
+function winButtons(){const y=CH-38;return[{id:'loop',x:W/2-118,y,w:112,h:20,label:'DESCEND AGAIN'},{id:'fire',x:W/2+6,y,w:112,h:20,label:'TO THE FIRE'}];}
+function titleButtons(){const y=CH-40;return[{id:'run',x:W/2-120,y,w:76,h:20,label:'DESCEND'},{id:'daily',x:W/2-38,y,w:76,h:20,label:'DAILY RUN'},{id:'seed',x:W/2+44,y,w:76,h:20,label:'SEED...'}];}
+function tryStart(px,py){if((state==='won'||state==='dead')&&px!==undefined){const ux=(px-UIX)/UIS,uy=(py-UIY)/UIS;return withUI(()=>tryStartUI(ux,uy));}return tryStartUI(px,py);}   /* the death and victory screens live in UI space, like the menus */
+function tryStartUI(px,py){
  if(state==='won'){if(wonT<1.5)return;if(press.KeyR){loopGame();return;}
   if(px!==undefined){for(const b of winButtons()){if(px>=b.x&&px<=b.x+b.w&&py>=b.y-4&&py<=b.y+b.h+4){if(b.id==='loop')loopGame();else toTitle();return;}}return;}
   if(press.Enter||press.Escape||press.Space)toTitle();return;}
@@ -2614,7 +2619,7 @@ function skinMenuInput(){
  if(dir){skinCursor=(skinCursor+dir+SKIN_IDS.length)%SKIN_IDS.length;SFX.block();}
  {let vdir=0;if(press.KeyW||press.ArrowUp)vdir=-1;if(press.KeyS||press.ArrowDown)vdir=1;if(virt.my>0.6&&!virt.sd)vdir=1;if(virt.my<-0.6&&!virt.su)vdir=-1;virt.sd=virt.my>0.6;virt.su=virt.my<-0.6;
   if(vdir){const rows=Math.ceil(SKIN_IDS.length/10),row=Math.floor(skinCursor/10),nr=row+vdir;if(nr>=0&&nr<rows&&skinCursor%10+nr*10<SKIN_IDS.length){skinCursor=skinCursor%10+nr*10;SFX.block();}else{overlayOpen='stats';SFX.block();}}}   // rows of ten; past the last row lie the records
- {const m=sm(),i=SKIN_CELL(m.x,m.y);if(i>=0&&i!==skinCursor&&(mouse.moved||mDown.l)){skinCursor=i;SFX.block();}}
+ {const m=um(),i=SKIN_CELL(m.x,m.y);if(i>=0&&i!==skinCursor&&(mouse.moved||mDown.l)){skinCursor=i;SFX.block();}}
  if(press.KeyR){overlayOpen='stats';SFX.block();}
  if(press.KeyQ||press.Enter||press.KeyE||mDown.l){const id=SKIN_IDS[skinCursor];if(save.unlocked.includes(id)){equipSkin(id);SFX.pickup();overlayOpen=null;}else SFX.guardbreak();}
  if(press.KeyH||press.KeyM||press.Escape)overlayOpen=null;
@@ -2633,7 +2638,7 @@ function pauseRows(){const S=save.settings,pct=v=>Math.round(v*10)*10+'%',onoff=
 const PAUSE_ROW=(x,y)=>{if(x<W/2-104||x>W/2+104)return -1;const i=Math.floor((y-(PAUSE_Y0-2))/PAUSE_DY);return i>=0&&i<pauseRows().length?i:-1;}
 function pauseInput(dt){const rows=pauseRows(),N=rows.length;let dir=0,act=false;
  if(press.KeyA||press.ArrowLeft)dir=-1;if(press.KeyD||press.ArrowRight)dir=1;if(press.Enter||press.KeyE||press.Space||press.KeyQ)act=true;
- {const m=sm(),i=PAUSE_ROW(m.x,m.y);if(i>=0&&mouse.moved&&i!==pauseRow){pauseRow=i;SFX.block();}if(i>=0&&mDown.l){pauseRow=i;if(rows[i].adj)dir=m.x<W/2?-1:1;else act=true;}}   /* hover picks a row; a click adjusts a value on its side, or picks an action */
+ {const m=um(),i=PAUSE_ROW(m.x,m.y);if(i>=0&&mouse.moved&&i!==pauseRow){pauseRow=i;SFX.block();}if(i>=0&&mDown.l){pauseRow=i;if(rows[i].adj)dir=m.x<W/2?-1:1;else act=true;}}   /* hover picks a row; a click adjusts a value on its side, or picks an action */
  if(virt.mx<-0.5&&!virt.sl)dir=-1;virt.sl=virt.mx<-0.5;if(virt.mx>0.5&&!virt.sr)dir=1;virt.sr=virt.mx>0.5;
  let vdir=0;if(press.KeyW||press.ArrowUp)vdir=-1;if(press.KeyS||press.ArrowDown)vdir=1;if(virt.my<-0.6&&!virt.su)vdir=-1;virt.su=virt.my<-0.6;if(virt.my>0.6&&!virt.sd)vdir=1;virt.sd=virt.my>0.6;
  if(vdir){pauseRow=(pauseRow+vdir+N)%N;SFX.block();}
@@ -2651,18 +2656,18 @@ function pauseInput(dt){const rows=pauseRows(),N=rows.length;let dir=0,act=false
 function drawDeath(){
  const fade=Math.max(0,Math.min(1,(deadT-1.0)/0.6));if(fade<=0)return;ctx.globalAlpha=fade;
  ctx.fillStyle='rgba(8,7,12,.6)';ctx.fillRect(0,0,W,CH);
- ctx.fillStyle='#e04a3a';ctx.fillRect(W/2-70,36,140,1);ctx.fillRect(W/2-70,64,140,1);
- ctx.font='16px "Press Start 2P", monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#e04a3a';ctx.fillText('YOU PERISHED',W/2,50);
+ ctx.fillStyle='#e04a3a';ctx.fillRect(W/2-70,22,140,1);ctx.fillRect(W/2-70,48,140,1);
+ ctx.font='16px "Press Start 2P", monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#e04a3a';ctx.fillText('YOU PERISHED',W/2,35);
  if(!run)return;
- txt('slain by '+run.killedBy,W/2,80,'#d9d0bd','center');
- txt('floor '+run.floor+(loop?' +'+loop:'')+'   room '+run.rooms+'   '+souls+' souls',W/2,96,'#8a8296','center');
- txt(run.kills+' kills   '+run.parries+' parries   '+(run.daily?'daily ':'seed ')+run.seed,W/2,110,'#8a8296','center');
+ txt('slain by '+run.killedBy,W/2,58,'#d9d0bd','center');
+ txt('floor '+run.floor+(loop?' +'+loop:'')+'   room '+run.rooms+'   '+souls+' souls',W/2,70,'#8a8296','center');
+ txt(run.kills+' kills   '+run.parries+' parries   '+(run.daily?'daily ':'seed ')+run.seed,W/2,82,'#8a8296','center');
  // what you carried down
- const p=player,w=wpn(),n=p.items.length,gw=15*(n+1)+3;let gx=Math.round(W/2-gw/2);ctx.fillStyle='#14131c';ctx.fillRect(gx,124,gw,18);
- ctx.fillStyle='#1c1b28';ctx.fillRect(gx+2,126,14,14);drawWeapon(p.weapon,gx+5,138,-Math.PI/4,Math.min(12,Math.max(9,w.len)));gx+=17;
- for(const it of p.items){drawIcon(it.id,gx+1,127);if(it.n>1)drawMini(String(it.n),gx+13,135,'#f4c968');gx+=15;}
+ const p=player,w=wpn(),n=p.items.length,gw=15*(n+1)+3;let gx=Math.round(W/2-gw/2);ctx.fillStyle='#14131c';ctx.fillRect(gx,94,gw,18);
+ ctx.fillStyle='#1c1b28';ctx.fillRect(gx+2,96,14,14);drawWeapon(p.weapon,gx+5,138,-Math.PI/4,Math.min(12,Math.max(9,w.len)));gx+=17;
+ for(const it of p.items){drawIcon(it.id,gx+1,97);if(it.n>1)drawMini(String(it.n),gx+13,135,'#f4c968');gx+=15;}
  if(deadT>1.8){for(const b of deathButtons()){ctx.fillStyle='#14131c';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.strokeStyle=b.id==='rise'?'#e04a3a':'#464666';ctx.lineWidth=1;ctx.strokeRect(b.x+0.5,b.y+0.5,b.w-1,b.h-1);txt(b.label,b.x+b.w/2,b.y+6,b.id==='rise'?'#e04a3a':'#8a8296','center');}
-  if(!touchMode)txt('click / enter rise   R same seed',W/2,CH-14,'#464666','center');}
+  if(!touchMode)txt('click / enter rise   R same seed',W/2,CH-9,'#464666','center');}
  ctx.globalAlpha=1;
 }
 let itemSel=0;
@@ -2671,7 +2676,7 @@ const ITEM_CELL=(x,y)=>{const i=Math.floor((x-8)/16);return y>=56&&y<74&&x>=8&&i
 function itemsInput(){let dir=0;if(press.KeyA||press.ArrowLeft)dir=-1;if(press.KeyD||press.ArrowRight)dir=1;if(press.KeyW||press.ArrowUp)dir=-4;if(press.KeyS||press.ArrowDown)dir=4;
  if(virt.mx<-0.5&&!virt.sl)dir=-1;virt.sl=virt.mx<-0.5;if(virt.mx>0.5&&!virt.sr)dir=1;virt.sr=virt.mx>0.5;
  const n=player.items.length;if(itemSel>=n)itemSel=Math.max(0,n-1);if(dir&&n){itemSel=(itemSel+dir+n*4)%n;SFX.block();}
- if(mouse.moved||mDown.l){const m=sm(),i=ITEM_CELL(m.x,m.y);if(i>=0&&i<n&&i!==itemSel){itemSel=i;SFX.block();}}}   // hover or click a cell
+ if(mouse.moved||mDown.l){const m=um(),i=ITEM_CELL(m.x,m.y);if(i>=0&&i<n&&i!==itemSel){itemSel=i;SFX.block();}}}   // hover or click a cell
 function drawItems(){
  ctx.fillStyle='rgba(8,7,12,.93)';ctx.fillRect(0,0,W,CH);
  const p=player,w=wpn(),sp=SPELLS[p.spell];
@@ -2699,14 +2704,14 @@ function drawItems(){
 function drawWin(){
  const fade=Math.max(0,Math.min(1,(wonT-0.6)/0.8));if(fade<=0)return;ctx.globalAlpha=fade;
  ctx.fillStyle='rgba(8,7,12,.6)';ctx.fillRect(0,0,W,CH);
- ctx.fillStyle='#f4c968';ctx.fillRect(W/2-152,36,304,1);ctx.fillRect(W/2-152,64,304,1);
- ctx.font='16px "Press Start 2P", monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f4c968';ctx.fillText('THE HOLLOW IS QUIET',W/2,50);
+ ctx.fillStyle='#f4c968';ctx.fillRect(W/2-120,22,240,1);ctx.fillRect(W/2-120,48,240,1);
+ ctx.font='12px "Press Start 2P", monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f4c968';ctx.fillText('THE HOLLOW IS QUIET',W/2,35);
  if(!run)return;
- txt('the wyrm is slain. the hollow rests.',W/2,80,'#d9d0bd','center');
- txt((FINAL*(loop+1))+' floors   '+run.rooms+' rooms   '+souls+' souls',W/2,98,'#8a8296','center');
- txt(run.kills+' kills   '+run.parries+' parries'+(loop?'   loop '+loop:''),W/2,112,'#8a8296','center');txt((run.daily?'daily ':'seed ')+run.seed,W/2,128,'#464666','center');
+ txt('the wyrm is slain. the hollow rests.',W/2,58,'#d9d0bd','center');
+ txt((FINAL*(loop+1))+' floors   '+run.rooms+' rooms   '+souls+' souls',W/2,70,'#8a8296','center');
+ txt(run.kills+' kills   '+run.parries+' parries'+(loop?'   loop '+loop:''),W/2,82,'#8a8296','center');txt((run.daily?'daily ':'seed ')+run.seed,W/2,94,'#464666','center');
  if(wonT>1.5){for(const b of winButtons()){ctx.fillStyle='#14131c';ctx.fillRect(b.x,b.y,b.w,b.h);ctx.strokeStyle=b.id==='loop'?'#f4c968':'#464666';ctx.lineWidth=1;ctx.strokeRect(b.x+0.5,b.y+0.5,b.w-1,b.h-1);txt(b.label,b.x+b.w/2,b.y+6,b.id==='loop'?'#f4c968':'#8a8296','center');}
-  txt(touchMode?'again: keep gear, foes grow stronger':'R: again, keep gear   Enter: the fire',W/2,CH-58,'#464666','center');}
+  txt(touchMode?'again: keep gear, foes grow stronger':'R: again, keep gear   Enter: the fire',W/2,CH-9,'#464666','center');}
  ctx.globalAlpha=1;
 }
 function drawStats(){
@@ -2801,7 +2806,7 @@ function draw(){
  if(state==='dead'){const z=Math.min(1,deadT/1.3);ctx.setTransform(PIX,0,0,PIX,0,0);ctx.fillStyle='rgba(8,4,6,'+(0.55*z)+')';ctx.fillRect(0,0,W,CH);}
  if(state==='won'){const z=Math.min(1,wonT/1.3);ctx.setTransform(PIX,0,0,PIX,0,0);ctx.fillStyle='rgba(6,6,12,'+(0.45*z)+')';ctx.fillRect(0,0,W,CH);}
  ctx.setTransform(PIX,0,0,PIX,OFFX*PIX,OFFY*PIX);
- drawHUD();
+ if(state!=='dead'&&state!=='won')drawHUD();
  ctx.setTransform(PIX,0,0,PIX,0,0);
  if(transT>0){ctx.fillStyle='rgba(6,6,10,'+Math.min(1,transT/0.4)+')';ctx.fillRect(0,0,W,CH);}
  if(flashT>0){ctx.fillStyle='rgba(255,240,200,'+(flashT/0.14*0.35).toFixed(3)+')';ctx.fillRect(0,0,W,CH);}   // the white blink of a parry
@@ -2817,24 +2822,20 @@ function draw(){
    if(pu>0){ctx.strokeStyle=hexA(bc,pu*0.8);ctx.lineWidth=2;for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(px+62,py+30,8+i*7+(1-pu)*12,-0.7,0.7);ctx.stroke();}}
    ctx.font='12px "Press Start 2P", monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=bc;ctx.fillText(banner.title,197,CH/2-10);txt(banner.sub,197,CH/2+6,'#8a8296','center');}
   else{ctx.font='16px "Press Start 2P", monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=bc;ctx.fillText(banner.title,W/2,CH/2-6);txt(banner.sub,W/2,CH/2+10,'#8a8296','center');}ctx.globalAlpha=1;}
- if(state==='play'&&overlayOpen==='map')drawMap();
- if(state==='play'&&overlayOpen==='help')drawHelp();
- if(state==='play'&&overlayOpen==='skins')drawSkins();
- if(state==='play'&&overlayOpen==='stats')drawStats();
- if(state==='play'&&overlayOpen==='pause')drawPause();
- if(state==='play'&&overlayOpen==='items')drawItems();
- if(state==='dead')drawDeath();
- if(state==='won')drawWin();
+ if(state==='play'&&overlayOpen){ctx.setTransform(PIX,0,0,PIX,0,0);ctx.fillStyle='rgba(8,7,12,.75)';ctx.fillRect(0,0,W,CH);   /* dim the whole view, then the sheet in its own space */
+  if(overlayOpen==='map')withUI(drawMap);else if(overlayOpen==='help')withUI(drawHelp);else if(overlayOpen==='skins')withUI(drawSkins);else if(overlayOpen==='stats')withUI(drawStats);else if(overlayOpen==='pause')withUI(drawPause);else if(overlayOpen==='items')withUI(drawItems);}
+ if(state==='dead')withUI(drawDeath);
+ if(state==='won')withUI(drawWin);
 }
 
 let last=performance.now();
 function frame(now){const dt=Math.min(0.033,(now-last)/1000);last=now;
  applyVirtual();
  if(press.KeyN)setMute(!muted);if(press.KeyT){document.body.classList.toggle('touch');touchMode=document.body.classList.contains('touch');fit();}
- if(state==='play'&&overlayOpen==='skins'){skinMenuInput();time+=dt;}
+ if(state==='play'&&overlayOpen==='skins'){withUI(skinMenuInput);time+=dt;}
  else if(state==='play'&&overlayOpen==='stats'){if(press.KeyS||press.ArrowDown||press.KeyW||press.ArrowUp||(virt.my>0.6&&!virt.sd)){overlayOpen='skins';SFX.block();}virt.sd=virt.my>0.6;if(press.KeyH||press.KeyM||press.Escape)overlayOpen=null;time+=dt;}
- else if(state==='play'&&overlayOpen==='pause'){pauseInput(dt);time+=dt;}
- else if(state==='play'&&overlayOpen==='items'){itemsInput();const off=press.KeyQ?hagOffer():null;if(off)uncurse(off.id);else if(press.KeyI||press.Escape||press.KeyP||press.KeyM||press.KeyH||press.KeyQ){overlayOpen=itemsBack;itemsBack=null;SFX.block();}time+=dt;}
+ else if(state==='play'&&overlayOpen==='pause'){withUI(()=>pauseInput(dt));time+=dt;}
+ else if(state==='play'&&overlayOpen==='items'){withUI(itemsInput);const off=press.KeyQ?hagOffer():null;if(off)uncurse(off.id);else if(press.KeyI||press.Escape||press.KeyP||press.KeyM||press.KeyH||press.KeyQ){overlayOpen=itemsBack;itemsBack=null;SFX.block();}time+=dt;}
  else if(state==='play'&&press.KeyP&&!overlayOpen){overlayOpen='pause';confirmRestart=0;}
  else if(state==='play'){if(press.KeyM)overlayOpen=overlayOpen==='map'?null:'map';if(press.KeyH){if(overlayOpen==='help'){overlayOpen=helpBack;helpBack=null;}else overlayOpen='help';}if(press.KeyI&&!overlayOpen){overlayOpen='items';itemsBack=null;SFX.block();}if(press.Escape&&(overlayOpen==='map'||overlayOpen==='help')){overlayOpen=overlayOpen==='help'?helpBack:null;helpBack=null;}if(overlayOpen)time+=dt;else if(banner&&banner.boss&&banner.t>0.5)cardTick(dt);else if(hitstop>0)hitstop-=dt;else if(slowT>0){slowT-=dt;update(dt*0.4);}else update(dt);}else if(state==='dead'){deadT+=dt;updateFx(dt*0.6);time+=dt*0.4;msg.t-=dt*2;}else if(state==='won'){wonT+=dt;updateFx(dt*0.6);time+=dt*0.4;msg.t-=dt*2;}
  if(parryFx){parryFx.t-=dt;if(parryFx.t<=0)parryFx=null;}flashT=Math.max(0,flashT-dt);

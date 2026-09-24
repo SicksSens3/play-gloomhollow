@@ -855,7 +855,7 @@ function mkStick(id,onMove,onEnd){
 }
 mkStick('stick',(x,y)=>{if(Math.hypot(x,y)<0.16){virt.mx=virt.my=0;}else{virt.mx=x;virt.my=y;}},()=>{virt.mx=virt.my=0;});
 mkStick('aim',(x,y)=>{const m=Math.hypot(x,y);virt.aiming=m>=0.16;virt.aimMag=m;if(virt.aiming)virt.aimAng=save.settings.stickPush?Math.atan2(y,x):Math.atan2(-y,-x);},   /* pull back to aim by default (a sling); the option flips it to point where you push */
- (x,y)=>{const m=Math.hypot(x,y);virt.aiming=false;if(m<0.16)return;virt.aimAng=Math.atan2(-y,-x);virt.aimHold=0.4;vPress.light=true;});   // any pull and release is a strike
+ (x,y)=>{const m=Math.hypot(x,y);virt.aiming=false;if(m<0.16)return;virt.aimAng=save.settings.stickPush?Math.atan2(y,x):Math.atan2(-y,-x);virt.aimHold=0.4;vPress.light=true;});   // the release strikes the same way the hold aimed   // any pull and release is a strike
 document.querySelectorAll('.b').forEach(b=>{const k=b.dataset.k;
  b.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();audioInit();touchMode=true;b.classList.add('on');if(k==='fs'){toggleFS();return;}if(k==='mute'){setMute(!muted);b.textContent=muted?'SOUND':'MUTE';return;}if(state!=='play'){tryStart();return;}if(k==='block')vHeld.block=true;else vPress[k]=true;},{passive:false});
  const end=e=>{e.preventDefault();b.classList.remove('on');if(k==='block')vHeld.block=false;};b.addEventListener('touchend',end);b.addEventListener('touchcancel',end);});
@@ -2567,10 +2567,10 @@ function drawHUD(){
  ctx.fillStyle=wpn().col;ctx.fillRect(6,CH-11,3,7);txt(wpn().name+(player.sharp?' +'+player.sharp:'')+((player.infs||[]).length?' '+'~'.repeat(player.infs.length):''),12,CH-12,'#8a8296');const spl=SPELLS[p.spell];ctx.fillStyle=spl.col;ctx.fillRect(W-9,CH-11,3,7);txt(spl.name,W-12,CH-12,p.mana>=spl.cost?'#8a8296':'#4a4456','right');}
  ctx.setTransform(PIX,0,0,PIX,OFFX*PIX,OFFY*PIX);
  if(touchMode&&virt.aiming&&state==='play'&&p.state!=='roll'){const w=wpn().atk;
-  const L=w.range+6+virt.aimMag*10,a=virt.aimAng,x0=p.x,y0=p.y-2;
+  const L=w.range*(p.chargeReady?hv().range:1),a=virt.aimAng,x0=p.x,y0=p.y-2;   // the guide is exactly as long as the swing
   ctx.save();ctx.setLineDash([2,2]);ctx.lineDashOffset=-time*20;ctx.strokeStyle='rgba(244,201,104,.75)';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0+Math.cos(a)*L,y0+Math.sin(a)*L);ctx.stroke();ctx.setLineDash([]);
-  if(w.arc>=1){ctx.strokeStyle='rgba(244,201,104,.3)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(x0,y0,w.range,a-w.arc/2,a+w.arc/2);ctx.stroke();}
+  if(w.arc>=1){ctx.strokeStyle='rgba(244,201,104,.3)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(x0,y0,L,a-w.arc/2,a+w.arc/2);ctx.stroke();}
   ctx.restore();ctx.fillStyle='#f4c968';ctx.fillRect(Math.round(x0+Math.cos(a)*L)-1,Math.round(y0+Math.sin(a)*L)-1,3,3);}
  const it=p.state==='free'?nearItem():null;
  if(it){const full=itemLabel(it),price=it.price>0?String(priceOf(it)):'';let L=[full];if(full.length>22){const pk=full.indexOf(' ('),k=pk>4?pk:full.lastIndexOf(' ',24);if(k>4)L=[full.slice(0,k),full.slice(k+1)];}   /* name on one line, the rest on the next */

@@ -572,7 +572,7 @@ const CURSED={
  fang:{name:'Hollow Fang',desc:'+35% damage; -30 max health',price:120,apply:p=>{p.dmgMul*=1.35;p.maxHp=Math.max(40,p.maxHp-30);p.hp=Math.min(p.hp,p.maxHp);},undo:p=>{p.dmgMul/=1.35;p.maxHp+=30;p.hp+=30;}},
  ashtongue:{name:'Ash Tongue',desc:'+50% fire damage; blows hurt you +25%',price:110,apply:p=>{p.frail.blow+=0.25;},undo:p=>{p.frail.blow-=0.25;}},
  thread:{name:"Witch's Thread",desc:'+80% spells; -40 stamina',price:120,apply:p=>{p.spellPow+=0.8;p.maxStam=Math.max(40,p.maxStam-40);p.stam=Math.min(p.stam,p.maxStam);},undo:p=>{p.spellPow-=0.8;p.maxStam+=40;}},
- hare:{name:"Hare's Foot",desc:'+25% speed; arrows, spells and traps hurt you +40%',price:100,apply:p=>{p.speed*=1.25;p.frail.shot+=0.4;},undo:p=>{p.speed/=1.25;p.frail.shot-=0.4;}},
+ hare:{name:"Hare's Sinew",desc:'+25% speed; arrows, spells and traps hurt you +40%',price:100,apply:p=>{p.speed*=1.25;p.frail.shot+=0.4;},undo:p=>{p.speed/=1.25;p.frail.shot-=0.4;}},
  blackstone:{name:'Black Whetstone',desc:'the weapon in hand +2; fire burns you twice as hard',price:130,apply:p=>{p.sharp+=2;p.frail.fire+=1;},undo:p=>{p.sharp=Math.max(0,p.sharp-2);p.frail.fire-=1;}},
  marrow:{name:'Marrow Tithe',desc:'+50% souls; flasks heal a quarter less',price:90,apply:p=>{}},
  leaden:{name:'Leaden Gourd',desc:'+1 flask; -20% speed',price:140,apply:p=>{p.maxFlasks++;p.flasks=Math.min(p.maxFlasks,p.flasks+1);p.speed*=0.8;},undo:p=>{p.maxFlasks=Math.max(1,p.maxFlasks-1);p.flasks=Math.min(p.flasks,p.maxFlasks);p.speed/=0.8;}},
@@ -596,7 +596,7 @@ const ITEMS={
  sharp:{name:'Whetstone',desc:'+20% weapon dmg'},
  gourd:{name:"Pilgrim's Gourd",desc:'+1 flask'},
  // the hag's wares (see CURSED)
- fang:{name:'Hollow Fang',desc:'+35% damage; -30 max health',cursed:true},ashtongue:{name:'Ash Tongue',desc:'+50% fire damage; blows hurt +25%',cursed:true},thread:{name:"Witch's Thread",desc:'+80% spells; -40 stamina',cursed:true},hare:{name:"Hare's Foot",desc:'+25% speed; shots and traps hurt +40%',cursed:true},blackstone:{name:'Black Whetstone',desc:'weapon +2; fire hurts twice as hard',cursed:true},marrow:{name:'Marrow Tithe',desc:'+50% souls; flasks heal less',cursed:true},leaden:{name:'Leaden Gourd',desc:'+1 flask; -20% speed',cursed:true},blackcat:{name:"Black Cat's Bone",desc:'+25 luck; one blow in ten hurts double',cursed:true},
+ fang:{name:'Hollow Fang',desc:'+35% damage; -30 max health',cursed:true},ashtongue:{name:'Ash Tongue',desc:'+50% fire damage; blows hurt +25%',cursed:true},thread:{name:"Witch's Thread",desc:'+80% spells; -40 stamina',cursed:true},hare:{name:"Hare's Sinew",desc:'+25% speed; shots and traps hurt +40%',cursed:true},blackstone:{name:'Black Whetstone',desc:'weapon +2; fire hurts twice as hard',cursed:true},marrow:{name:'Marrow Tithe',desc:'+50% souls; flasks heal less',cursed:true},leaden:{name:'Leaden Gourd',desc:'+1 flask; -20% speed',cursed:true},blackcat:{name:"Black Cat's Bone",desc:'+25 luck; one blow in ten hurts double',cursed:true},
  // school gear: fire, frost, blood, arcane. One copy each, like everything else you carry
  kindling:{name:'Kindling Charm',desc:'+50% fire damage'},wildfire:{name:'Wildfire Ash',desc:'burning foes spread fire'},cinderheart:{name:'Cinder Heart',desc:'longer fires; +35% vs burning'},
  rime:{name:'Rime Tooth',desc:'+35% vs the chilled'},hoarfrost:{name:'Hoarfrost Band',desc:'chills last twice as long'},brittle:{name:'Brittle Bone',desc:'a chilled kill chills its neighbours'},

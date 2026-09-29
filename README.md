@@ -188,7 +188,7 @@ It fills the top of the arena. Its claws slam down and stay planted where they l
 | **Boss door** | A skull nailed over the arch, chains either side, the doorway lit red. Come near it and the game names who waits. Go in ready. |
 | **Secret** | A hidden wall. Strike where the stone sounds wrong and a forgotten hoard opens. |
 | **Shop** | A merchant behind a counter: flasks, gear, a tome or a weapon. Prices climb with every floor. He polishes, counts souls and drums his fingers; stand at the counter and press Q and he will talk. |
-| **The hag's carpet** | Rare, and never on the last two floors. A crowned crone hunched on a purple carpet with three wares laid out on it, each cheaper than the merchant's and each with a tooth in it: Hollow Fang (+35% damage; -30 max health), Ash Tongue (+50% fire damage; blows hurt you +25%), Witch's Thread (+80% spells; -40 stamina), Hare's Foot (+25% speed; arrows, spells and traps hurt you +40%), Black Whetstone (the weapon in hand +2; fire burns you twice as hard), Marrow Tithe (+50% souls; flasks heal a quarter less), Leaden Gourd (+1 flask; -20% speed). She talks too. And she buys curses back: open the satchel beside her, pick the piece, and she takes it for half again what she sells it at, undoing what it did. |
+| **The hag's carpet** | Rare, and never on the last two floors. A crowned crone hunched on a purple carpet with three wares laid out on it, each cheaper than the merchant's and each with a tooth in it: Hollow Fang (+35% damage; -30 max health), Ash Tongue (+50% fire damage; blows hurt you +25%), Witch's Thread (+80% spells; -40 stamina), Hare's Sinew (+25% speed; arrows, spells and traps hurt you +40%), Black Whetstone (the weapon in hand +2; fire burns you twice as hard), Marrow Tithe (+50% souls; flasks heal a quarter less), Leaden Gourd (+1 flask; -20% speed), Black Cat's Bone (+25 luck; one blow in ten on you lands double). She talks too. And she buys curses back: open the satchel beside her, pick the piece, and she takes it for half again what she sells it at, undoing what it did. |
 | **Smith** | The whetstone is always on his counter: +20% weapon damage per pass, up to two passes by the first floor, four by the second, and so on. One price for any weapon, doubling with each pass on the same weapon; switch weapons and the price starts over. The three pedestals hold three of the four infusions: Ember (hits burn), Frost (hits chill), Blood (hits drink), Storm (hits arc to the nearest foe, to two if it stands in water). They stack: one blade can carry all three, and a weapon keeps its infusions when you set it down. He works the anvil while you browse; stand beside him and press Q to talk. |
 | **Shrine** | Three offerings, take one: a stat or a piece of school gear. |
 | **Puzzle** | Braziers that keep an order (the notches tell it), pressure plates, idols turned to face the stone, or a walk across stones in one unbroken path. A wrong move raises a hollow. The prize matches the riddle. |
@@ -260,6 +260,13 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 | **Carrion Crown** | +30% vs the staggered |
 | **Stormheart** | a full charge fires a bolt |
 | **Grave Bell** | a kill staggers all near it |
+| **Four-Leaf Clover** | +10 luck |
+| **Rabbit's Foot** | +15 luck |
+| **Bent Horseshoe** | +5 luck; crits mend 3 |
+| **Fuzzy Dice** | two luck rolls on every strike |
+| **Loaded Die** | crits hit for triple |
+
+**Luck.** Never shown. Every plain strike rolls a hidden hundred, and a roll under your luck is a crit: double damage, and a foe still winding up loses its blow, which no plain light can manage on its own. One in a hundred to begin with; the charms above add to it, and the Thief Daggers carry a little of their own.
 
 **Cursed.** Anything with a bite in it is marked CURSED, named in purple on the floor and in the satchel, and taking one puffs a purple skull over your head for a moment. They turn up rarely in chests and at shrines; the hag keeps three on her carpet and sells them cheap.
 
@@ -268,11 +275,12 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 | **Hollow Fang** | +35% damage; -30 max health |
 | **Ash Tongue** | +50% fire damage; blows hurt +25% |
 | **Witch's Thread** | +80% spells; -40 stamina |
-| **Hare's Foot** | +25% speed; shots and traps hurt +40% |
+| **Hare's Sinew** | +25% speed; shots and traps hurt +40% |
 | **Black Whetstone** | weapon +2; fire hurts twice as hard |
 | **Marrow Tithe** | +50% souls; flasks heal less |
 | **Leaden Gourd** | +1 flask; -20% speed |
 | **Crimson Tithe** | +40% damage; flasks heal half |
+| **Black Cat's Bone** | +25 luck; one blow in ten hurts double |
 
 ## Bearings
 

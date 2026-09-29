@@ -1670,6 +1670,21 @@ function approachVec(e,nx,ny,dist,dt){if(Math.random()<dt*0.25)e.flank=[-1,0,1][
 function hasLOS(x0,y0,x1,y1){const d=Math.hypot(x1-x0,y1-y0),n=Math.ceil(d/6);for(let i=1;i<n;i++){const t=i/n;if(collides(x0+(x1-x0)*t,y0+(y1-y0)*t,1,false))return false;}return true;}
 // the nearest pillar, brazier or prop an archer can duck behind
 function findCover(e){const tx0=Math.floor(e.x/T),ty0=Math.floor(e.y/T);let best=null,bd=100;for(let ty=ty0-6;ty<=ty0+6;ty++)for(let tx=tx0-6;tx<=tx0+6;tx++){const s=room.solid[ty]&&room.solid[ty][tx];if(s!==2&&s!==4&&s!==8)continue;const cx=tx*T+8,cy=ty*T+8,d=Math.hypot(cx-e.x,cy-e.y);if(d<bd){bd=d;best={x:cx,y:cy};}}return best;}
+function atkDur(e){return e.type==='grunt'?0.15:e.type==='mutt'?0.26:e.type==='shield'?0.15:e.type==='wretch'?0.12:e.type==='drowned'?0.18:e.type==='bell'?0.14:e.type==='angler'?0.16:e.type==='salamander'?0.15:e.type==='knight'?(e.kind==='dash'?0.22:e.kind==='whirl'?1.1:0.12):e.type==='king'?(e.kind==='sweep'?0.2:0.3):(e.kind==='charge'?0.55:e.kind==='leap'?0.45:0.2);}
+// The red cone is the whole attack. It is computed once, as a foe begins to wind up, from the very numbers its blow will use: where it stands,
+// the way it faces, how far the lunge carries it plus its reach, and how wide the swing is. It stays on the floor until the blow is spent,
+// and inTele() gates every melee hit, so nothing outside the cone is ever struck. A lunge is drawn as a cone a little wider than its lane.
+const LUNGES={grunt:[115,8],shield:[92,7],wretch:[150,5],drowned:[95,9],bell:[90,6],toller:[80,11],hellsbell:[70,15],angler:[110,8],mutt:[230,6]};
+const MELEE_KINDS={drowned:['slam'],toller:['swing'],hellsbell:['swing'],angler:['bite'],bell:[null,undefined]};   // which of a type's moves are the lunge; the rest are shots, tolls and calls
+function teleFor(e){const p=player,R0=e.r+p.r;if(!e.dir||(!e.dir.x&&!e.dir.y)){const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy)||1;e.dir={x:dx/d,y:dy/d};}
+ let len=0,arc=0,follow=false;const cone=(R,tr)=>{len=tr+R;arc=Math.max(0.7,2*Math.atan(R/Math.max(1,len*0.6)));};
+ const L=LUNGES[e.type],mk=MELEE_KINDS[e.type];if(L&&(!mk||mk.includes(e.kind)))cone(R0+L[1],L[0]*atkDur(e));
+ else if(e.type==='salamander'&&e.kind==='whip'){len=R0+22;arc=2.8;}
+ else if(e.type==='knight'){if(e.kind==='dash')cone(R0+12,200*atkDur(e));else if(e.kind==='whirl'){len=R0+19;arc=Math.PI*2;follow=true;}else if(e.kind!=='retrieve'&&e.kind!=='call'){len=R0+16+45*atkDur(e);arc=2.8;}}
+ else if(e.type==='king'){if(e.kind==='sweep'){len=R0+34;arc=2.7;}else if(e.kind==='stomp'){len=R0+16;arc=Math.PI*2;}}
+ else if(e.type==='brute'){if(e.kind==='sweep'){len=R0+38;arc=3.0;}else if(e.kind==='grab'){len=R0+26;arc=1.6;}else if(e.kind==='charge')cone(R0+4,(brutePhase(e)>=3?185:165)*atkDur(e));}
+ if(!len)return null;return{x:e.x,y:e.y,ang:Math.atan2(e.dir.y,e.dir.x),len,arc,follow};}
+function inTele(e){const t=e.tele,p=player;if(!t)return true;const ox=t.follow?e.x:t.x,oy=t.follow?e.y:t.y,dx=p.x-ox,dy=p.y-oy,d=Math.hypot(dx,dy);if(d>t.len+p.r)return false;if(t.arc>=Math.PI*2)return true;let a=Math.atan2(dy,dx)-t.ang;a=Math.atan2(Math.sin(a),Math.cos(a));return Math.abs(a)<=t.arc/2+Math.atan2(p.r,Math.max(1,d));}   /* the cone touching your circle is a hit; a hair outside it is not */
 function updateEnemy(e,dt){
  const p=player;e.flash=Math.max(0,e.flash-dt);e.t-=dt;e.spikeCd-=dt;e.cd2-=dt;e.cd3-=dt;if(e.cdS>0)e.cdS-=dt;if(e.squashT>0)e.squashT-=dt;if(e.cdT>0)e.cdT-=dt;if(e.cdG>0)e.cdG-=dt;
  if(e.type==='brute'){if(!e.corpse){e.corpseT+=dt;if(e.corpseT>10&&e.state!=='windup'&&e.state!=='attack'){e.corpse=true;e.corpseT=0;burst(e.x-e.facing*14,e.y+e.r,10,'#cfc4b0');}}   // he tears another from the floor
@@ -1692,7 +1707,7 @@ function updateEnemy(e,dt){
  if(e.state!=='windup'&&e.state!=='attack'){e.facing=dx>=0?1:-1;e.viewAng=toP;}
  // shieldbearer turns slowly
  if(e.type==='shield'){let da=toP-e.faceAng;da=Math.atan2(Math.sin(da),Math.cos(da));const rate=(e.state==='stagger'?0.6:1.9)*dt;e.faceAng+=Math.abs(da)<rate?da:Math.sign(da)*rate;}
- const lunge=(spd,reach)=>{moveEnt(e,e.dir.x*spd*dt,e.dir.y*spd*dt);if(!e.hit&&dist<e.r+p.r+reach){e.hit=true;hurtPlayer(e.dmg,e);}};
+ const lunge=(spd,reach)=>{moveEnt(e,e.dir.x*spd*dt,e.dir.y*spd*dt);if(!e.hit&&dist<e.r+p.r+reach&&inTele(e)){e.hit=true;hurtPlayer(e.dmg,e);}};
  if(e.state==='latch'){e.x=p.x+e.lx;e.y=p.y+e.ly;e.faceAng=e.viewAng=Math.atan2(-e.ly,-e.lx);p.latchT=0.12;if(Math.random()<0.2)burst(p.x+e.lx*0.5,p.y+e.ly*0.5-2,2,'#5aa04a');
   if(p.state==='roll'||e.t<=0||p.hp<=0){e.state='recover';e.t=0.7;moveEnt(e,Math.sign(e.lx||1)*10,Math.sign(e.ly||1)*6);}return;}   /* latched on: it hangs from you and drags at your legs until you roll it off; no bite while it hangs */
  switch(e.state){
@@ -1788,10 +1803,10 @@ function updateEnemy(e,dt){
    if(e.type==='king'&&(e.kind==='bolts'||e.kind==='sweep'&&e.t>0.15||e.kind==='rupture'&&e.t>0.25)){e.dir={x:nx,y:ny};}
    if((e.type==='hellsbell'||e.type==='toller')&&(e.kind==='slam'&&e.t>0.25||e.kind==='swing'&&e.t>0.15)){e.dir={x:nx,y:ny};}
    if(e.t<=0){
-    if(e.type==='archer'){projs.push({x:e.x,y:e.y-2,vx:nx*105,vy:ny*105,r:2,dmg:e.dmg,owner:'e',life:3,col:'#c8b070',name:'a cultist arrow'});SFX.arrow();e.cd=1.6+Math.random();e.state='recover';e.t=0.95;}
-    else if(e.type==='imp'){projs.push({x:e.x,y:e.y-2,vx:nx*115,vy:ny*115,r:3,dmg:e.dmg,owner:'e',life:2.5,col:'#e8a33c',name:'an imp\'s fireball',burn:true});SFX.bolt();e.shots=(e.shots||0)+1;e.cd=1.0+Math.random()*0.4;e.state='recover';e.t=0.45;
+    if(e.type==='archer'){projs.push({x:e.x,y:e.y-2,vx:nx*105,vy:ny*105,r:3,dmg:e.dmg,owner:'e',life:3,col:'#c8b070',name:'a cultist arrow',arrow:true});SFX.arrow();e.cd=1.6+Math.random();e.state='recover';e.t=0.95;}
+    else if(e.type==='imp'){projs.push({x:e.x,y:e.y-2,vx:nx*115,vy:ny*115,r:4,dmg:e.dmg,owner:'e',life:2.5,col:'#e8a33c',name:'an imp\'s fireball',burn:true});SFX.bolt();e.shots=(e.shots||0)+1;e.cd=1.0+Math.random()*0.4;e.state='recover';e.t=0.45;
      if(e.shots>=3){e.shots=0;e.cd=1.8;   /* three shots, then it blinks away, every time */const sp=freeSpots(room,5).filter(q=>Math.hypot(q.x-p.x,q.y-p.y)>50);if(sp.length){burst(e.x,e.y-3,8,'#c8503a');const q=pick(sp);e.x=q.x;e.y=q.y;burst(e.x,e.y-3,8,'#c8503a');}}}
-    else if(e.type==='drowned'&&e.kind==='spit'){projs.push({x:e.x,y:e.y-4,vx:nx*72,vy:ny*72,r:4,dmg:Math.round(e.dmg*0.6),owner:'e',life:3,col:'#4aa08a',name:'a gout of black water'});SFX.search();e.cd=2.2+Math.random();e.state='recover';e.t=0.6;}
+    else if(e.type==='drowned'&&e.kind==='spit'){projs.push({x:e.x,y:e.y-4,vx:nx*72,vy:ny*72,r:5,dmg:Math.round(e.dmg*0.6),owner:'e',life:3,col:'#4aa08a',name:'a gout of black water'});SFX.search();e.cd=2.2+Math.random();e.state='recover';e.t=0.6;}
     else if(e.type==='knight'&&e.kind==='throw'){e.swordOut=true;const kn=e;projs.push({x:e.x,y:e.y-4,vx:e.dir.x*175,vy:e.dir.y*175,r:4,dmg:Math.round(e.dmg*1.2),owner:'e',life:0.7,col:'#b06a2a',name:"the Knight's thrown blade",sword:true,onEnd:(q)=>{kn.target={x:q.x,y:q.y};kn.state='attack';kn.kind='retrieve';kn.t=1.5;kn.hit=false;kn.dir={x:0,y:0};}});SFX.swingH();e.state='recover';e.kind='wait';e.t=1.2;e.cd=5;}
     else if(e.type==='bell'&&e.kind==='ring'){for(const o of room.enemies){if(o===e||o.dead||o.boss||Math.hypot(o.x-e.x,o.y-e.y)>100)continue;if(!o.baseSpeed){o.baseSpeed=o.speed;o.baseDmg=o.dmg;}o.speed=o.baseSpeed*1.35;o.dmg=Math.round(o.baseDmg*1.3);o.buffT=5;if(o.state==='idle'){o.state='chase';}burst(o.x,o.y-4,8,'#f4c968');}
      burst(e.x+6,e.y-14,12,'#f4c968');tone(880,0.7,'sine',0.12,660);tone(1320,0.5,'sine',0.06,990);e.cd=5+Math.random()*2;e.kind=null;e.state='recover';e.t=0.7;}
@@ -1807,24 +1822,24 @@ function updateEnemy(e,dt){
       else if(e.kind==='dark'){room.dark=true;e.hidden=true;e.shielded=true;e.state='dark';e.darkVolleys=0;e.volT=0.9;const sp=freeSpots(room,10).sort((a,b)=>Math.hypot(b.x-p.x,b.y-p.y)-Math.hypot(a.x-p.x,a.y-p.y))[0];if(sp){e.x=sp.x;e.y=sp.y;}SFX.toll();showMsg('The lights go out',2.2);}}
      else if(e.type==='knight'&&e.kind==='call'){const sp=freeSpots(room,4);for(let i=0;i<2&&i<sp.length;i++){room.enemies.push(mkEnemy('drowned',sp[i].x,sp[i].y,false));burst(sp[i].x,sp[i].y,10,'#3d7a72');}SFX.guardbreak();e.state='recover';e.t=0.8;}
     else if(e.type==='king'&&e.kind!=='sweep'&&e.kind!=='stomp'){
-     if(e.kind==='bolts'){for(let i=-1;i<=1;i++){const a=toP+i*0.3;projs.push({x:e.x,y:e.y-6,vx:Math.cos(a)*105,vy:Math.sin(a)*105,r:3,dmg:Math.round(e.dmg*0.7),owner:'e',life:3,col:'#8a6aaa',name:"the King's shadow",home:1.3});}SFX.bolt();e.cd=2.4;e.state='recover';e.t=0.7;}
+     if(e.kind==='bolts'){for(let i=-1;i<=1;i++){const a=toP+i*0.3;projs.push({x:e.x,y:e.y-6,vx:Math.cos(a)*105,vy:Math.sin(a)*105,r:4,dmg:Math.round(e.dmg*0.7),owner:'e',life:3,col:'#8a6aaa',name:"the King's shadow",home:1.3});}SFX.bolt();e.cd=2.4;e.state='recover';e.t=0.7;}
      else if(e.kind==='rupture'){for(let k=1;k<=8;k++)room.hazards.push({kind:'rock',x:e.x+e.dir.x*(12+k*15),y:e.y+e.dir.y*(12+k*15),delay:k*0.07,t:1.3,dmg:14,name:"the King's rupture",col:'#8a8296'});SFX.slam();shake=Math.max(shake,0.2);e.cd2=5;e.state='recover';e.t=1.0;}
      else{e.calls=(e.calls||0)+1;const sp=freeSpots(room,6),types=['grunt','grunt','archer'];if(e.hp<e.maxHp*0.5)types.push('grunt');for(let i=0;i<types.length&&i<sp.length;i++){room.enemies.push(mkEnemy(types[i],sp[i].x,sp[i].y,false));burst(sp[i].x,sp[i].y,10,'#3a2450');}SFX.guardbreak();e.state='recover';e.t=0.9;}}
     else if(e.type==='witch'){const t2=e.tier===2,half=e.hp<e.maxHp*0.5;
-     if(e.kind==='volley'){const nb=t2||half?3:2;for(let i=-nb;i<=nb;i++){const a=toP+i*0.22;projs.push({x:e.x,y:e.y-4,vx:Math.cos(a)*120,vy:Math.sin(a)*120,r:3,dmg:e.dmg,owner:'e',life:2.5,col:'#e8a33c',name:'the Witch\'s fire',burn:true});}SFX.bolt();}
+     if(e.kind==='volley'){const nb=t2||half?3:2;for(let i=-nb;i<=nb;i++){const a=toP+i*0.22;projs.push({x:e.x,y:e.y-4,vx:Math.cos(a)*120,vy:Math.sin(a)*120,r:4,dmg:e.dmg,owner:'e',life:2.5,col:'#e8a33c',name:'the Witch\'s fire',burn:true});}SFX.bolt();}
      else if(e.kind==='ring'){const ht=half||t2?6:3.2,ch=half||t2;for(let i=0;i<8;i++){const a=i/8*Math.PI*2;room.hazards.push({x:e.slam.x+Math.cos(a)*22,y:e.slam.y+Math.sin(a)*14,t:ht,chase:ch});}room.hazards.push({x:e.slam.x,y:e.slam.y,t:ht,chase:ch});SFX.slam();shake=Math.max(shake,0.15);}
      else if(e.kind==='wall'){const vx=-ny,vy=nx;for(let k=0;k<7;k++)for(let j=-2;j<=2;j++)room.hazards.push({x:e.x+nx*(30+k*16)+vx*j*14,y:e.y+ny*(30+k*16)+vy*j*14,delay:k*0.13,t:1.5,dmg:8});SFX.slam();shake=Math.max(shake,0.12);}
      else if(e.kind==='meteor'){for(let i=0;i<6;i++){const a=Math.random()*6.28,r=i?12+Math.random()*58:0;room.hazards.push({x:e.slam.x+Math.cos(a)*r,y:e.slam.y+Math.sin(a)*r*0.75,delay:0.9,t:2.2,dmg:10});}SFX.bolt();}
      else if(e.kind==='summon'){e.summoned=true;const sp=freeSpots(room,6),n=t2?2:3;for(let i=0;i<n&&i<sp.length;i++){room.enemies.push(mkEnemy(t2?'imp':'wretch',sp[i].x,sp[i].y,false));burst(sp[i].x,sp[i].y,8,'#5a2a4a');}SFX.guardbreak();}
      e.cd=(t2?1.0:1.3)+Math.random()*0.8;e.state='recover';e.t=0.7;}
-    else{e.state='attack';e.hit=false;if(e.type==='mutt'||e.type==='angler')e.dir={x:nx,y:ny};
-     e.t=e.type==='grunt'?0.15:e.type==='mutt'?0.26:e.type==='shield'?0.15:e.type==='wretch'?0.12:e.type==='drowned'?0.18:e.type==='bell'?0.14:e.type==='angler'?0.16:e.type==='salamander'?0.15:e.type==='knight'?(e.kind==='dash'?0.22:e.kind==='whirl'?1.1:0.12):e.type==='king'?(e.kind==='sweep'?0.2:0.3):(e.kind==='charge'?0.55:e.kind==='leap'?0.45:0.2);
+    else{e.state='attack';e.hit=false;   /* no re-aim at the release: the cone on the floor is the promise, so the blow goes where the wind-up said */
+     e.t=atkDur(e);
      if(e.type==='knight'||e.type==='king'&&e.kind==='sweep')SFX.swingH();if(e.type==='brute'&&e.kind==='charge')SFX.roll();if(e.type==='brute'&&e.kind==='sweep')SFX.swingH();if(e.type==='brute'&&e.kind==='leap'){e.leapFrom={x:e.x,y:e.y};SFX.roll();}}
    }break;
   case'attack':
    if(e.type==='grunt'){lunge(115,8);if(e.t<=0){e.state='recover';e.t=0.65;}}
    else if(e.type==='mutt'){moveEnt(e,e.dir.x*230*dt,e.dir.y*230*dt);e.faceAng=e.viewAng=Math.atan2(e.dir.y,e.dir.x);
-    if(!e.hit&&dist<e.r+p.r+6){e.hit=true;const swinging=p.state==='attack'||p.charging;if(hurtPlayer(e.dmg,e)){if(swinging){e.state='latch';e.t=1.0;e.lt=0;e.lx=e.x-p.x;e.ly=e.y-p.y;dmgNum(e.x,e.y-10,'LATCHED','#5aa04a');SFX.leech();}}}   /* the bite rots you; caught mid-swing, it hangs on */
+    if(!e.hit&&dist<e.r+p.r+6&&inTele(e)){e.hit=true;const swinging=p.state==='attack'||p.charging;if(hurtPlayer(e.dmg,e)){if(swinging){e.state='latch';e.t=1.0;e.lt=0;e.lx=e.x-p.x;e.ly=e.y-p.y;dmgNum(e.x,e.y-10,'LATCHED','#5aa04a');SFX.leech();}}}   /* the bite rots you; caught mid-swing, it hangs on */
     if(e.t<=0&&e.state==='attack'){e.state='recover';e.t=0.6;}}
    else if(e.type==='shield'){lunge(92,7);if(e.t<=0){e.state='recover';e.t=0.8;}}
    else if(e.type==='wretch'){lunge(150,5);if(e.t<=0){e.state='recover';e.t=0.55;}}
@@ -1834,35 +1849,35 @@ function updateEnemy(e,dt){
    else if(e.type==='hellsbell'){lunge(70,15);if(e.t<=0){e.state='recover';e.t=0.8;}}
    else if(e.type==='angler'){lunge(110,8);if(e.t<=0){e.state='recover';e.t=0.9;}}
    else if(e.type==='salamander'){if(!e.hit){e.hit=true;const a0=Math.atan2(e.dir.y,e.dir.x);for(let i=0;i<6;i++){const q=a0-1.2+i*0.48;parts.push({x:e.x+Math.cos(q)*16,y:e.y+Math.sin(q)*12,vx:Math.cos(q)*40,vy:Math.sin(q)*30,life:0.18,col:'#e8a33c'});}
-     if(dist<e.r+p.r+22){let a=toP-a0;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)<1.4)hurtPlayer(e.dmg,e);}SFX.swingL();}
+     if(dist<e.r+p.r+22&&inTele(e)){let a=toP-a0;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)<1.4)hurtPlayer(e.dmg,e);}SFX.swingL();}
     if(e.t<=0){e.state='recover';e.t=0.7;e.cd=1.2;}}
    else if(e.type==='knight'){
     if(e.kind==='retrieve'){const tx2=e.target.x-e.x,ty2=e.target.y-e.y,td=Math.hypot(tx2,ty2);if(td>6){e.dir={x:tx2/td,y:ty2/td};moveEnt(e,e.dir.x*220*dt,e.dir.y*220*dt);if(!e.hit&&dist<e.r+p.r+6){e.hit=true;hurtPlayer(Math.round(e.dmg*0.9),e);}}if(td<=6||e.t<=0){e.swordOut=false;burst(e.x,e.y-4,8,'#e8a33c');SFX.block();e.state='recover';e.t=0.6;}}
     else if(e.kind==='dash'){lunge(200,12);if(e.t<=0){e.cd2=3;e.state='recover';e.t=e.hp<e.maxHp*0.5?0.5:0.9;}}
     else if(e.kind==='whirl'){e.dir.x+=(nx-e.dir.x)*1.5*dt;e.dir.y+=(ny-e.dir.y)*1.5*dt;const dl=Math.hypot(e.dir.x,e.dir.y)||1;e.dir.x/=dl;e.dir.y/=dl;moveEnt(e,e.dir.x*72*dt,e.dir.y*72*dt);
      e.whirlT=(e.whirlT||0)+dt;if(e.whirlT>=0.3){e.whirlT-=0.3;e.hit=false;}if(Math.random()<0.5)parts.push({x:e.x+(Math.random()-.5)*30,y:e.y-4+(Math.random()-.5)*20,vx:0,vy:0,life:0.15,col:'#e8a33c'});
-     if(!e.hit&&dist<e.r+p.r+19){e.hit=true;hurtPlayer(Math.round(e.dmg*0.8),e);}
+     if(!e.hit&&dist<e.r+p.r+19&&inTele(e)){e.hit=true;hurtPlayer(Math.round(e.dmg*0.8),e);}
      if(e.t<=0){e.whirlT=0;e.cd3=6;e.state='recover';e.t=1.2;}}
-    else{moveEnt(e,e.dir.x*45*dt,e.dir.y*45*dt);if(!e.hit&&dist<e.r+p.r+16){let a=Math.atan2(dy,dx)-Math.atan2(e.dir.y,e.dir.x);a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)<1.4){e.hit=true;hurtPlayer(e.dmg,e);}}
+    else{moveEnt(e,e.dir.x*45*dt,e.dir.y*45*dt);if(!e.hit&&dist<e.r+p.r+16&&inTele(e)){let a=Math.atan2(dy,dx)-Math.atan2(e.dir.y,e.dir.x);a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)<1.4){e.hit=true;hurtPlayer(e.dmg,e);}}
      if(e.t<=0){if(e.phase<e.combo){e.phase++;e.state='windup';e.t=e.tier===2&&e.phase===e.combo?0.55:0.26;e.hit=false;}else{e.state='recover';e.t=e.hp<e.maxHp*0.5?0.6:1.0;}}}}
    else if(e.type==='king'){
     if(e.kind==='sweep'){if(!e.hit){e.hit=true;const a0=Math.atan2(e.dir.y,e.dir.x);for(let i=0;i<10;i++){const q=a0-1.3+i*0.29;parts.push({x:e.x+Math.cos(q)*30,y:e.y-2+Math.sin(q)*30,vx:Math.cos(q)*30,vy:Math.sin(q)*30,life:0.2,col:'#e04a3a'});}
-      if(dist<e.r+p.r+34){let a=toP-a0;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)<1.35)hurtPlayer(e.dmg,e);}}
+      if(dist<e.r+p.r+34&&inTele(e)){let a=toP-a0;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)<1.35)hurtPlayer(e.dmg,e);}}
      if(e.t<=0){if(e.phase===1){e.phase=2;e.state='windup';e.t=0.3;e.dir={x:nx,y:ny};}else{e.state='recover';e.t=0.9;}}}
-    else{if(!e.hit){e.hit=true;shake=Math.max(shake,0.3);burst(e.x,e.y+2,16,'#8a6aaa');SFX.slam();room.waves.push(mkWave(e.x,e.y,Math.round(e.dmg*0.6),"the King's stomp",'#8a6aaa'));if(dist<e.r+p.r+16)hurtPlayer(e.dmg,{x:e.x,y:e.y,name:"the King's stomp"});}
+    else{if(!e.hit){e.hit=true;shake=Math.max(shake,0.3);burst(e.x,e.y+2,16,'#8a6aaa');SFX.slam();room.waves.push(mkWave(e.x,e.y,Math.round(e.dmg*0.6),"the King's stomp",'#8a6aaa'));if(dist<e.r+p.r+16&&inTele(e))hurtPlayer(e.dmg,{x:e.x,y:e.y,name:"the King's stomp"});}
      if(e.t<=0){e.cd3=4.5;e.state='recover';e.t=0.9;}}}
    else{ // brute
     const P=brutePhase(e);
     if(e.kind==='grab'){const gx=e.x+e.dir.x*(e.r+6),gy=e.y+e.dir.y*(e.r+6);moveEnt(e,e.dir.x*40*dt,e.dir.y*40*dt);
-     if(!e.hit&&Math.hypot(p.x-gx,p.y-gy)<p.r+12){e.hit=true;if(hurtPlayer(Math.round(e.dmg*0.8),e)){e.held=true;p.fling={vx:e.dir.x*260,vy:e.dir.y*260,t:0.35};p.state='hurt';p.t=0.7;p.inv=Math.max(p.inv,0.5);SFX.slam();shake=Math.max(shake,0.3);dmgNum(p.x,p.y-18,'FLUNG','#cfc4b0');}}   // caught: hurt and hurled across the room
+     if(!e.hit&&Math.hypot(p.x-gx,p.y-gy)<p.r+12&&inTele(e)){e.hit=true;if(hurtPlayer(Math.round(e.dmg*0.8),e)){e.held=true;p.fling={vx:e.dir.x*260,vy:e.dir.y*260,t:0.35};p.state='hurt';p.t=0.7;p.inv=Math.max(p.inv,0.5);SFX.slam();shake=Math.max(shake,0.3);dmgNum(p.x,p.y-18,'FLUNG','#cfc4b0');}}   // caught: hurt and hurled across the room
      if(e.t<=0){e.state='recover';e.t=e.held?0.9:0.7;e.held=false;}}
     else if(e.kind==='sweep'){if(!e.hit){e.hit=true;const a0=Math.atan2(e.dir.y,e.dir.x),sg=e.phase===2?-1:1;for(let i=0;i<12;i++){const q=a0+sg*(-1.4+i*0.25);parts.push({x:e.x+Math.cos(q)*26,y:e.y-2+Math.sin(q)*20,vx:Math.cos(q)*40,vy:Math.sin(q)*30,life:0.2,col:'#cfc4b0'});}
       vfx.push({kind:'arc',x:e.x,y:e.y-2,r:30,a0:a0-1.45,a1:a0+1.45,t:0.22,max:0.22,col:'#f0ece0',w:4});SFX.swingH();
-      if(dist<e.r+p.r+38){let a=toP-a0;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)<1.5)hurtPlayer(Math.round(e.dmg*0.9),e);}}   // the timber reaches farther than a fist
+      if(dist<e.r+p.r+38&&inTele(e)){let a=toP-a0;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)<1.5)hurtPlayer(Math.round(e.dmg*0.9),e);}}   // the timber reaches farther than a fist
      if(e.t<=0){if(P>=3&&e.phase===1){e.phase=2;e.state='windup';e.t=0.3;e.dir={x:nx,y:ny};}else{e.state='recover';e.t=P>=3?0.6:0.9;}}}   // berserk: the hook comes back the other way
     else if(e.kind==='charge'){const ox=e.x,oy=e.y;moveEnt(e,e.dir.x*(P>=3?185:165)*dt,e.dir.y*(P>=3?185:165)*dt);if(Math.random()<0.6)parts.push({x:e.x+(Math.random()-.5)*10,y:e.y+e.r,vx:0,vy:-10,life:0.3,col:'#6d6578'});
      e.ghT=(e.ghT||0)-dt;if(e.ghT<=0){e.ghT=0.06;vfx.push({kind:'ghost',spr:SPR[sprKey(e)],x:e.x,y:e.y+e.r,facing:e.facing,t:0.22,max:0.22,white:false,lcol:'rgba(160,144,106,A)'});}   // afterimages
-     if(!e.hit&&dist<e.r+p.r+4){e.hit=true;hurtPlayer(e.dmg,e);}
+     if(!e.hit&&dist<e.r+p.r+4&&inTele(e)){e.hit=true;hurtPlayer(e.dmg,e);}
      if(e.t<=0||(Math.abs(e.x-ox)<0.01&&Math.abs(e.y-oy)<0.01)){shake=Math.max(shake,0.3);SFX.slam();burst(e.x+e.dir.x*8,e.y,14,'#6d6578');e.squashT=0.15;vfx.push({kind:'ring',x:e.x+e.dir.x*8,y:e.y+4,r0:6,r1:30,t:0.3,max:0.3,col:'#a0906a',w:2});
       if(P>=3)room.waves.push(mkWave(e.x+e.dir.x*8,e.y,Math.round(e.dmg*0.5),"the Warden's shockwave",'#a0906a'));e.cd2=P>=3?4:6;e.state='recover';e.t=P>=3?0.9:1.2;}}   // berserk: the charge ends in a crater
     else if(e.kind==='leap'){const q=1-Math.max(0,e.t)/0.45;e.x=e.leapFrom.x+(e.slam.x-e.leapFrom.x)*q;e.y=e.leapFrom.y+(e.slam.y-e.leapFrom.y)*q;e.z=Math.sin(q*Math.PI)*24;
@@ -1990,7 +2005,7 @@ function ambient(dt){const bm=BIOME();
 function update(dt){
  time+=dt;updatePlayer(dt);
  room.ambT=(room.ambT||0)-dt;if(room.ambT<=0){room.ambT=1.1+Math.random()*1.6;const f=room.decor.find(d=>d.kind==='forge'||d.kind==='cauldron'||d.kind==='fire'||d.kind==='fountain');if(f&&Math.hypot(f.x-player.x,f.y-player.y)<200)(f.kind==='cauldron'||f.kind==='fountain'?SFX.bubble:SFX.crackle)();}
- for(const e of room.enemies)if(!e.dead){e.moving=false;if(e.hitT>0)e.hitT-=dt;if(e.poiseT>0){e.poiseT-=dt;if(e.poiseT<=0)e.poise=e.poiseMax;}if(e.poiseCd>0)e.poiseCd-=dt;if(e.broken&&e.state!=='stagger')e.broken=false;if(e.state==='windup'&&e.pstate!=='windup'){e.t*=e.boss?ENEMY_K.bossWind:ENEMY_K.wind;if(hasRelic('hourglass')&&player.hourglassT>0)e.t*=1.4;if(e.windMul)e.t*=e.windMul;if(player.charging&&!e.boss&&Math.hypot(player.x-e.x,player.y-e.y)<48)e.t*=0.6;e.windT=e.t;}   /* a foe that sees you winding a heavy in its face hurries its own blow */if(e.state==='recover'&&e.pstate==='attack'&&!e.boss)e.t*=ENEMY_K.rec;   /* the follow-through after a mob's swing: the punish window */e.pstate=e.state;if(!e.anchored&&collides(e.x,e.y,e.r,true)){const fp=freePoint(e);if(fp){e.x=fp.x;e.y=fp.y;}}   // never leave a foe overlapping a pillar, whatever put it there
+ for(const e of room.enemies)if(!e.dead){e.moving=false;if(e.hitT>0)e.hitT-=dt;if(e.poiseT>0){e.poiseT-=dt;if(e.poiseT<=0)e.poise=e.poiseMax;}if(e.poiseCd>0)e.poiseCd-=dt;if(e.broken&&e.state!=='stagger')e.broken=false;if(e.state==='windup'&&e.pstate!=='windup'){e.t*=e.boss?ENEMY_K.bossWind:ENEMY_K.wind;if(hasRelic('hourglass')&&player.hourglassT>0)e.t*=1.4;if(e.windMul)e.t*=e.windMul;if(player.charging&&!e.boss&&Math.hypot(player.x-e.x,player.y-e.y)<48)e.t*=0.6;e.windT=e.t;e.tele=teleFor(e);}if(e.state!=='windup'&&e.state!=='attack')e.tele=null;   /* a foe that sees you winding a heavy in its face hurries its own blow */if(e.state==='recover'&&e.pstate==='attack'&&!e.boss)e.t*=ENEMY_K.rec;   /* the follow-through after a mob's swing: the punish window */e.pstate=e.state;if(!e.anchored&&collides(e.x,e.y,e.r,true)){const fp=freePoint(e);if(fp){e.x=fp.x;e.y=fp.y;}}   // never leave a foe overlapping a pillar, whatever put it there
   updateEnemy(e,dt);enemyTick(e,dt);if(e.moving){e.walk=(e.walk||0)+dt;if((e.boss||e.elite)&&!e.anchored&&Math.random()<0.2)parts.push({x:e.x+(Math.random()-.5)*e.r*2,y:e.y+e.r-1,vx:(Math.random()-.5)*12,vy:-5-Math.random()*5,life:0.25,col:'#6d6578'});}}
  // Ground hazards: fire (Witch) or rock (King). `delay` is a telegraph window before the hazard turns live.
  for(let i=room.hazards.length-1;i>=0;i--){const h=room.hazards[i];if(h.delay>0){h.delay-=dt;continue;}h.t-=dt;if(h.t<=0){room.hazards.splice(i,1);continue;}if(h.chase){const hx=player.x-h.x,hy=player.y-h.y,hd=Math.hypot(hx,hy)||1;h.x+=hx/hd*13*dt;h.y+=hy/hd*13*dt;}
@@ -2140,11 +2155,11 @@ function reachLine(x,y,ang,L,col){const c=Math.cos(ang),sn=Math.sin(ang);ctx.fil
  const ex=x+c*L,ey=y+sn*L;ctx.fillStyle=hexA(col,0.9);for(let k=-2;k<=2;k++)ctx.fillRect(Math.round(ex-sn*k),Math.round(ey+c*k),1,1);}   // a small tick marks the end of the reach
 // A filled sector on the floor under a foe: the lunge it is winding up. Kept faint and only for melee, so the floor never fills up with shapes.
 function sector(x,y,r,ang,arc,col,al,outline){ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,ang-arc/2,ang+arc/2);ctx.closePath();ctx.fillStyle=hexA(col,al);ctx.fill();if(outline){ctx.strokeStyle=hexA(col,Math.min(1,al*2.2));ctx.lineWidth=1;ctx.stroke();}ctx.restore();}
-const TELE={brute:{len:40,arc:2.9,only:'sweep'},toller:{len:28,arc:1.5,only:'swing'},hellsbell:{len:34,arc:1.7,only:'swing'},grunt:{len:26,arc:1.3},mutt:{len:24,arc:0.8},shield:{len:22,arc:1.2},wretch:{len:24,arc:1.2},drowned:{len:28,arc:1.4,only:'slam'},bell:{len:20,arc:1.2},angler:{len:26,arc:1.2,skip:'hook'},salamander:{len:32,arc:2.8,only:'whip'}};
+// The cones on the floor: each foe's e.tele (see teleFor), faint and filling through the wind-up, solid while the blow is live.
 function drawTelegraphs(){const p=player;
  if(p.state==='free'&&(p.charging||virt.aiming)){const w=wpn(),L=p.chargeReady?w.atk.range*hv().range:w.atk.range;reachLine(p.x,p.y-2,p.aim,L,p.chargeReady?'#ffffff':w.col);}
- for(const e of room.enemies){if(e.dead||e.state!=='windup')continue;const tg=TELE[e.type];if(!tg||(tg.only&&e.kind!==tg.only)||(tg.skip&&e.kind===tg.skip))continue;
-  const dir=e.dir||{x:Math.cos(e.faceAng||0),y:Math.sin(e.faceAng||0)},wt=e.windT||0.5,q=1-Math.max(0,e.t)/wt;sector(e.x,e.y,tg.len+e.r,Math.atan2(dir.y,dir.x),tg.arc,'#e04a3a',0.07+0.23*q,true);}}
+ for(const e of room.enemies){if(e.dead||!e.tele||(e.state!=='windup'&&e.state!=='attack'))continue;const t=e.tele,ox=t.follow?e.x:t.x,oy=t.follow?e.y:t.y;
+  let al=0.4;if(e.state==='windup'){const wt=e.windT||0.5,q=1-Math.max(0,e.t)/wt;al=0.08+0.24*q;}sector(ox,oy,t.len,t.ang,t.arc,'#e04a3a',al,true);}}
 function drawDecor(d){
  if(d.kind==='wallbell'){const x=Math.round(d.x),y=Math.round(d.y),sw=Math.round(Math.sin(time*1.7+x)*1);   // a small bronze bell on a bracket, swaying a pixel
   ctx.fillStyle='#2a2a34';ctx.fillRect(x-4,y-22,8,2);ctx.fillRect(x-1,y-24,2,2);ctx.fillStyle='#5a5a7c';ctx.fillRect(x-1+sw,y-20,2,3);
@@ -2509,6 +2524,13 @@ function drawPlayerProj(q){const col=q.col,h=q.hist||[],ang=Math.atan2(q.vy,q.vx
  else if(q.tag==='lance'){ctx.save();ctx.translate(q.x,q.y);ctx.rotate(ang);ctx.fillStyle='#e04a3a';ctx.beginPath();ctx.ellipse(-4,0,9,3.5,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e8a33c';ctx.beginPath();ctx.ellipse(-2,0,6,2.5,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff0c0';ctx.beginPath();ctx.ellipse(1,0,3,1.5,0,0,Math.PI*2);ctx.fill();ctx.restore();
   if(Math.random()<0.7)parts.push({x:q.x-Math.cos(ang)*6+(Math.random()-.5)*4,y:q.y-Math.sin(ang)*6+(Math.random()-.5)*4,vx:(Math.random()-.5)*20,vy:-20-Math.random()*20,life:0.3,col:Math.random()<0.5?'#e8a33c':'#e04a3a',noG:true});light(q.x,q.y,18,'rgba(232,163,60,A)',0.5);}
  else{ctx.fillStyle=col;ctx.beginPath();ctx.arc(q.x,q.y,q.r+0.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(q.x,q.y,Math.max(1,q.r-1.2),0,Math.PI*2);ctx.fill();light(q.x,q.y,16,hexA(col,'A'),0.5);}}
+// A foe's shot is drawn at the size that hurts: a dark rim just outside its hit circle, its colour filled, a bright core, a short fading trail.
+// An arrow is a shaft with its head on that circle. Nothing that can hit you is a one-pixel streak any more.
+function drawShot(q){const x=q.x,y=q.y,l=Math.hypot(q.vx,q.vy)||1,ux=q.vx/l,uy=q.vy/l,r=q.r;
+ for(let k=1;k<=2;k++){ctx.globalAlpha=0.3/k;ctx.fillStyle=q.col;ctx.beginPath();ctx.arc(x-ux*r*1.7*k,y-uy*r*1.7*k,Math.max(1,r-k),0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+ if(q.arrow){ctx.lineCap='butt';ctx.strokeStyle=K;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+ux*r,y+uy*r);ctx.lineTo(x-ux*9,y-uy*9);ctx.stroke();ctx.strokeStyle=q.col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x+ux*(r-1),y+uy*(r-1));ctx.lineTo(x-ux*9,y-uy*9);ctx.stroke();ctx.fillStyle=K;ctx.beginPath();ctx.arc(x,y,r+1,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e8e0d0';ctx.beginPath();ctx.arc(x,y,r-0.5,0,Math.PI*2);ctx.fill();}
+ else{ctx.fillStyle=K;ctx.beginPath();ctx.arc(x,y,r+1,0,Math.PI*2);ctx.fill();ctx.fillStyle=q.col;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff8f0';ctx.fillRect(Math.round(x)-1,Math.round(y)-1,2,2);}
+ light(x,y,r*4+6,hexA(q.col,'A'),0.22);}
 function drawSpark(q){const l=Math.hypot(q.vx,q.vy)||1;ctx.fillStyle='#c9a227';ctx.fillRect(Math.round(q.x-q.vx/l*4)-1,Math.round(q.y-q.vy/l*4)-1,2,2);ctx.fillStyle='#fff0c0';ctx.fillRect(Math.round(q.x)-2,Math.round(q.y)-2,4,4);ctx.fillStyle='#ffffff';ctx.fillRect(Math.round(q.x)-1,Math.round(q.y)-1,2,2);light(q.x,q.y,18,'rgba(244,201,104,A)',0.6);if(Math.random()<0.4)parts.push({x:q.x,y:q.y,vx:(Math.random()-.5)*12,vy:(Math.random()-.5)*12,life:0.25,col:'#f4c968',noG:true});}
 // Spell effects that aren't particles: expanding rings, rune circles, the Soul Chain, Shade Step's ghosts, and the Wyrm's globs in flight.
 function drawFx(){for(const r of rods){const x=Math.round(r.x);if(!r.struck){const k=r.t/0.4,y=Math.round(r.y-96*(1-k));ctx.fillStyle=K;ctx.fillRect(x-2,y-14,4,16);ctx.fillStyle='#8a94a4';ctx.fillRect(x-1,y-13,2,14);ctx.fillStyle='#d9e8ff';ctx.fillRect(x-1,y-1,2,2);ctx.strokeStyle=hexA('#d9e8ff',0.25+0.35*Math.abs(Math.sin(time*16)));ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(r.x,r.y,8,4,0,0,Math.PI*2);ctx.stroke();}   /* falling: the rod and the ring where it will land */
@@ -2870,7 +2892,7 @@ function draw(){
  for(const w of room.waves){if(w.r<=0)continue;const a=0.15+0.75*(1-w.r/w.maxR);ctx.strokeStyle=hexA(w.col,a);ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(w.x,w.y,w.r,w.r*0.75,0,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=hexA('#fff0c0',a*0.5);ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(w.x,w.y,Math.max(1,w.r-2),Math.max(1,w.r-2)*0.75,0,0,Math.PI*2);ctx.stroke();}
  ents.push({y:player.y,f:drawPlayer});room.decor.forEach(d=>{if(!FLAT_DECOR.has(d.kind))ents.push({y:d.kind==='lantern'?d.y+40:d.kind==='anvil'?d.y-1:d.y,f:()=>drawDecor(d)});});room.items.forEach(it=>ents.push({y:it.y,f:()=>drawItem(it)}));room.props.forEach(b=>{if(b.kind==='plate'||b.kind==='stone')drawProp(b);else ents.push({y:b.y+4,f:()=>drawProp(b)});});
  ents.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
- for(const q of projs){ctx.fillStyle=q.col;if(q.hook){if(q.from&&!q.from.dead){ctx.strokeStyle='#cfc4b0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q.from.x+6,q.from.y-4);ctx.lineTo(q.x,q.y);ctx.stroke();}ctx.fillStyle=K;ctx.fillRect(Math.round(q.x)-2,Math.round(q.y)-2,5,5);ctx.fillStyle='#e8e0d0';ctx.fillRect(Math.round(q.x)-1,Math.round(q.y)-1,3,3);continue;}if(q.sword){ctx.save();ctx.translate(q.x,q.y);ctx.rotate(time*25);ctx.strokeStyle='#b06a2a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(8,0);ctx.stroke();ctx.strokeStyle='#e8a33c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(8,0);ctx.stroke();ctx.restore();continue;}if(q.owner==='p'){drawPlayerProj(q);}else if(q.spark){drawSpark(q);}else{ctx.lineWidth=1;ctx.strokeStyle=q.col;ctx.beginPath();ctx.moveTo(q.x,q.y);const l=Math.hypot(q.vx,q.vy);ctx.lineTo(q.x-q.vx/l*6,q.y-q.vy/l*6);ctx.stroke();}}
+ for(const q of projs){ctx.fillStyle=q.col;if(q.hook){if(q.from&&!q.from.dead){ctx.strokeStyle='#cfc4b0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q.from.x+6,q.from.y-4);ctx.lineTo(q.x,q.y);ctx.stroke();}ctx.fillStyle=K;ctx.fillRect(Math.round(q.x)-2,Math.round(q.y)-2,5,5);ctx.fillStyle='#e8e0d0';ctx.fillRect(Math.round(q.x)-1,Math.round(q.y)-1,3,3);continue;}if(q.sword){ctx.save();ctx.translate(q.x,q.y);ctx.rotate(time*25);ctx.strokeStyle='#b06a2a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(8,0);ctx.stroke();ctx.strokeStyle='#e8a33c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(8,0);ctx.stroke();ctx.restore();continue;}if(q.owner==='p'){drawPlayerProj(q);}else if(q.spark){drawSpark(q);}else{drawShot(q);}}
  drawFx();
  if(parryFx){const f=parryFx,k=1-f.t/f.max,e=1-Math.pow(1-k,3);   // the parry flash: a star that snaps out, a ring that races away, a shield-arc facing the blow
   ctx.save();ctx.translate(Math.round(f.x),Math.round(f.y));

@@ -843,6 +843,9 @@ const TPL={
  trap:[["..................","..................","..................","....~~~~~~~~~~....","....~^^^^^^^^~....","....~^......^~....","....~^..CS..^~....","....~^..HH..^~....","....~^......^~....","....~^^^^^^^^~....","....~~~~~~~~~~....","..................","..................",".................."],
   ["......................","......................","......................","...~~~~~~~~~~~~~~~~...","...~..............~...","...~.~~~~~~~~~~~~.~...","...~.~....CS....~.~...","...~.~..H....H..~.~...","...~.~~~~~~~~~~~~.~...","...~..............~...","...~~~~~~~~~~~~~~~~...","......................","......................","......................"]],
  // a blessed well: drink once and you carry one more flask from then on
+ // halls: the corridors the generator lays between special rooms. No foes, a torch or two, and the odd pillar to walk round.
+ hallH:[["t............t","..............","....P....P....","..............","t............t"],["..............",".t..........t.","..............",".t..........t.",".............."],["t.....^^.....t","..............","..P........P..","..............","t.....^^.....t"]],
+ hallV:[["t...t",".....",".....","..P..",".....",".....","..P..",".....",".....","t...t"],[".....","t...t",".....",".....",".....",".....",".....",".....","t...t","....."],["t...t",".....",".^.^.",".....",".....",".....",".....",".^.^.",".....","t...t"]],
  fountain:[["............",".s........s.",".....OO.....",".....OO.....","............","..n......n..","............","............","............"]],
  startWell:[["..................","..OO..............","..OO..............","..................","........F.........","..................","..................","..................","..................",".................."]],
  boss:[["..................","..................","..P............P..","..................","..................","..................","..................","..................","..................","..................","..................","..................","..................","..................","..................","..P............P..","..................",".................."]],
@@ -938,23 +941,33 @@ function genDungeonInner(){
  while(n<20&&tries<800){tries++;const base=order[Math.floor(Math.random()*order.length)];const d=DIRS[Math.floor(Math.random()*4)];
   const nx=base.x+d.x,ny=base.y+d.y;if(rooms[key(nx,ny)])continue;
   const r={x:nx,y:ny,type:'combat',depth:base.depth+1};rooms[key(nx,ny)]=r;order.push(r);n++;}
- let far=order[1]||start;order.forEach(r=>{if(r.depth>far.depth)far=r;});far.type='boss';
- const cand=order.filter(r=>r!==start&&r!==far).sort(()=>Math.random()-0.5);
-  // the pit-ring trap room takes a dead end when the tree has one to spare: a puzzle you step into on purpose, never a hall you must cross
- {const isLeaf=r=>DIRS.filter(d=>rooms[key(r.x+d.x,r.y+d.y)]).length===1,leaves=cand.filter(isLeaf);if(cand.length>4&&leaves.length>=2&&!isLeaf(cand[4])){const li=cand.indexOf(leaves[0]);[cand[4],cand[li]]=[cand[li],cand[4]];}}
- if(cand[0])cand[0].type='shop';if(cand[1])cand[1].type='shrine';if(cand[2])cand[2].type='treasure';if(cand[3])cand[3].type='puzzle';if(cand[4])cand[4].type='trap';if(cand[5])cand[5].type='smith';if(cand[6])cand[6].type='arena';
- if(cand[2]&&Math.random()<0.35)cand[2].type='combat';if(cand[4]&&Math.random()<0.35)cand[4].type='combat';   // chests are rarer: the treasure room and the trap room sit out a floor in three
- const leaf=order.find(r=>r.type==='combat'&&DIRS.filter(d=>rooms[key(r.x+d.x,r.y+d.y)]).length===1);
- if(leaf){leaf.type='vault';const combats=order.filter(r=>r.type==='combat'||r.type==='arena');if(combats.length)pick(combats).keyRoom=true;else leaf.type='combat';}
- const parents=order.filter(r=>r.type==='combat').sort(()=>Math.random()-0.5);
- for(const pr of parents){const ds=DIRS.filter(d=>!rooms[key(pr.x+d.x,pr.y+d.y)]);if(!ds.length)continue;const d=pick(ds);
-  const sr={x:pr.x+d.x,y:pr.y+d.y,type:'secret',depth:pr.depth+1,parent:key(pr.x,pr.y)};rooms[key(sr.x,sr.y)]=sr;pr.secretDir=d.n;break;}
+ const adjStart=r=>Math.abs(r.x)+Math.abs(r.y)===1;let far=order.find(r=>r!==start&&!adjStart(r))||order[1]||start;order.forEach(r=>{if(r.depth>far.depth&&!adjStart(r))far=r;});far.type='boss';   /* the deepest room, but never one whose wall is the start room's: the tree can curl back on the grid */
+ // Keepers, puzzles and hoards never sit side by side, and none of them opens off the start room: every special room (the boss too) must
+ // have nothing but fight rooms and halls on its four sides. When the tree has no such slot left, it grows one: a hall off a fight room,
+ // then the special beyond it, so the spacing comes from corridors rather than from doing without.
+ const nb=r=>DIRS.map(d=>rooms[key(r.x+d.x,r.y+d.y)]).filter(Boolean),SPECIAL=t=>t!=='combat'&&t!=='hall',isLeaf=r=>nb(r).length===1;
+ const clean=(x,y)=>!DIRS.some(d=>{const o=rooms[key(x+d.x,y+d.y)];return o&&SPECIAL(o.type);});   // a cell touching no special
+ const okSlot=r=>r.type==='combat'&&clean(r.x,r.y);
+ const grow=(from,type)=>{const ds=DIRS.filter(d=>!rooms[key(from.x+d.x,from.y+d.y)]).sort(()=>Math.random()-0.5);for(const d of ds){const x=from.x+d.x,y=from.y+d.y;if(type!=='hall'&&!clean(x,y))continue;const r={x,y,type,depth:from.depth+1};rooms[key(x,y)]=r;order.push(r);return r;}return null;};
+ function slot(prefLeaf){let c=order.filter(okSlot);if(prefLeaf){const lv=c.filter(isLeaf);if(lv.length)c=lv;}if(c.length)return pick(c);
+  if(order.length>=34)return null;
+  const bases=order.filter(r=>r.type==='combat'||r.type==='hall').sort(()=>Math.random()-0.5);
+  for(const bs of bases){const r=grow(bs,'combat');if(r)return r;}   // a new fight room in a clean cell becomes the slot
+  for(const bs of bases.filter(r=>r.type==='combat')){const h=grow(bs,'hall');if(!h)continue;const r=grow(h,'combat');if(r)return r;   /* a hall, then the room beyond it */rooms[key(h.x,h.y)]=undefined;delete rooms[key(h.x,h.y)];order.splice(order.indexOf(h),1);}
+  return null;}
+ const place=(type,prefLeaf)=>{const r=slot(prefLeaf);if(r)r.type=type;return r;};
+ place('shop');place('shrine');if(Math.random()>=0.35)place('treasure');place('puzzle');if(Math.random()>=0.35)place('trap',true);place('smith');place('arena');   // chests are rarer: the treasure room and the trap room sit out a floor in three; the trap takes a dead end
+ {const v=place('vault',true);if(v){const combats=order.filter(r=>r.type==='combat'||r.type==='arena');if(combats.length)pick(combats).keyRoom=true;else v.type='combat';}}
+ // the secret room hangs off a fight room, in a cell that touches no special
+ {const parents=order.filter(r=>r.type==='combat').sort(()=>Math.random()-0.5);
+  for(const pr of parents){const ds=DIRS.filter(d=>!rooms[key(pr.x+d.x,pr.y+d.y)]&&clean(pr.x+d.x,pr.y+d.y));if(!ds.length)continue;const d=pick(ds);
+   const sr={x:pr.x+d.x,y:pr.y+d.y,type:'secret',depth:pr.depth+1,parent:key(pr.x,pr.y)};rooms[key(sr.x,sr.y)]=sr;order.push(sr);pr.secretDir=d.n;break;}}
  // one biome special per floor: an ossuary in Gloomhollow, a flooded vault in the Drowned Halls, a kiln in the Ember Depths
- if(floor<FINAL-1){const cs=order.filter(r=>r.type==='combat');if(cs.length>=3)pick(cs).type=['ossuary','flooded','kiln','ossuary'][BIOME()];}
+ if(floor<FINAL-1)place(['ossuary','flooded','kiln','ossuary'][BIOME()]);
  // and a blessed well on every floor (the throne and maw floors keep theirs in the start room)
- if(floor<FINAL-1){const cs=order.filter(r=>r.type==='combat');if(cs.length>=3)pick(cs).type='fountain';}
+ if(floor<FINAL-1)place('fountain');
  // now and then the hag has laid her carpet on this floor: cheap wares, each with a tooth in it. She takes a dead end when there is one.
- if(floor<FINAL-1&&Math.random()<0.28){const cs=order.filter(r=>r.type==='combat'),lv=cs.filter(r=>DIRS.filter(d=>rooms[key(r.x+d.x,r.y+d.y)]).length===1);if(cs.length>=4)pick(lv.length?lv:cs).type='hag';}
+ if(floor<FINAL-1&&Math.random()<0.28)place('hag',true);
  if(loop>0){const cs=order.filter(r=>r.type==='combat');if(cs.length)pick(cs).champRoom=true;}
  // Steel is scarce: one room a floor carries a weapon, sometimes two; every other chest holds relics or vials. The shop stocks one only when the floor has a single weapon room.
  {const wr=Object.values(rooms).filter(r=>['treasure','vault','secret','trap','arena','puzzle','flooded'].includes(r.type)).sort(()=>Math.random()-0.5);const nW=Math.min(wr.length,1+(Math.random()<0.5?1:0));for(let i=0;i<nW;i++)wr[i].weaponRoom=true;const shopR=order.find(r=>r.type==='shop');if(shopR&&nW<2)shopR.shopWeapon=true;const sr=wr.find(r=>!r.weaponRoom);if(sr)sr.spellRoom=true;}   /* and one room a floor carries a tome: spells are rarer than steel now */
@@ -968,6 +981,7 @@ function buildRoomInner(r){
   const grand=loop>0?0.5:r.depth>=1?0.32:0;   // a grand room: halls, the dining hall, the library, the biome's set piece; the loop halls join on a loop
   if(Math.random()<grand){const pool=GRAND_ALL.concat(GRAND_BIO[BIOME()],loop>0?BIG_BY_BIOME[BIOME()]:[]).filter(t=>t!==lastGrand);tpl=pick(pool);lastGrand=tpl;}}
  else if(r.type==='arena'&&loop>0&&Math.random()<0.5)tpl=pick(BIG_BY_BIOME[BIOME()]);
+ else if(r.type==='hall'){const D=dungeon||{},v=(D[key(r.x,r.y-1)]||D[key(r.x,r.y+1)])&&!(D[key(r.x-1,r.y)]||D[key(r.x+1,r.y)]);tpl=pick(v?TPL.hallV:TPL.hallH);}   /* a hall runs the way its doors do */
  else tpl=pick(TPL[r.type==='start'&&floor>=FINAL-1?'startWell':r.type!=='boss'?r.type:floor>=FINAL?'maw':floor===FINAL-1?'throne':BIOME()===3?'belfry':'boss']);
  r.tpl=tpl;const iw=tpl[0].length,ih=tpl.length;r.rw=iw+2;r.rh=ih+2;r.pw=r.rw*T;r.ph=r.rh*T;r.dx=Math.floor(r.rw/2)-1;r.dy=Math.floor(r.rh/2)-1;
  r.solid=[];r.spikes=[];r.items=[];r.decor=[];r.props=[];r.well=null;

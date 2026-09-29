@@ -53,12 +53,12 @@ In halls wider than the screen, chevrons on the edge of the view point to foes y
 
 ## Weapons
 
-Sixteen, found in chests, on arena pedestals and merchant counters. One or two per floor. Each has a plain strike and a named heavy.
+Twenty, found in chests, on arena pedestals and merchant counters. One or two per floor. Each has a plain strike and a named heavy.
 
 | Weapon | Strike | Heavy | What the heavy does |
 |---|---|---|---|
 | **Rusted Shortsword** | plain, 18 damage | Wheel (0.6s charge, x1.6) | a full circle swing |
-| **Thief Daggers** | very fast, chains, 11 damage | Flurry (0.4s charge, x0.65) | three cuts, each leaves the foe bleeding |
+| **Thief Daggers** | very fast, chains, lucky, 11 damage | Flurry (0.4s charge, x0.65) | three cuts, each leaves the foe bleeding |
 | **Bone Spear** | long thrust, slow to recover, 22 damage | Impale (0.7s charge, x1.75) | runs through every foe in a line |
 | **Gravedigger Mace** | pounds the ground, staggers, 34 damage | Wrecker (0.9s charge, x1.6) | the whirl breaks into a full circle, then the pound |
 | **Warden Greatsword** | huge, slow, 52 damage | Cleave (1.1s charge, x1.75) | hurls foes back and lays them out |
@@ -73,8 +73,14 @@ Sixteen, found in chests, on arena pedestals and merchant counters. One or two p
 | **Tomb Warhammer** | crushing, shakes the ground, 60 damage | Tremor (1.4s charge, x2) | everything in the pound is stunned |
 | **Duelist Sabre** | quick cuts, steps in, 17 damage | Passado (0.5s charge, x1.5) | a dash through the line, untouchable |
 | **Gravedirt Katar** | fastest, short, 13 damage | Frenzy (0.35s charge, x0.6) | four cuts; each one returns stamina |
+| **Gambler's Dirk** | fast, lucky; crits bleed, 13 damage | Wager (0.5s charge, x1.2) | all in: the strike rolls at four times your luck; a crit hits triple and mends ten, a miss bleeds you ten |
+| **Tempered Blade** | strikes alternate fire and frost; both together steam, 17 damage | Anneal (0.7s charge, x1.5) | fire and frost in one blow: it steams at once |
+| **Stormlash** | long; hits arc; crits call lightning, 15 damage | Thunderhead (0.7s charge, x1.3) | a rod falls on every foe the lash touches |
+| **Fortune's Cleaver** | each swing rolls an element; lucky, 26 damage | Jackpot (0.8s charge, x1.4) | every element at once, and it always crits |
 
 The smith's infusions add a burn, a chill or lifesteal to any weapon; the whetstone adds twenty percent.
+
+**Steam.** Fire on a chilled foe, or frost on a burning one, and the two marks spend themselves in a burst: half again the blow, a stagger, and a cloud that chills every foe beside it. The Tempered Blade does it on every second strike; an Ember Blade with a Frost Infusion does it on every one.
 
 ## Spells
 

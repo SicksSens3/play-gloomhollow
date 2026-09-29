@@ -578,7 +578,7 @@ const uncursePrice=id=>Math.round(priced(CURSED[id].price)*1.5/10)*10;
 function hagOffer(){let R=null;try{R=room;}catch(e){}if(!R||R.type!=='hag'||!player.items.length)return null;const it=player.items[Math.min(itemSel,player.items.length-1)];return it&&ITEMS[it.id]&&ITEMS[it.id].cursed?it:null;}
 function uncurse(id){const c=CURSED[id];if(!c||!hasRelic(id))return false;const cost=uncursePrice(id);if(souls<cost){showMsg('Not enough souls',1);SFX.block();return false;}souls-=cost;if(c.undo)c.undo(player);player.items=player.items.filter(i=>i.id!==id);itemSel=Math.max(0,Math.min(itemSel,player.items.length-1));SFX.buy();burst(player.x,player.y-4,16,'#b06ac8');showMsg('She takes back the '+c.name,2.2);const hg=room.decor.find(d=>d.kind==='hag');if(hg)hg.talkUntil=time+2;return true;}   // the flask half is read where flasks heal (hasRelic('tithe'))
 // What the card says when you take a piece: one plain sentence, sometimes two.
-const CARD={vigor:"Deep roots. Fifty more health, and it fills now.",endurance:"Boots for the long road. Fifty more stamina.",might:"A gauntlet of ash. Every strike a third harder.",attune:"Still water. Forty more mana, and spells sixty percent stronger.",swift:"The wind at your back. A quarter faster on your feet.",kindling:"Fire you deal burns half again as hot.",wildfire:"Half the time, a burning foe passes its fire to the next.",cinderheart:"Your fires last longer, and the burning take a third more.",rime:"The chilled take a third more from you.",hoarfrost:"Your chills hold twice as long.",brittle:"Kill a chilled foe and the cold jumps to its neighbours.",leech:"Each melee hit gives back six percent of it as health.",ruin:"The bleeding take forty percent more from you.",sanguine:"Every kill mends five health.",focus:"Spells forty percent stronger.",echo:"Spells cost a third less mana.",conduit:"Each melee hit gives back three mana.",band:"A parry drives thorns into the one who struck.",idol:"Every strike sets its mark burning.",veil:"Nothing touches you for the whole of a roll.",aegis:"Every fight begins with a ward on you.",miser:"The dead leave half again the souls.",hourglass:"Every foe winds up a quarter slower.",ironheart:"A flask heals seventy instead of forty-five.",bloodstone:"Once a floor, the blow that would kill you leaves you at thirty.",mask:"Below forty percent health you hit a third harder.",sigil:"A parry chills the one who struck.",emberheart:"Drinking a flask bursts into flame around you.",lantern:"Every kill mends four health.",seal:"Every price a quarter off.",quicksilver:"Rolls cost no stamina and carry you farther.",brand:"Heavies charge faster and cost only a light's stamina.",candle:"Every kill returns twelve mana.",mirror:"One blow in five turns back on the one who struck.",gargoyle:"No blow interrupts your swing.",feather:"A fall into a pit costs nothing.",frostguard:"A parry chills every foe near you.",echoguard:"A parry gives back twenty-five stamina and ten mana.",cinderheels:"Every roll leaves three fires in your wake.",vipertooth:"A counter-hit leaves the foe bleeding.",quakefist:"A heavy that lands staggers every foe beside it.",carrioncrown:"Staggered foes take thirty percent more.",stormheart:"The moment a heavy is fully charged, a soul bolt flies.",gravebell:"Every kill staggers the foes around it.",fang:"A third harder. Thirty health gone.",ashtongue:"Your fire burns half again as hot. Blows on you land a quarter harder.",thread:"Spells eighty percent stronger. Forty stamina gone.",hare:"A quarter faster. Arrows, spells and traps hurt you forty percent more.",blackstone:"Two passes on the weapon in hand. Fire burns you twice as hard.",marrow:"Half again the souls. Flasks heal a quarter less.",leaden:"One more flask. A fifth slower on your feet.",tithe:"Forty percent harder. Flasks heal half."};
+const CARD={vigor:"Deep roots. Fifty more health, and it fills now.",endurance:"Boots for the long road. Fifty more stamina.",might:"A gauntlet of ash. Every strike a third harder.",attune:"Still water. Forty more mana, and spells sixty percent stronger.",swift:"The wind at your back. A quarter faster on your feet.",kindling:"Fire you deal burns half again as hot.",wildfire:"Half the time, a burning foe passes its fire to the next.",cinderheart:"Your fires last longer, and the burning take a third more.",rime:"The chilled take a third more from you.",hoarfrost:"Your chills hold twice as long.",brittle:"Kill a chilled foe and the cold jumps to its neighbours.",leech:"Each melee hit gives back six percent of it as health.",ruin:"The bleeding take forty percent more from you.",sanguine:"Every kill mends five health.",focus:"Spells forty percent stronger.",echo:"Spells cost a third less mana.",conduit:"Each melee hit gives back three mana.",band:"A parry drives thorns into the one who struck.",idol:"Every strike sets its mark burning.",veil:"Nothing touches you for the whole of a roll.",aegis:"Every fight begins with a ward on you.",miser:"The dead leave half again the souls.",hourglass:"The sand runs when blood does. Take a blow, or turn one aside, and for four seconds every foe winds up slower.",ironheart:"A flask heals seventy instead of forty-five.",bloodstone:"Once a floor, the blow that would kill you leaves you at thirty.",mask:"Below forty percent health you hit a third harder.",sigil:"A parry chills the one who struck.",emberheart:"Drinking a flask bursts into flame around you.",lantern:"Every kill mends four health.",seal:"Every price a quarter off.",quicksilver:"Rolls cost no stamina and carry you farther.",brand:"Heavies charge faster and cost only a light's stamina.",candle:"Every kill returns twelve mana.",mirror:"One blow in five turns back on the one who struck.",gargoyle:"No blow interrupts your swing.",feather:"A fall into a pit costs nothing.",frostguard:"A parry chills every foe near you.",echoguard:"A parry gives back twenty-five stamina and ten mana.",cinderheels:"Every roll leaves three fires in your wake.",vipertooth:"A counter-hit leaves the foe bleeding.",quakefist:"A heavy that lands staggers every foe beside it.",carrioncrown:"Staggered foes take thirty percent more.",stormheart:"The moment a heavy is fully charged, a soul bolt flies.",gravebell:"Every kill staggers the foes around it.",fang:"A third harder. Thirty health gone.",ashtongue:"Your fire burns half again as hot. Blows on you land a quarter harder.",thread:"Spells eighty percent stronger. Forty stamina gone.",hare:"A quarter faster. Arrows, spells and traps hurt you forty percent more.",blackstone:"Two passes on the weapon in hand. Fire burns you twice as hard.",marrow:"Half again the souls. Flasks heal a quarter less.",leaden:"One more flask. A fifth slower on your feet.",tithe:"Forty percent harder. Flasks heal half."};
 // Run upgrades are gear you carry. ITEMS names them for the satchel; BUFFS/UPG/the shop still apply the effects.
 const ITEMS={
  vigor:{name:'Amulet of Deep Root',desc:'+50 max health'},
@@ -604,7 +604,7 @@ const ITEMS={
  veil:{name:'Veil of Smoke',desc:'the whole roll is untouchable',relic:true,rar:'rare'},
  aegis:{name:'Aegis Shard',desc:'a ward as each fight begins',relic:true,rar:'common'},
  miser:{name:"Miser's Ring",desc:'half again the souls',relic:true,rar:'uncommon'},
- hourglass:{name:'Cracked Hourglass',desc:'foes wind up slower',relic:true,rar:'rare'},
+ hourglass:{name:'Cracked Hourglass',desc:'struck, or parry: foes wind up slower for 4s',relic:true,rar:'rare'},
  ironheart:{name:'Iron Heart',desc:'flasks heal 70',relic:true,rar:'common'},
  bloodstone:{name:'Bloodstone',desc:'once a floor, death spares you',relic:true,rar:'rare'},
  mask:{name:'Hollow Mask',desc:'hit harder when near death',relic:true,rar:'uncommon'},
@@ -644,7 +644,9 @@ const whetCap=()=>2*floor+4*loop;   // how far the steel can be honed by this fl
 const priceOf=it=>Math.round((it.kind==='upgrade'&&it.id==='sharp'?whetPrice():(it.price||0))*(hasRelic('seal')?0.75:1));   // the Merchant's Seal knocks a quarter off
 const soulMul=()=>(hasRelic('miser')?1.5:1)*Math.pow(1.5,cnt('marrow'));   // the Miser's Ring and the hag's Marrow Tithe both swell what the dead leave
 // The parry triggers: frost around you, or stamina and mana back.
-function relicParry(tgt){const p=player;if(hasRelic('frostguard')){for(const o of room.enemies){if(o.dead)continue;if(Math.hypot(o.x-p.x,o.y-p.y)<44){o.slow=Math.max(o.slow||0,slowFor(3));burst(o.x,o.y-4,6,'#7fa8ff');}}vfx.push({kind:'ring',x:p.x,y:p.y,r0:6,r1:44,t:0.35,max:0.35,col:'#7fa8ff',w:2,inner:true});}
+// The Cracked Hourglass: not always on. A blow that lands on you, or one you parry, opens a four-second window in which every foe winds up slower.
+function hourglassOn(){const p=player;if(!hasRelic('hourglass'))return;p.hourglassT=4;burst(p.x,p.y-6,10,'#d9c8a0');vfx.push({kind:'ring',x:p.x,y:p.y,r0:4,r1:30,t:0.3,max:0.3,col:'#d9c8a0',w:1,inner:true});}
+function relicParry(tgt){const p=player;hourglassOn();if(hasRelic('frostguard')){for(const o of room.enemies){if(o.dead)continue;if(Math.hypot(o.x-p.x,o.y-p.y)<44){o.slow=Math.max(o.slow||0,slowFor(3));burst(o.x,o.y-4,6,'#7fa8ff');}}vfx.push({kind:'ring',x:p.x,y:p.y,r0:6,r1:44,t:0.35,max:0.35,col:'#7fa8ff',w:2,inner:true});}
  if(hasRelic('echoguard')){p.stam=Math.min(p.maxStam,p.stam+25);p.mana=Math.min(p.maxMana,p.mana+10);burst(p.x,p.y-6,8,'#f4c968');}}
 // Footing, never shown. Every blow wears a foe's hidden pool of it; a few quiet seconds bring it back; when it breaks the foe staggers.
 // Lights chip, heavies and ripostes tear, a counter-hit tears double. Heavies still knock the small ones flat outright; a boss only goes down when the pool breaks.
@@ -1110,21 +1112,25 @@ function collides(x,y,r,forEnemy){for(const[dx,dy]of[[-r,-r],[r,-r],[-r,r],[r,r]
 function moveEnt(e,dx,dy){const en=e!==player;const ox=e.x,oy=e.y;if(!collides(e.x+dx,e.y,e.r,en))e.x+=dx;if(!collides(e.x,e.y+dy,e.r,en))e.y+=dy;if(en&&(e.x!==ox||e.y!==oy)){e.moving=true;}}
 function spikeState(s){const t=(time+s.phase)%2.6;return t>2.0?'up':t>1.65?'warn':'down';}
 
+// Enemy cadence knob. Every wind-up is stretched by this on the way in (mobs by `wind`, bosses more gently by `bossWind`), and a mob's recover
+// after a melee swing by `rec`, so each blow is telegraphed for long enough to read and leaves a clear window to punish. Applied in the
+// pre-pass in updateEnemies, so the per-enemy numbers below stay the hand-tuned shape and this sets the tempo.
+const ENEMY_K={wind:1.5,bossWind:1.2,rec:1.3};
 const ETYPES={
- grunt:{name:'a hollow',hp:34,r:4,speed:18,dmg:14,souls:20,poise:22},   // slow: it shuffles, and it trembles as it comes
+ grunt:{name:'a hollow',hp:34,r:4,speed:34,dmg:14,souls:20,poise:22},   // it weaves as it comes, but you cannot simply walk away from it
  archer:{name:'a cultist',hp:26,r:4,speed:40,dmg:14,souls:30,poise:14},
  mutt:{name:'a festered mutt',hp:20,r:4,speed:46,dmg:8,souls:30,poise:10},   // fast and low; alone (two in a great hall); it latches onto a swinging arm and drags at you until you roll
- shield:{name:'a shieldbearer',hp:60,r:5,speed:20,dmg:20,souls:50,poise:50},
+ shield:{name:'a shieldbearer',hp:60,r:5,speed:30,dmg:20,souls:50,poise:50},
  wretch:{name:'a wretch',hp:14,r:3,speed:64,dmg:6,souls:10,poise:6},
  brute:{name:'the Warden',hp:375,r:11,speed:27,dmg:34,souls:400,boss:true,poise:160},
  knight:{name:'the Rusted Knight',hp:300,r:7,speed:50,dmg:22,souls:450,boss:true,poise:130},
- drowned:{name:'a drowned one',hp:70,r:5,speed:24,dmg:22,souls:40,poise:28},
+ drowned:{name:'a drowned one',hp:70,r:5,speed:36,dmg:22,souls:40,poise:28},
  imp:{name:'an imp',hp:30,r:3,speed:46,dmg:14,souls:40,poise:8},
  witch:{name:'the Cinder Witch',hp:265,r:6,speed:34,dmg:16,souls:500,boss:true,poise:110},
  bell:{name:'a bellringer',hp:30,r:4,speed:30,dmg:10,souls:45,poise:36},
- angler:{name:'an angler',hp:60,r:5,speed:22,dmg:20,souls:50,poise:26},
+ angler:{name:'an angler',hp:60,r:5,speed:28,dmg:20,souls:50,poise:26},
  salamander:{name:'a salamander',hp:45,r:4,speed:58,dmg:14,souls:40,poise:30},
- toller:{name:'a toller',hp:70,r:5,speed:26,dmg:18,souls:55,poise:60},
+ toller:{name:'a toller',hp:70,r:5,speed:32,dmg:18,souls:55,poise:60},
  hellsbell:{name:'Hells Bell',hp:425,r:10,speed:24,dmg:26,souls:700,boss:true,poise:180},
  king:{name:'the Hollow King',hp:450,r:8,speed:30,dmg:26,souls:1200,boss:true,poise:170},
  dragon:{name:'the Ashen Wyrm',hp:625,r:13,speed:0,dmg:24,souls:2000,boss:true,anchored:true,poise:220}};
@@ -1294,13 +1300,14 @@ function artAfterHit(e,A,ang){const p=player;if(!A)return;const mob=!e.boss&&!e.
  else if(A==='tremor'&&mob&&!e.dead){e.state='stagger';e.t=Math.max(e.t||0,1.4);}
  else if(A==='frenzy'){p.stam=Math.min(p.maxStam,p.stam+4);}}
 function startAttack(heavy){const p=player,w=wpn(),a=w.atk,h=heavy?hv():null;p.state='attack';
- p.atk={phase:'wind',t:(heavy?a.wind*1.1:a.wind)*(p.rage>0?0.8:1),ang:p.aim,hitSet:new Set(),arc:a.arc*(h?h.arc:1),range:a.range*(h?h.range:1),step:a.step*(h?h.step:1),dmgMul:h?h.mul:1,hits:h?h.hits:1,heavy:!!heavy,art:h?h.art:null,dur:p.rage>0?{...a,wind:a.wind*0.8,rec:a.rec*0.75}:a}   /* in a fury the wind-up and the recovery shorten */;
+ const K=w.heavy?{w:1.15,r:1.2}:{w:1.7,r:1.6},dur={...a,wind:a.wind*K.w*(p.rage>0?0.8:1),rec:a.rec*K.r*(p.rage>0?0.75:1)};   /* every swing commits: lights wind up and recover much longer than their table says, heavies a little */
+ p.atk={phase:'wind',t:(heavy?dur.wind*1.1:dur.wind),ang:p.aim,hitSet:new Set(),arc:a.arc*(h?h.arc:1),range:a.range*(h?h.range:1),step:a.step*(h?h.step:1),dmgMul:h?h.mul:1,hits:h?h.hits:1,heavy:!!heavy,art:h?h.art:null,dur};
  if(h){if(h.art==='wheel'||h.art==='wrecker')p.atk.arc=Math.PI*2;if(h.art==='blink')blinkBehind(p);}
  p.stam=Math.max(0,p.stam-a.cost*(heavy&&!hasRelic('brand')?2:1));if(w.shape==='mace')p.fv=heavy?18:10;p.stamCd=0.75;p.facing=Math.cos(p.aim)>=0?1:-1;p.blocking=false;p.charging=false;p.charge=0;p.chargeReady=false;
  if(w.effect==='cursed'&&p.hp>3){p.hp-=2;burst(p.x,p.y-4,2,'#c8302a');}(w.heavy||heavy?SFX.swingH:SFX.swingL)();if(heavy){burst(p.x+Math.cos(p.aim)*10,p.y-4+Math.sin(p.aim)*10,10,'#fff0c0');shake=Math.max(shake,0.08);}}
 // Back onto the last safe tile, centred. Input still pushing toward the pit you fell in (px,py) is ignored until it lets go or turns away.
 function toSafe(px,py){const p=player,tx=Math.floor(p.safe.x/T),ty=Math.floor(p.safe.y/T),dx=px-p.safe.x,dy=py-p.safe.y,l=Math.hypot(dx,dy)||1;p.x=tx*T+T/2;p.y=ty*T+T/2;p.relock={x:dx/l,y:dy/l};}
-function startRoll(){const p=player;p.state='roll';p.t=0.34;p.rollDir={...p.lastMove};p.stam=Math.max(0,p.stam-(hasRelic('quicksilver')?0:20));p.stamCd=0.65;p.blocking=false;SFX.roll();
+function startRoll(){const p=player;p.state='roll';p.t=0.36;p.rollDir={...p.lastMove};p.stam=Math.max(0,p.stam-(hasRelic('quicksilver')?0:26));p.stamCd=0.7;   /* the roll commits: a vulnerable first step, i-frames through the middle, an open tail, then a short landing before you can act again */p.blocking=false;SFX.roll();
  if(hasRelic('cinderheels')){for(let k=0;k<3;k++){room.hazards.push({x:p.x+p.rollDir.x*(4+k*11),y:p.y+p.rollDir.y*(4+k*11)+2,delay:0.05+k*0.09,t:1.4,dmg:Math.round(6*fireMul()),name:'your heels',mine:true});}SFX.crackle();}}   /* the Cinder Heels: fire in your wake */
 // The keepers. Each has a handful of things to say; they come in order, once each, then start over. Lore, not lessons.
 const KEEPERS={
@@ -1359,6 +1366,7 @@ function updatePlayer(dt){player.mHeldT=mHeld.l?(player.mHeldT||0)+dt:0;
  if(room.cleared&&!room.bossWarned)for(const d of DIRS){if(!room.doors[d.n])continue;const nb=beyond(d.n);if(!nb||nb.type!=='boss'||nb.cleared)continue;const c=doorCenter(d.n);if(Math.hypot(player.x-c.x,player.y-c.y)<30){room.bossWarned=true;const nm=ETYPES[bossType()].name;showMsg((nm.charAt(0).toUpperCase()+nm.slice(1))+' waits beyond this door',3);SFX.boss();}}
 if(player.stunT>0)player.stunT-=dt;if(player.fling){const F=player.fling;F.t-=dt;moveEnt(player,F.vx*dt,F.vy*dt);F.vx*=0.94;F.vy*=0.94;if(F.t<=0)player.fling=null;}
  const p=player;p.inv=Math.max(0,p.inv-dt);p.flash=Math.max(0,p.flash-dt);p.latchT=Math.max(0,(p.latchT||0)-dt);p.curseFx=Math.max(0,(p.curseFx||0)-dt);p.rage=Math.max(0,(p.rage||0)-dt);p.stamCd=Math.max(0,p.stamCd-dt);p.appearT=Math.max(0,(p.appearT||0)-dt);
+ if(p.hourglassT>0){p.hourglassT-=dt;if(Math.random()<0.2)parts.push({x:p.x+(Math.random()-.5)*8,y:p.y-4,vx:0,vy:-9,life:0.35,col:'#d9c8a0',noG:true});}   /* the Hourglass window: sand drifts up while foes are slowed */
  if(p.state!=='free'&&p.charging){p.charging=false;p.charge=0;p.chargeReady=false;}   // a roll, a hit or a swing drops the charge
  if(p.stamCd<=0&&p.state!=='roll'&&p.state!=='attack'&&!p.charging)p.stam=Math.min(p.maxStam,p.stam+dt*(p.blocking?14:34));
  let mx=(keys.KeyD?1:0)-(keys.KeyA?1:0)+virt.mx,my=(keys.KeyS?1:0)-(keys.KeyW?1:0)+virt.my;let len=Math.hypot(mx,my);
@@ -1400,12 +1408,13 @@ if(player.stunT>0)player.stunT-=dt;if(player.fling){const F=player.fling;F.t-=dt
   if(a.phase==='wind'&&a.t<=0){a.phase='active';a.t=d.active;if(a.art==='firewake')firewake(p,a);if(a.art==='passado')p.inv=Math.max(p.inv,d.active+0.08);}
   else if(a.phase==='active'){moveEnt(p,Math.cos(a.ang)*a.step*dt,Math.sin(a.ang)*a.step*dt);attackHits(a.range,a.arc,d.dmg*p.dmgMul*a.dmgMul,(!!wpn().heavy||!!d.stagger||a.heavy)&&a.hits<=1,a.ang);   // a flurry only shoves on its last cut, so the rest still land
    if(a.t<=0){if(a.hits>1){a.hits--;a.hitSet=new Set();a.phase='wind';a.t=0.05;a.ang=p.aim;(wpn().heavy?SFX.swingH:SFX.swingL)();}else{a.phase='rec';a.t=d.rec*(a.heavy?1.7:1);if(a.art==='bulwark'){p.ward=1;p.wardT=1.6;burst(p.x,p.y-4,10,'#f4c968');}}}}   // a flurry re-aims each cut
-  else if(a.phase==='rec'){if((mUp.l||(mDown.l&&vStrike))&&!wpn().heavy&&!a.heavy&&a.t<d.rec*0.7&&p.stam>0)startAttack(false);else if(press.Space&&a.t<d.rec*(a.heavy?0.3:0.6)&&p.stam>0)startRoll();   /* a heavy leaves you open: no early roll out of it */else if(a.t<=0){p.state='free';p.atk=null;}}
+  else if(a.phase==='rec'){if((mUp.l||(mDown.l&&vStrike))&&!wpn().heavy&&!a.heavy&&a.t<d.rec*0.3&&p.stam>0)startAttack(false);   /* the next light only chains at the tail of the recovery */else if(press.Space&&a.t<d.rec*(a.heavy?0.2:0.3)&&p.stam>0)startRoll();   /* a heavy leaves you open: no early roll out of it */else if(a.t<=0){p.state='free';p.atk=null;}}
  }else if(p.state==='roll'){
   const sp=p.t>0.08?(hasRelic('quicksilver')?152:128):40;moveEnt(p,p.rollDir.x*sp*dt,p.rollDir.y*sp*dt);
-  if(Math.random()<0.5)parts.push({x:p.x-p.rollDir.x*4+(Math.random()-.5)*4,y:p.y+p.r-1,vx:-p.rollDir.x*20+(Math.random()-.5)*14,vy:-8-Math.random()*10,life:0.28,col:'#6d6578',noG:true});p.ghostT=(p.ghostT||0)-dt;if(p.ghostT<=0){p.ghostT=0.07;vfx.push({kind:'ghost',x:p.x,y:p.y+p.r,t:0.18,max:0.18,facing:p.facing,white:false,lcol:'rgba(140,130,160,A)'});}   /* dust and a shade or two behind the roll */
+  if(p.t>0.30&&Math.random()<0.7)parts.push({x:p.x-p.rollDir.x*3+(Math.random()-.5)*5,y:p.y+p.r-1,vx:-p.rollDir.x*24+(Math.random()-.5)*16,vy:-10-Math.random()*10,life:0.26,col:'#6d6578',noG:true});   /* dust kicked up at the take-off; nothing trails the jump itself */
   {const rtx=Math.floor(p.x/T),rty=Math.floor(p.y/T),rs=room.solid[rty]&&room.solid[rty][rtx];if(rs===0||rs===3)p.safe={x:p.x,y:p.y};}
-  if(p.t<=0){p.state='free';const etx=Math.floor(p.x/T),ety=Math.floor(p.y/T),es=room.solid[ety]&&room.solid[ety][etx];if(es===5){toSafe(p.x,p.y);burst(p.x,p.y+3,5,'#6d6578');}}
+  if(p.t<=0){p.state='rollend';p.t=0.12;for(let i=0;i<5;i++)parts.push({x:p.x+(Math.random()-.5)*8,y:p.y+p.r-1,vx:(Math.random()-.5)*40,vy:-6-Math.random()*8,life:0.24,col:'#6d6578',noG:true});SFX.step();   /* the landing: a puff of dust and a footfall */const etx=Math.floor(p.x/T),ety=Math.floor(p.y/T),es=room.solid[ety]&&room.solid[ety][etx];if(es===5){toSafe(p.x,p.y);burst(p.x,p.y+3,5,'#6d6578');}}
+ }else if(p.state==='rollend'){if(p.t<=0)p.state='free';   /* the landing: no swing, no second roll, no block until it is done */
  }else if(p.state==='cast'){
   if(p.t<=0){const sp=SPELLS[p.spell];p.mana-=spellCost(sp);let ba=p.aim;
    if(touchMode&&p.spell!=='blink'){let best=null,bd=170;for(const e of room.enemies){if(e.dead)continue;const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<bd){bd=d;best=e;}}if(best)ba=Math.atan2(best.y-p.y,best.x-p.x);}
@@ -1468,7 +1477,7 @@ function attackHits(range,arc,dmg,stagger,ang){
    if(d>range+hp.r)continue;let a=Math.atan2(dy,dx)-ang;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)>arc/2)continue;at=hp;break;}
   if(!at)continue;
   player.atk.hitSet.add(e);const wasRip=e.riposte&&player.riposteT>0;let mul=1;const wasStag=e.state==='stagger';
-  if(e.state==='windup'&&!e.dead){mul*=e.boss?1.15:1.3;e.poiseHit=2;dmgNum(at.x,at.y-e.r-14,'COUNTER','#fff0c0');hitstop=Math.max(hitstop,0.1);flashT=Math.max(flashT,0.07);vfx.push({kind:'ring',x:at.x,y:at.y-4,r0:4,r1:22,t:0.22,max:0.22,col:'#fff0c0',w:2});SFX.counter();if(!e.boss&&!e.anchored){e.state='stagger';e.t=Math.max(e.t||0,0.6);}if(hasRelic('vipertooth')){e.bleed=3;e.bleedT=e.bleedT||0;}}   /* the counter-hit: step in during the telegraph and the blow never comes */
+  if((H||wpn().heavy)&&e.state==='windup'&&!e.dead){mul*=e.boss?1.15:1.3;e.poiseHit=2;dmgNum(at.x,at.y-e.r-14,'COUNTER','#fff0c0');hitstop=Math.max(hitstop,0.1);flashT=Math.max(flashT,0.07);vfx.push({kind:'ring',x:at.x,y:at.y-4,r0:4,r1:22,t:0.22,max:0.22,col:'#fff0c0',w:2});SFX.counter();if(!e.boss&&!e.anchored){e.state='stagger';e.t=Math.max(e.t||0,0.6);}if(hasRelic('vipertooth')){e.bleed=3;e.bleedT=e.bleedT||0;}}   /* the counter-hit: a heavy (a charged one, or any swing of a heavy weapon) that steps in during the telegraph, and the blow never comes. A light landing there is just a light: low risk, low reward */
   if(wasStag&&hasRelic('carrioncrown'))mul*=1.3;   /* the Carrion Crown: the staggered take more */
   if(A==='shatter'&&e.slow>0){mul=1.5;dmgNum(at.x,at.y-e.r-14,'SHATTER','#7fa8ff');}else if(A==='butcher'&&e.hp<e.maxHp*0.35){mul=3;dmgNum(at.x,at.y-e.r-14,'BUTCHER','#c8302a');}
   if(e.burn>0)mul*=1+0.35*cnt('cinderheart');if(e.slow>0)mul*=1+0.35*cnt('rime');if(e.bleed>0)mul*=1+0.4*cnt('ruin');   // the schools: hit the burning, the chilled, the bleeding harder
@@ -1557,7 +1566,7 @@ function hitSpark(x,y,ang,heavy){const k=heavy?9:5;for(let i=0;i<k;i++){const a=
  vfx.push({kind:'ring',x,y,r0:1,r1:heavy?12:7,t:heavy?0.16:0.11,max:heavy?0.16:0.11,col:'#fff0c0',w:heavy?2:1});light(x,y,heavy?18:12,'rgba(255,240,200,A)',heavy?0.45:0.3);}
 function sparkSpray(x,y,ang){for(let i=0;i<10;i++){const a=ang+(Math.random()-.5)*1.1,s=70+Math.random()*90;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-10,life:0.18+Math.random()*0.22,col:i%3?'#fff0c0':'#f4c968',noG:true});}}
 function hurtPlayer(d,src){
- const p=player;if(p.inv>0||p.hp<=0||state!=='play'||winning||p.state==='fall')return false;if(p.state==='roll'&&(p.t>0.06||hasRelic('veil')))return false;
+ const p=player;if(p.inv>0||p.hp<=0||state!=='play'||winning||p.state==='fall')return false;if(p.state==='roll'&&((p.t<0.31&&p.t>0.10)||hasRelic('veil')))return false;   /* i-frames only through the middle 0.21 s of the 0.36 s roll */
  const dx=p.x-src.x,dy=p.y-src.y,l=Math.hypot(dx,dy)||1;
  if(p.frail){const f=src.burn===true?p.frail.fire:(src.hp!==undefined&&!src.from)?p.frail.blow:p.frail.shot;if(f!==1)d=Math.round(d*f);}if(p.rage>0)d=Math.round(d*1.15);   /* a fury leaves you open: blows land 15% harder */   /* the hag's bargains: blows, shots or fire land harder on you */
  if(p.ward>0){p.ward=0;p.inv=0.35;burst(p.x,p.y-4,16,'#f4c968');dmgNum(p.x,p.y-16,'WARD','#f4c968');SFX.parry();shake=Math.max(shake,0.1);return true;}
@@ -1569,14 +1578,14 @@ function hurtPlayer(d,src){
     tgt.riposte=true;tgt.flash=0.25;p.riposteT=2.6;p.inv=0.3;p.blockT=1;p.parryT=0.4;p.parryAng=ang;parryFx={x:sx,y:sy,ang,t:0.5,max:0.5};slowT=0.32;flashT=0.14;
     SFX.parry();buzz([20,40,20]);shake=Math.max(shake,0.2);hitstop=Math.max(hitstop,0.13);burst(sx,sy,14,'#f4c968');sparkSpray(sx,sy,ang);dmgNum(p.x,p.y-16,'PARRY','#f4c968');stat('parries');run.parries++;relicParry(tgt);return true;}
    p.stam-=d*1.3;moveEnt(p,dx/l*4,dy/l*4);burst(sx,sy,6,'#d9d0bd');
-   if(p.stam<=0){p.stam=0;p.stamCd=1.2;p.blocking=false;p.state='hurt';p.t=0.7;p.hp-=Math.round(d*0.5);p.inv=0.5;p.flash=0.2;SFX.guardbreak();buzz([40,30,40]);shake=Math.max(shake,0.15);dmgNum(p.x,p.y-16,'BREAK','#e04a3a');if(p.hp<=0&&!spare())die();}
+   if(p.stam<=0){p.stam=0;p.stamCd=1.2;p.blocking=false;p.state='hurt';p.t=0.7;p.hp-=Math.round(d*0.5);p.inv=0.5;p.flash=0.2;SFX.guardbreak();buzz([40,30,40]);shake=Math.max(shake,0.15);dmgNum(p.x,p.y-16,'BREAK','#e04a3a');hourglassOn();if(p.hp<=0&&!spare())die();}
    else{p.stamCd=0.6;p.hp-=Math.round(d*0.15);p.inv=0.25;SFX.block();buzz(15);shake=Math.max(shake,0.06);}
    return true;}
- p.hp-=d;p.inv=0.55;p.flash=0.15;hurtT=0.4;shake=Math.max(shake,0.15);burst(p.x,p.y-2,6,'#c8302a');hitSpark(p.x,p.y-4,Math.atan2(dy,dx),false);dmgNum(p.x,p.y-14,d,'#e04a3a');SFX.hurt();buzz(35);if(run){run.killedBy=src.name||'the dark';if(room.type==='boss'&&!room.cleared)run.bossHits++;}if(src.burn===true){p.burn=2.4;p.burnT=0;}   // only true fire sources ignite you, not a foe who happens to be burning
+ p.hp-=d;p.inv=0.22;p.flash=0.15;hurtT=0.4;hourglassOn();shake=Math.max(shake,0.15);burst(p.x,p.y-2,6,'#c8302a');hitSpark(p.x,p.y-4,Math.atan2(dy,dx),false);dmgNum(p.x,p.y-14,d,'#e04a3a');SFX.hurt();buzz(35);if(run){run.killedBy=src.name||'the dark';if(room.type==='boss'&&!room.cleared)run.bossHits++;}if(src.burn===true){p.burn=2.4;p.burnT=0;}   // only true fire sources ignite you, not a foe who happens to be burning
  if(src.affix==='vampiric'&&!src.dead&&src.hp>0){const h=Math.round(d*0.6);src.hp=Math.min(src.maxHp,src.hp+h);burst(src.x,src.y-4,8,'#c8302a');dmgNum(src.x,src.y-src.r-8,'+'+h,'#c8302a');SFX.leech();}
- if(!src.pit)moveEnt(p,dx/l*6,dy/l*6);   // a pit puts you back centred on the last safe tile; no shove
+ if(!src.pit)moveEnt(p,dx/l*10,dy/l*10);   // a pit puts you back centred on the last safe tile; no shove
  if(p.charging){p.charging=false;p.charge=0;p.chargeReady=false;p.stam=Math.max(0,p.stam-wpn().atk.cost*2);p.stamCd=0.75;burst(p.x,p.y-8,10,'#ffffff');dmgNum(p.x,p.y-24,'LOST','#e8a33c');}   /* struck while winding a heavy: the charge is gone and so is its stamina */
- if(!(p.state==='attack'&&(wpn().heavy||p.atk.heavy||hasRelic('gargoyle'))&&p.atk.phase!=='wind')){p.state='hurt';p.t=0.26;p.atk=null;}
+ if(!(p.state==='attack'&&(wpn().heavy||p.atk.heavy||hasRelic('gargoyle'))&&p.atk.phase!=='wind')){p.state='hurt';p.t=0.42;p.atk=null;}   /* a real stagger: a second foe can land one while you reel */
  if(p.hp<=0&&!spare())die();
  return true;
 }
@@ -1814,8 +1823,15 @@ function updateEnemy(e,dt){
  }
  const tx=Math.floor(e.x/T),ty=Math.floor(e.y/T);
  if(e.spikeCd<=0&&room.solid[ty]&&room.solid[ty][tx]===3){const s=room.spikes.find(q=>q.tx===tx&&q.ty===ty);if(s&&spikeState(s)==='up'){e.spikeCd=1;damageEnemy(e,10,false,Math.random()*6.28);}}
- for(const o of room.enemies){if(o===e||o.dead||o.anchored)continue;const ox=e.x-o.x,oy=e.y-o.y,d=Math.hypot(ox,oy),m=e.r+o.r+1;if(d<m&&d>0)moveEnt(e,ox/d*(m-d)*0.5,oy/d*(m-d)*0.5);}   // through moveEnt: a crowd used to press one of its own into a pillar
+ separate(e,dt);
 }
+// Foes never stand in one another. Overlap is pushed apart at once; inside a standoff ring they drift apart more gently, so a pack
+// fans out around you and each one can be read. Bosses are not shoved by their own minions, and a mid-swing foe holds its line.
+function separate(e,dt){if(e.boss||e.anchored)return;const swinging=e.state==='attack';
+ for(const o of room.enemies){if(o===e||o.dead||o.anchored)continue;const ox=e.x-o.x,oy=e.y-o.y,d=Math.hypot(ox,oy);if(d<1e-3){moveEnt(e,(Math.random()-.5)*2,(Math.random()-.5)*2);continue;}
+  const hard=e.r+o.r+2,soft=hard+(o.boss?6:9);
+  if(d<hard)moveEnt(e,ox/d*(hard-d)*(o.boss?1:0.6),oy/d*(hard-d)*(o.boss?1:0.6));
+  else if(d<soft&&!swinging){const k=(soft-d)/(soft-hard)*38*dt;moveEnt(e,ox/d*k,oy/d*k);}}}
 // ---------- the Ashen Wyrm (final boss) ----------
 // Its head hangs from the top wall and never moves. Claws slam where you stand and stay planted (hit them); the tail sweeps the
 // arena at your height (roll through); fire breath fans across the floor, after which the lowered head can be hit for bonus damage.
@@ -1923,7 +1939,7 @@ function ambient(dt){const bm=BIOME();
 function update(dt){
  time+=dt;updatePlayer(dt);
  room.ambT=(room.ambT||0)-dt;if(room.ambT<=0){room.ambT=1.1+Math.random()*1.6;const f=room.decor.find(d=>d.kind==='forge'||d.kind==='cauldron'||d.kind==='fire'||d.kind==='fountain');if(f&&Math.hypot(f.x-player.x,f.y-player.y)<200)(f.kind==='cauldron'||f.kind==='fountain'?SFX.bubble:SFX.crackle)();}
- for(const e of room.enemies)if(!e.dead){e.moving=false;if(e.hitT>0)e.hitT-=dt;if(e.poiseT>0){e.poiseT-=dt;if(e.poiseT<=0)e.poise=e.poiseMax;}if(e.poiseCd>0)e.poiseCd-=dt;if(e.broken&&e.state!=='stagger')e.broken=false;if(e.state==='windup'&&e.pstate!=='windup'){if(hasRelic('hourglass'))e.t*=1.25;if(e.windMul)e.t*=e.windMul;if(player.charging&&!e.boss&&Math.hypot(player.x-e.x,player.y-e.y)<48)e.t*=0.6;e.windT=e.t;}   /* a foe that sees you winding a heavy in its face hurries its own blow */e.pstate=e.state;if(!e.anchored&&collides(e.x,e.y,e.r,true)){const fp=freePoint(e);if(fp){e.x=fp.x;e.y=fp.y;}}   // never leave a foe overlapping a pillar, whatever put it there
+ for(const e of room.enemies)if(!e.dead){e.moving=false;if(e.hitT>0)e.hitT-=dt;if(e.poiseT>0){e.poiseT-=dt;if(e.poiseT<=0)e.poise=e.poiseMax;}if(e.poiseCd>0)e.poiseCd-=dt;if(e.broken&&e.state!=='stagger')e.broken=false;if(e.state==='windup'&&e.pstate!=='windup'){e.t*=e.boss?ENEMY_K.bossWind:ENEMY_K.wind;if(hasRelic('hourglass')&&player.hourglassT>0)e.t*=1.4;if(e.windMul)e.t*=e.windMul;if(player.charging&&!e.boss&&Math.hypot(player.x-e.x,player.y-e.y)<48)e.t*=0.6;e.windT=e.t;}   /* a foe that sees you winding a heavy in its face hurries its own blow */if(e.state==='recover'&&e.pstate==='attack'&&!e.boss)e.t*=ENEMY_K.rec;   /* the follow-through after a mob's swing: the punish window */e.pstate=e.state;if(!e.anchored&&collides(e.x,e.y,e.r,true)){const fp=freePoint(e);if(fp){e.x=fp.x;e.y=fp.y;}}   // never leave a foe overlapping a pillar, whatever put it there
   updateEnemy(e,dt);enemyTick(e,dt);if(e.moving){e.walk=(e.walk||0)+dt;if((e.boss||e.elite)&&!e.anchored&&Math.random()<0.2)parts.push({x:e.x+(Math.random()-.5)*e.r*2,y:e.y+e.r-1,vx:(Math.random()-.5)*12,vy:-5-Math.random()*5,life:0.25,col:'#6d6578'});}}
  // Ground hazards: fire (Witch) or rock (King). `delay` is a telegraph window before the hazard turns live.
  for(let i=room.hazards.length-1;i>=0;i--){const h=room.hazards[i];if(h.delay>0){h.delay-=dt;continue;}h.t-=dt;if(h.t<=0){room.hazards.splice(i,1);continue;}if(h.chase){const hx=player.x-h.x,hy=player.y-h.y,hd=Math.hypot(hx,hy)||1;h.x+=hx/hd*13*dt;h.y+=hy/hd*13*dt;}
@@ -2460,15 +2476,17 @@ function drawPlayer(){
  const p=player;const w=wpn();
  if(state==='dead'){const z=Math.min(1,deadT/0.5);ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(p.x,p.y+p.r,7,2,0,0,Math.PI*2);ctx.fill();ctx.save();ctx.translate(p.x,p.y+p.r);ctx.rotate(Math.PI/2*z*(p.facing>=0?1:-1));ctx.translate(-p.x,-(p.y+p.r));drawSpr(SPR.player,p.x,p.y+p.r,p.facing,deadT<0.15);ctx.restore();return;}
  const moving=p.state==='free'&&(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD||Math.hypot(virt.mx,virt.my)>0.16),wframe=Math.floor(p.walk*10)%4,bob=moving?(wframe%2===0?1:0):0;
- if(p.state!=='fall'){ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(p.x,p.y+p.r,6,2,0,0,Math.PI*2);ctx.fill();}
- const rolling=p.state==='roll';
+ const rolling=p.state==='roll',rprog=rolling?Math.max(0,1-p.t/0.36):0,rq=rolling&&rprog>=0.14?(rprog-0.14)/0.86:0,hop=rolling?Math.sin(rq*Math.PI)*10:0;   /* the roll is a jump: rq runs over the airborne part, hop is its height */
+ if(p.state!=='fall'){ctx.fillStyle='rgba(0,0,0,'+(0.35-hop*0.012).toFixed(3)+')';ctx.beginPath();ctx.ellipse(p.x,p.y+p.r,Math.max(2.5,6-hop*0.28),Math.max(1,2-hop*0.07),0,0,Math.PI*2);ctx.fill();}   /* the shadow stays on the floor and shrinks as you rise */
  // standing still: a slow breath (the chest rises and the frame narrows a hair) and a one-pixel bob at the top of it; weapon and shield ride the bob
  const idle=p.state==='free'&&!moving,br=idle?Math.sin(time*2.6):0,ib=idle&&br>0.35?1:0;
  ctx.save();
- if(rolling){const prog=1-p.t/0.34,dir=p.rollDir.x>=0?1:-1;
-  if(prog<0.18||prog>0.84){const sq=prog<0.18?prog/0.18:(1-prog)/0.16,pv=playerView(p);ctx.translate(p.x,p.y+p.r);ctx.scale(1+0.25*sq,1-0.3*sq);ctx.translate(-p.x,-(p.y+p.r));drawSpr(pv.spr,p.x,p.y+p.r,pv.flip,p.flash>0);}
-  else{const q=(prog-0.18)/0.66,hop=Math.sin(q*Math.PI)*4;ctx.translate(p.x,p.y+1-hop);ctx.rotate(q*Math.PI*2*dir);ctx.drawImage(SPR.roll.img,-5,-4);
-   if(Math.random()<0.6)parts.push({x:p.x-p.rollDir.x*4+(Math.random()-.5)*4,y:p.y+p.r-1,vx:-p.rollDir.x*20,vy:-6-Math.random()*8,life:0.25,col:'#6d6578'});}}
+ if(rolling){const dir=p.rollDir.x>=0?1:-1,pv=playerView(p),wh=p.flash>0,fy=p.y+p.r;   // a dodge is a jump: crouch, spring off leaning into it, tuck and turn once at the top, stretch out for the floor, land in rollend
+  if(rprog<0.14){const k=rprog/0.14;ctx.translate(p.x,fy);ctx.scale(1+0.2*k,1-0.3*k);drawSpr(pv.spr,0,0,pv.flip,wh);}   // the crouch
+  else if(rq<0.22){const k=rq/0.22;ctx.translate(p.x,fy-hop);ctx.rotate(0.35*k*dir);ctx.scale(1-0.15*k,1+0.2*k);drawSpr(pv.spr,0,0,pv.flip,wh);}   // the spring: tall and leaning
+  else if(rq<0.78){const k=(rq-0.22)/0.56;ctx.translate(p.x,fy-hop-4);ctx.rotate(k*Math.PI*2*dir);ctx.drawImage(wh?SPR.roll.white:SPR.roll.img,-5,-4);}   // the tuck: one full turn at the top of the arc
+  else{const k=(rq-0.78)/0.22;ctx.translate(p.x,fy-hop);ctx.rotate(-0.25*(1-k)*dir);ctx.scale(1-0.1*(1-k),1+0.12*(1-k));drawSpr(pv.spr,0,0,pv.flip,wh);}}   // legs down, coming in to land
+ else if(p.state==='rollend'){const k=p.t/0.12,pv=playerView(p);ctx.translate(p.x,p.y+p.r);ctx.scale(1+0.25*k,1-0.32*k);drawSpr(pv.spr,0,0,pv.flip,p.flash>0);}   // the landing squash, easing back up
  else if(p.state==='fall'){const k=1-p.t/0.75,sc=Math.max(0.15,1-0.85*k*k),drop=10*k;ctx.globalAlpha=Math.max(0,1-k*1.1);ctx.translate(p.x,p.y+p.r+drop);ctx.scale(sc,sc);ctx.rotate(Math.sin(k*9)*0.35*k);ctx.translate(-p.x,-(p.y+p.r));drawSpr(SPR.roll,p.x,p.y+p.r,p.facing,false);}
  else{if(p.inv>0&&Math.floor(p.inv*20)%2===0)ctx.globalAlpha=0.5;if(p.appearT>0){const q=p.appearT/0.3;ctx.translate(p.x,p.y+p.r);ctx.scale(1-0.6*q,1-0.6*q);ctx.translate(-p.x,-(p.y+p.r));}const pv=playerView(p),wfr=moving?[pv.walk[0],pv.spr,pv.walk[1],pv.spr][wframe]:pv.spr;
   if(idle){const sp=pv.spr,H=sp.h,fy=p.y+p.r,legs=3,neck=7,swell=1+0.08*Math.max(0,br),wh=p.flash>0;drawSprRows(sp,p.x,fy,pv.flip,wh,H-legs,H,0,1);drawSprRows(sp,p.x,fy,pv.flip,wh,neck,H-legs,-ib,swell);drawSprRows(sp,p.x,fy,pv.flip,wh,0,neck,-ib,1);}   // breathing from the chest
@@ -2477,7 +2495,7 @@ function drawPlayer(){
  if(p.burn>0){const f=Math.floor(time*12)%2;ctx.fillStyle='#e04a3a';ctx.fillRect(Math.round(p.x)-3+f,Math.round(p.y)-12,3,3);ctx.fillRect(Math.round(p.x)+1-f,Math.round(p.y)-9,2,2);ctx.fillStyle='#e8a33c';ctx.fillRect(Math.round(p.x)-2+f,Math.round(p.y)-14+f,2,2);light(p.x,p.y-8,14,'rgba(232,163,60,A)',0.3);}
  if(p.stunT>0){for(let i=0;i<3;i++){const a=time*6+i*2.094;ctx.fillStyle=i===Math.floor(time*9)%3?'#fff0c0':'#f4c968';ctx.fillRect(Math.round(p.x+Math.cos(a)*7)-1,Math.round(p.y-17+Math.sin(a)*2)-1,2,2);}}   // stars while the toll rings in your ears
  if(p.ward>0){for(let i=0;i<3;i++){const a=time*3.2+i*2.094,x=Math.round(p.x+Math.cos(a)*10),y=Math.round(p.y-5+Math.sin(a)*5);ctx.fillStyle=K;ctx.fillRect(x-2,y-2,4,5);ctx.fillStyle='#f4c968';ctx.fillRect(x-1,y-1,2,3);ctx.fillStyle='#fff0c0';ctx.fillRect(x-1,y-1,1,1);}light(p.x,p.y-4,16,'rgba(244,201,104,A)',0.25+0.1*Math.sin(time*6));}   // the Bone Ward circles you
- if(rolling)return;
+ if(rolling||p.state==='rollend')return;   // no weapon or shield through the jump and the landing
  if(p.blocking){const bash=p.parryT>0?Math.min(1,p.parryT/0.2):0,pa=p.parryAng||0,par=p.blockT<PARRY_WIN||p.parryT>0,x=Math.round(p.x+Math.cos(pa)*3*bash),y=Math.round(p.y+Math.sin(pa)*2*bash)-4-ib,raise=Math.min(1,p.blockT*8);   // shield held up toward the camera, guarding all sides
   const w=10,h=12,top=y-Math.round(h/2)-Math.round(raise*2);ctx.fillStyle=K;ctx.fillRect(x-w/2-1,top-1,w+2,h);ctx.fillRect(x-w/2,top+h-1,w,2);ctx.fillRect(x-2,top+h+1,4,1);
   ctx.fillStyle='#6b7a90';ctx.fillRect(x-w/2,top,w,h-1);ctx.fillRect(x-w/2+1,top+h-1,w-2,1);ctx.fillRect(x-1,top+h,2,1);

@@ -272,6 +272,13 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 | **Bent Horseshoe** | +5 luck; crits mend 3 |
 | **Fuzzy Dice** | two luck rolls on every strike |
 | **Loaded Die** | crits hit for triple |
+| **Scavenger's Sack** | every breakable drops souls, twice as many |
+| **Clay Heart** | every smash mends 4 |
+| **Wrecking Charm** | a smash sends shards into foes near it |
+| **Tinker's Nose** | breakables hold flasks far more often |
+| **Magpie's Eye** | every breakable rolls twice for its lucky find |
+
+**Breakables.** Clay pots, crates and barrels all go under any swing, and a crate or barrel frees the tile it stood on. Fight rooms and halls carry a handful each. Most spill a few souls, some a drop or two of mending that flies to you like souls do, and a lucky one, gated by your luck, holds a flask.
 
 **Luck.** Never shown. Every plain strike rolls a hidden hundred, and a roll under your luck is a crit: double damage, and a foe still winding up loses its blow, which no plain light can manage on its own. One in a hundred to begin with; the charms above add to it, and the Thief Daggers carry a little of their own.
 
@@ -288,6 +295,7 @@ One pool, one copy of each per run, nothing stacks. Chests and shrines hand them
 | **Leaden Gourd** | +1 flask; -20% speed |
 | **Crimson Tithe** | +40% damage; flasks heal half |
 | **Black Cat's Bone** | +25 luck; one blow in ten hurts double |
+| **Rat King's Bell** | breakables drop double; one in four hides a wretch |
 
 ## Bearings
 
